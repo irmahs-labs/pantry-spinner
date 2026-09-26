@@ -8,9 +8,6 @@ interface Props {
   dispatch: Dispatch<Action>;
 }
 
-/** How long a dish stays off the reels once cooked. Days. */
-const REPEAT_OPTIONS = [3, 5, 7, 14];
-
 export function ReelRules({ state, dispatch }: Props) {
   return (
     <div className="rules">
@@ -36,25 +33,6 @@ export function ReelRules({ state, dispatch }: Props) {
           off, read against each ingredient’s kind — so a rule works on anything
           you add, and a new one is a new row.
         </p>
-      </div>
-
-      <div className="rcard" style={{ gap: 16 }}>
-        <div className="repeat-head">
-          <div className="kicker">Don’t repeat a dish for</div>
-          <div className="repeat-val">{state.repeatDays} days</div>
-        </div>
-        <div className="seg">
-          {REPEAT_OPTIONS.map((d) => (
-            <button
-              key={d}
-              type="button"
-              aria-pressed={state.repeatDays === d}
-              onClick={() => dispatch({ days: d, type: "rules/repeatDays" })}
-            >
-              {d} days
-            </button>
-          ))}
-        </div>
       </div>
 
       <button

@@ -1,16 +1,6 @@
 {
   "meal_planner_demo_ingredients": [
     {
-      "id": 2,
-      "name": "Firm Tofu",
-      "short_name": "Tofu",
-      "id_category": 1,
-      "id_protein_kind": 8,
-      "id_vegetable_kind": null,
-      "id_starch_kind": null,
-      "gluten_free": null
-    },
-    {
       "id": 1,
       "name": "Chicken Thighs",
       "short_name": "Chicken",
@@ -21,11 +11,11 @@
       "gluten_free": null
     },
     {
-      "id": 4,
-      "name": "Salmon Fillet",
-      "short_name": "Salmon",
+      "id": 2,
+      "name": "Firm Tofu",
+      "short_name": "Tofu",
       "id_category": 1,
-      "id_protein_kind": 5,
+      "id_protein_kind": 8,
       "id_vegetable_kind": null,
       "id_starch_kind": null,
       "gluten_free": null
@@ -41,12 +31,12 @@
       "gluten_free": null
     },
     {
-      "id": 6,
-      "name": "Baby Spinach",
-      "short_name": "spinach",
-      "id_category": 2,
-      "id_protein_kind": null,
-      "id_vegetable_kind": 1,
+      "id": 4,
+      "name": "Salmon Fillet",
+      "short_name": "Salmon",
+      "id_category": 1,
+      "id_protein_kind": 5,
+      "id_vegetable_kind": null,
       "id_starch_kind": null,
       "gluten_free": null
     },
@@ -61,6 +51,16 @@
       "gluten_free": null
     },
     {
+      "id": 6,
+      "name": "Baby Spinach",
+      "short_name": "spinach",
+      "id_category": 2,
+      "id_protein_kind": null,
+      "id_vegetable_kind": 1,
+      "id_starch_kind": null,
+      "gluten_free": null
+    },
+    {
       "id": 7,
       "name": "Mushrooms",
       "short_name": null,
@@ -71,13 +71,13 @@
       "gluten_free": null
     },
     {
-      "id": 10,
-      "name": "Sweet Potato",
-      "short_name": null,
+      "id": 8,
+      "name": "Jasmine Rice",
+      "short_name": "Rice",
       "id_category": 3,
       "id_protein_kind": null,
       "id_vegetable_kind": null,
-      "id_starch_kind": 5,
+      "id_starch_kind": 1,
       "gluten_free": true
     },
     {
@@ -91,56 +91,56 @@
       "gluten_free": true
     },
     {
-      "id": 8,
-      "name": "Jasmine Rice",
-      "short_name": "Rice",
+      "id": 10,
+      "name": "Sweet Potato",
+      "short_name": null,
       "id_category": 3,
       "id_protein_kind": null,
       "id_vegetable_kind": null,
-      "id_starch_kind": 1,
+      "id_starch_kind": 5,
       "gluten_free": true
     }
   ],
   "meal_planner_demo_ingredient_methods": [
-    { "id_demo_ingredient": 10, "id_method": 1 },
-    { "id_demo_ingredient": 7, "id_method": 1 },
-    { "id_demo_ingredient": 5, "id_method": 1 },
-    { "id_demo_ingredient": 2, "id_method": 2 },
-    { "id_demo_ingredient": 7, "id_method": 3 },
-    { "id_demo_ingredient": 3, "id_method": 3 },
-    { "id_demo_ingredient": 2, "id_method": 3 },
     { "id_demo_ingredient": 1, "id_method": 3 },
-    { "id_demo_ingredient": 4, "id_method": 4 },
-    { "id_demo_ingredient": 8, "id_method": 6 },
-    { "id_demo_ingredient": 5, "id_method": 6 },
-    { "id_demo_ingredient": 10, "id_method": 7 },
-    { "id_demo_ingredient": 4, "id_method": 7 },
     { "id_demo_ingredient": 1, "id_method": 7 },
     { "id_demo_ingredient": 1, "id_method": 8 },
-    { "id_demo_ingredient": 3, "id_method": 9 }
+    { "id_demo_ingredient": 2, "id_method": 2 },
+    { "id_demo_ingredient": 2, "id_method": 3 },
+    { "id_demo_ingredient": 3, "id_method": 3 },
+    { "id_demo_ingredient": 3, "id_method": 9 },
+    { "id_demo_ingredient": 4, "id_method": 4 },
+    { "id_demo_ingredient": 4, "id_method": 7 },
+    { "id_demo_ingredient": 5, "id_method": 1 },
+    { "id_demo_ingredient": 5, "id_method": 6 },
+    { "id_demo_ingredient": 7, "id_method": 1 },
+    { "id_demo_ingredient": 7, "id_method": 3 },
+    { "id_demo_ingredient": 8, "id_method": 6 },
+    { "id_demo_ingredient": 10, "id_method": 1 },
+    { "id_demo_ingredient": 10, "id_method": 7 }
   ],
   "meal_planner_demo_pantry": [
-    { "id_demo_ingredient": 10, "quantity": 3, "id_unit": 1, "days_left": 20 },
-    { "id_demo_ingredient": 9, "quantity": 10, "id_unit": 1, "days_left": 12 },
-    { "id_demo_ingredient": 3, "quantity": 8, "id_unit": 1, "days_left": 9 },
-    { "id_demo_ingredient": 7, "quantity": 250, "id_unit": 2, "days_left": 4 },
     { "id_demo_ingredient": 1, "quantity": 600, "id_unit": 2, "days_left": 2 },
-    { "id_demo_ingredient": 8, "quantity": 1.5, "id_unit": 3, "days_left": 90 },
+    { "id_demo_ingredient": 2, "quantity": 1, "id_unit": 8, "days_left": 6 },
+    { "id_demo_ingredient": 3, "quantity": 8, "id_unit": 1, "days_left": 9 },
     { "id_demo_ingredient": 6, "quantity": 1, "id_unit": 7, "days_left": 1 },
-    { "id_demo_ingredient": 2, "quantity": 1, "id_unit": 8, "days_left": 6 }
+    { "id_demo_ingredient": 7, "quantity": 250, "id_unit": 2, "days_left": 4 },
+    { "id_demo_ingredient": 8, "quantity": 1.5, "id_unit": 3, "days_left": 90 },
+    { "id_demo_ingredient": 9, "quantity": 10, "id_unit": 1, "days_left": 12 },
+    { "id_demo_ingredient": 10, "quantity": 3, "id_unit": 1, "days_left": 20 }
   ],
   "meal_planner_demo_shopping_list": [
-    {
-      "id_demo_ingredient": 5,
-      "quantity": 1,
-      "id_unit": 10,
-      "note": "Drawn twice, never in stock"
-    },
     {
       "id_demo_ingredient": 4,
       "quantity": 300,
       "id_unit": 2,
       "note": "For the weekend"
+    },
+    {
+      "id_demo_ingredient": 5,
+      "quantity": 1,
+      "id_unit": 10,
+      "note": "Drawn twice, never in stock"
     }
   ]
 }

@@ -305,17 +305,17 @@
     },
     { "id": 3, "code": "pan_fry", "label": "Pan-fry", "phrase": "Pan-fried" },
     { "id": 4, "code": "grill", "label": "Grill", "phrase": "Grilled" },
-    { "id": 5, "code": "braise", "label": "Braise", "phrase": "Braised" },
+    { "id": 5, "code": "smoke", "label": "Smoke", "phrase": "Smoked" },
     { "id": 6, "code": "steam", "label": "Steam", "phrase": "Steamed" },
     { "id": 7, "code": "bake", "label": "Bake", "phrase": "Baked" },
     { "id": 8, "code": "air_fry", "label": "Air-fry", "phrase": "Air-fried" },
-    { "id": 9, "code": "poach", "label": "Poach", "phrase": "Poached" },
     {
-      "id": 10,
-      "code": "slow_cook",
-      "label": "Slow-cook",
-      "phrase": "Slow-cooked"
-    }
+      "id": 9,
+      "code": "deep_fry",
+      "label": "Deep-fry",
+      "phrase": "Deep-fried"
+    },
+    { "id": 10, "code": "soup", "label": "Soup", "phrase": "Simmered" }
   ],
   "meal_planner_diet_rules": [
     {

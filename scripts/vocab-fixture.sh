@@ -35,7 +35,9 @@ dump() {
     echo "{"
     for i in "${!tables[@]}"; do
       t="meal_planner_${tables[$i]}"
-      order=$([ "$t" = meal_planner_categories ] && echo position || echo 1)
+      # By whole row, which is by id first: an aggregate's "order by 1" is a
+      # constant and would keep whatever order an update left on disk.
+      order=$([ "$t" = meal_planner_categories ] && echo position || echo t)
       sep=$([ "$i" -lt $((${#tables[@]} - 1)) ] && echo "," || echo "")
       printf '  "%s": %s%s\n' "$t" "$(q -c "select coalesce(json_agg(t order by $order), '[]') from public.$t t")" "$sep"
     done

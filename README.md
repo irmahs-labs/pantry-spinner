@@ -8,12 +8,12 @@ Three reels — **Protein**, **Vegetables**, **Starch** — spin from what is ac
 
 | Screen | What it does |
 | --- | --- |
-| **Draw** | Three reels, a payline, and one button. Click a column to hold it, draw again for the rest, then send the dish into the pot. Space draws too. |
+| **Draw** | Three reels, a payline, and one button. Click a column to hold it, draw again for the rest, then send the dish into the pot. Space draws too. Beside the dish, _Yesterday you ate …_ says what went into the pot yesterday. |
 | **Pantry** | What is stocked, soonest to go off first. Stocking something picks from the ingredients you have already described. |
 | **Add ingredient** | Describes a new one: its name, its reel, and its kind. The kind is what dish names and diet filters read. |
 | **Shopping list** | What to pick up. Moving something into the pantry is what lets it spin. |
 | **Cooking methods** | Which methods are in rotation. Each draw picks one and names the dish after it. |
-| **Reel rules** | Diet constraints, the no-repeat window, and the expiry weighting switch. |
+| **Reel rules** | Diet constraints and the expiry weighting switch. |
 
 A permanent sidebar moves between them.
 
@@ -41,7 +41,7 @@ Air-fried   Chicken   Rice     Bowl with roasted            broccoli
   method                                    else its kind's word
 ```
 
-`{starch_method}` is available too. The roasting-tray template uses it: _Baked Chicken & roasted Sweet Potato Tray…_. A placeholder with nothing to fill it disappears with its spare space. `phrase` is stored on each method because no rule turns _Air-fry_ into _Air-fried_ and _Slow-cook_ into _Slow-cooked_.
+`{starch_method}` is available too. The roasting-tray template uses it: _Baked Chicken & roasted Sweet Potato Tray…_. A placeholder with nothing to fill it disappears with its spare space. `phrase` is stored on each method because no rule turns _Air-fry_ into _Air-fried_, and _Soup_ has to become a word that sits before a food: _Simmered_.
 
 ## Stack
 
@@ -121,15 +121,17 @@ RLS then narrows `authenticated` to your own rows. A new table needs a line in t
 | `meal_planner_pantry` | What is stocked: quantity, unit and `date_expiration`. The reels are built from this table alone. |
 | `meal_planner_method_settings` | A row only for a method you switched **off**, so a new account has all ten. |
 | `meal_planner_shopping_list` | What to buy, why, and whether it has been bought. |
+| `meal_planner_history` | Every dish sent into the pot: its name, dish style (by code), method and `date_cooked`. The Draw screen reads yesterday's back. |
+| `meal_planner_history_ingredients` | Which of your ingredients each meal was drawn from. Its policy checks that the meal and the ingredient are both yours. |
 | `meal_planner_demo_*` | The demo pantry guest mode starts from: ingredients, their methods, pantry (with `days_left` instead of a date) and shopping list. Readable by anyone, owned by no one. Seeded by its own migration. |
 
 Five notes on the shape:
 
-- **History is switched off.** `FEATURES.history` in `src/features.ts` is `false`, and the two tables it would need are deliberately not in the schema, so nothing reads or writes them. Turning it on means a new migration alongside the flag. Until then _Into the pot_ pushes the drawn ingredients' use-by dates two weeks out and says so — the only lasting effect.
+- **Meals are recorded; the Cooked screen is off.** _Into the pot_ writes the dish to `meal_planner_history` and pushes the drawn ingredients' use-by dates two weeks out. The Draw screen shows yesterday's dish from there. `FEATURES.history` in `src/features.ts` now switches only the Cooked screen, which lists every meal and is still `false`.
 - **`id_ingredient`, not a repeated name.** Everything keys on an ingredient id and the name lives in `meal_planner_ingredients`. The app works in names; ids are resolved at the boundary in `src/lib/remote.ts`.
 - **Three kind tables, not one.** They carry different columns, which is the argument for keeping them apart. An ingredient has three nullable kind columns and a check constraint that exactly the one matching its category is set, so a starch can never carry a protein's kind.
 - **A quantity is a number and a unit**: `600` + `g`, `1` + `bag`, `2` + `piece`. A unit marked `is_count` renders as `×2`, anything else as `600 g`.
-- **Reel rules are not stored.** Weighting is computed from `date_expiration` at draw time, so there is no rules table; the diet chips, the no-repeat window and the weighting switch live in memory and reset on reload. Cooking methods _are_ stored, because switching one off is a standing preference rather than a setting for one draw.
+- **Reel rules are not stored.** Weighting is computed from `date_expiration` at draw time, so there is no rules table; the diet chips and the weighting switch live in memory and reset on reload. Cooking methods _are_ stored, because switching one off is a standing preference rather than a setting for one draw.
 
 1. **Create the project** — [supabase.com/dashboard](https://supabase.com/dashboard) → _New project_. The Free plan allows two active projects per account.
 2. **Apply the migrations** — the schema lives in `supabase/migrations/`, one timestamped file per change, and the Supabase CLI applies whatever is not applied yet:
@@ -162,7 +164,7 @@ A new account starts empty — no ingredients, no fridge. Create an ingredient f
 
 ### Changing the schema
 
-Write a new migration rather than editing an applied one — `npx supabase migration new <name>` creates the timestamped file, and `npm run db:push` applies it. `npm run db:diff` shows what the linked database has that the migrations do not, which is how a change made by hand in the dashboard gets captured back into the repo. There is one file there now, holding the whole schema — nothing had been pushed when it was written, so there was no history to preserve.
+Write a new migration rather than editing an applied one — `npx supabase migration new <name>` creates the timestamped file, and `npm run db:push` applies it. `npm run db:diff` shows what the linked database has that the migrations do not, which is how a change made by hand in the dashboard gets captured back into the repo. The first file holds the whole original schema; later ones add the demo seed, meal history, and the renamed cooking methods.
 
 Signing in loads your rows into the reducer; from then on the reducer is mirrored back into Postgres — write only what changed. The reducer stays the single source of truth in the session, so a compound action like _Into the pot_ needs no bespoke save path.
 
@@ -242,6 +244,6 @@ Design rules that are load-bearing, not decoration:
 
 ## Not built, deliberately
 
-No onboarding. Cooking a dish refreshes an item's window rather than decrementing its quantity, so the number a row carries is what you put there. An ingredient's category cannot be changed after it is created — remove the ingredient and add it again. There is no screen for adding a cooking method. A method is a row in `meal_planner_cooking_methods` with its `phrase`, so a new one is an insert in the dashboard, and it shows up on Add ingredient after a reload. The no-repeat window and the diet chips are not persisted.
+No onboarding. Cooking a dish refreshes an item's window rather than decrementing its quantity, so the number a row carries is what you put there. An ingredient's category cannot be changed after it is created — remove the ingredient and add it again. There is no screen for adding a cooking method. A method is a row in `meal_planner_cooking_methods` with its `phrase`, so a new one is an insert in the dashboard, and it shows up on Add ingredient after a reload. The diet chips are not persisted.
 
-Three things stay in code on purpose, because they are presentation rather than vocabulary. The first is the SVG icon drawings, keyed by the database's codes, with a plain plate for any dish style the app hasn't drawn. The second is the date and no-repeat presets on two forms. The third is form copy such as "Use by" and "Gluten-free", which labels columns rather than naming anything. The three category codes are fixed as well, because the schema fixes them: an ingredient has one kind column per category, so a fourth category is a migration, not a row. Sync is last-write-wins with no realtime channel, so two devices editing at once will talk over each other. These are the obvious next increments, not oversights.
+Three things stay in code on purpose, because they are presentation rather than vocabulary. The first is the SVG icon drawings, keyed by the database's codes, with a plain plate for any dish style the app hasn't drawn. The second is the date presets on the stocking forms. The third is form copy such as "Use by" and "Gluten-free", which labels columns rather than naming anything. The three category codes are fixed as well, because the schema fixes them: an ingredient has one kind column per category, so a fourth category is a migration, not a row. Sync is last-write-wins with no realtime channel, so two devices editing at once will talk over each other. These are the obvious next increments, not oversights.

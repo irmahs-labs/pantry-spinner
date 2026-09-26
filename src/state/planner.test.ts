@@ -3,8 +3,9 @@ import { describe, expect, it } from "vitest";
 import { toVocab } from "../data/vocab";
 import type { RawVocab } from "../data/vocab";
 import { FEATURES } from "../features";
+import { addDaysISO, todayISO } from "../lib/dates";
 import raw from "../test/vocab.json";
-import { createInitialState, plannerReducer } from "./planner";
+import { createInitialState, plannerReducer, yesterdaysMeal } from "./planner";
 import type { PlannerState } from "./planner";
 
 /**
@@ -70,15 +71,15 @@ describe("into the pot", () => {
     expect(chicken?.expiresOn).not.toBe("2026-09-25");
   });
 
-  it("records the meal only when history is on", () => {
+  it("records the meal whether or not the Cooked screen is on", () => {
+    expect(after.plan).toHaveLength(1);
+    expect(after.plan[0].dish).toBe(
+      "Air-fried Chicken Rice Bowl with charred broccoli"
+    );
+    expect(after.plan[0].cookedOn).toBe(todayISO());
     if (FEATURES.history) {
-      expect(after.plan).toHaveLength(1);
-      expect(after.plan[0].dish).toBe(
-        "Air-fried Chicken Rice Bowl with charred broccoli"
-      );
       expect(after.screen).toBe("plan");
     } else {
-      expect(after.plan).toHaveLength(0);
       expect(after.screen).toBe("spin");
       expect(after.flash).toContain("another two weeks");
     }
@@ -95,6 +96,39 @@ describe("the vocabulary sets the form defaults", () => {
     expect(loaded.draft.proteinKind).toBe(vocab.proteinKinds[0].code);
     expect(loaded.draft.starchKind).toBe(vocab.starchKinds[0].code);
     expect(loaded.draft.unit).toBe(vocab.units.find((u) => u.isDefault)?.code);
+  });
+});
+
+describe("yesterday's meal", () => {
+  const entry = (id: string, cookedOn: string) => ({
+    cookedOn,
+    dish: `Dish ${id}`,
+    id,
+    ingredients: [],
+    method: null,
+    note: "",
+    style: "bowl",
+  });
+
+  it("is the newest dish cooked yesterday", () => {
+    const state = {
+      ...loaded,
+      plan: [
+        entry("tonight", todayISO()),
+        entry("late", addDaysISO(-1)),
+        entry("early", addDaysISO(-1)),
+        entry("before", addDaysISO(-2)),
+      ],
+    };
+    expect(yesterdaysMeal(state)?.id).toBe("late");
+  });
+
+  it("is nothing when yesterday went unrecorded", () => {
+    const state = {
+      ...loaded,
+      plan: [entry("tonight", todayISO()), entry("before", addDaysISO(-2))],
+    };
+    expect(yesterdaysMeal(state)).toBeUndefined();
   });
 });
 

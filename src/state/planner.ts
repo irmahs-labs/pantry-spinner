@@ -6,7 +6,9 @@ import type {
 } from "../data/model";
 import {
   EMPTY_VOCAB,
+  defaultServing,
   defaultUnit,
+  formatQuantity,
   labelOfCategory,
   methodOf,
 } from "../data/vocab";
@@ -50,6 +52,8 @@ export interface AddDraft {
   unit: string;
   /** Straight into the pantry, or onto the shopping list. */
   have: boolean;
+  /** How much a serving is, typed; only asked for in a unit with a serving size. */
+  serving: string;
 }
 
 /** The pantry's own add row: an ingredient you already have, being stocked. */
@@ -57,6 +61,8 @@ export interface StockDraft {
   name: string;
   qty: string;
   unit: string;
+  /** How much a serving is, typed; only asked for in a unit with a serving size. */
+  serving: string;
   days: number;
 }
 
@@ -95,13 +101,20 @@ const DRAFT0: AddDraft = {
   name: "",
   proteinKind: "",
   qty: "",
+  serving: "",
   shortName: "",
   starchKind: "",
   unit: "",
   vegetableKind: "",
 };
 
-const STOCK0: StockDraft = { days: 7, name: "", qty: "1", unit: "" };
+const STOCK0: StockDraft = {
+  days: 7,
+  name: "",
+  qty: "1",
+  serving: "",
+  unit: "",
+};
 
 export function createInitialState(): PlannerState {
   return {
@@ -165,7 +178,7 @@ export type Action =
   | { type: "stock/submit" }
   | { type: "pantry/remove"; name: string }
   | { type: "pantry/filter"; filter: CategoryCode | "all" }
-  | { type: "grocery/add"; name: string }
+  | { type: "grocery/add"; name: string; qty?: string; unit?: string }
   | { type: "grocery/toggle"; name: string }
   | { type: "grocery/remove"; name: string }
   | { type: "grocery/stock"; name: string }
@@ -174,11 +187,25 @@ export type Action =
   | { type: "rules/toggleWeighting" }
   | { type: "flash/clear" };
 
-/** Refreshing a window never brings an expiry date forward. */
-function laterOf(expiresOn: string, days: number): string {
-  const refreshed = addDaysISO(days);
-  return expiresOn > refreshed ? expiresOn : refreshed;
+/** The serving box starts on the unit's default, or empty for a unit that is its own serving. */
+const servingText = (v: Vocab, unit: string): string =>
+  String(defaultServing(v, unit) ?? "");
+
+/**
+ * How much one serving is, in `unit`. A unit that is its own serving (a piece,
+ * a can) is always 1; otherwise what was typed, or the unit's default.
+ */
+export function servingOf(v: Vocab, unit: string, typed: string): number {
+  const fallback = defaultServing(v, unit);
+  if (fallback === null) {
+    return 1;
+  }
+  const value = Number(typed);
+  return Number.isFinite(value) && value > 0 ? value : fallback;
 }
+
+/** Keeps sums like 0.3 − 0.1 from leaving a trailing 0.19999999999999998. */
+const tidy = (n: number) => Math.round(n * 1e6) / 1e6;
 
 /** A blank or nonsense entry means one of the thing, not NaN. */
 function parseQuantity(typed: string): number {
@@ -189,7 +216,6 @@ function parseQuantity(typed: string): number {
 const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
 
 const STOCKED_WINDOW = 6;
-const COOKED_WINDOW = 14;
 
 export function plannerReducer(
   state: PlannerState,
@@ -209,12 +235,17 @@ export function plannerReducer(
           glutenFree: starch?.glutenFree ?? false,
           proteinKind:
             state.draft.proteinKind || (v.proteinKinds[0]?.code ?? ""),
+          serving: state.draft.unit
+            ? state.draft.serving
+            : servingText(v, unit),
           starchKind: state.draft.starchKind || (starch?.code ?? ""),
           unit: state.draft.unit || unit,
           vegetableKind:
             state.draft.vegetableKind || (v.vegetableKinds[0]?.code ?? ""),
         },
-        stock: { ...state.stock, unit: state.stock.unit || unit },
+        stock: state.stock.unit
+          ? state.stock
+          : { ...state.stock, serving: servingText(v, unit), unit },
         vocab: v,
       };
     }
@@ -289,21 +320,28 @@ export function plannerReducer(
         n ? ingredientOf(state.catalogue, n) : undefined
       ) as Triple<Ingredient | undefined>;
       const methods = state.methods ?? [null, null, null];
-      // Everything drawn was in the pantry, so cooking pushes its window out.
-      const pantry = state.pantry.map((item) =>
-        names.includes(item.name)
-          ? { ...item, expiresOn: laterOf(item.expiresOn, COOKED_WINDOW) }
-          : item
-      );
+      // Cooking uses one serving of everything drawn. The last serving (or what
+      // is left of one) takes the item out of the pantry altogether.
+      const pantry = state.pantry.flatMap((item) => {
+        if (!names.includes(item.name)) {
+          return [item];
+        }
+        const left = tidy(item.qty - item.serving);
+        return left > 0 ? [{ ...item, qty: left }] : [];
+      });
+      const usage = names.map((name) => {
+        const item = pantry.find((p) => p.name === name);
+        return item
+          ? `${name}: ${formatQuantity(state.vocab, item.qty, item.unit)} left`
+          : `${name}: used up`;
+      });
 
       // The meal is recorded either way; that is what "Yesterday you ate …"
       // reads. Only landing on the Cooked screen waits on FEATURES.history.
       const method = methodOf(state.vocab, methods[0]);
       return {
         ...state,
-        flash: FEATURES.history
-          ? ""
-          : `${names.join(", ")} — good for another two weeks.`,
+        flash: FEATURES.history ? "" : `${usage.join(" · ")}.`,
         methods: null,
         pantry,
         picked: null,
@@ -337,6 +375,13 @@ export function plannerReducer(
           state.vocab.starchKinds.find(
             (k) => k.code === action.patch.starchKind
           )?.glutenFree ?? false;
+      }
+      // A new unit brings its own serving size, unless the same patch set one.
+      if (
+        action.patch.unit !== undefined &&
+        action.patch.serving === undefined
+      ) {
+        draft.serving = servingText(state.vocab, action.patch.unit);
       }
       return { ...state, draft, flash: "" };
     }
@@ -419,6 +464,7 @@ export function plannerReducer(
                 expiresOn: addDaysISO(d.days),
                 name,
                 qty: parseQuantity(d.qty),
+                serving: servingOf(state.vocab, d.unit, d.serving),
                 unit: d.unit,
               },
               ...state.pantry.filter((p) => !same(p.name, name)),
@@ -428,7 +474,14 @@ export function plannerReducer(
     }
 
     case "stock/patch": {
-      return { ...state, stock: { ...state.stock, ...action.patch } };
+      const stock = { ...state.stock, ...action.patch };
+      if (
+        action.patch.unit !== undefined &&
+        action.patch.serving === undefined
+      ) {
+        stock.serving = servingText(state.vocab, action.patch.unit);
+      }
+      return { ...state, stock };
     }
 
     case "stock/submit": {
@@ -444,11 +497,20 @@ export function plannerReducer(
             expiresOn: addDaysISO(state.stock.days),
             name,
             qty: parseQuantity(state.stock.qty),
+            serving: servingOf(
+              state.vocab,
+              state.stock.unit || defaultUnit(state.vocab),
+              state.stock.serving
+            ),
             unit: state.stock.unit || defaultUnit(state.vocab),
           },
           ...state.pantry.filter((p) => p.name !== name),
         ],
-        stock: { ...STOCK0, unit: defaultUnit(state.vocab) },
+        stock: {
+          ...STOCK0,
+          serving: servingText(state.vocab, defaultUnit(state.vocab)),
+          unit: defaultUnit(state.vocab),
+        },
       };
     }
 
@@ -480,8 +542,8 @@ export function plannerReducer(
             acquired: false,
             name,
             note: "Added by you",
-            qty: 1,
-            unit: defaultUnit(state.vocab),
+            qty: parseQuantity(action.qty ?? ""),
+            unit: action.unit || defaultUnit(state.vocab),
           },
           ...state.grocery,
         ],
@@ -514,6 +576,11 @@ export function plannerReducer(
             expiresOn: addDaysISO(STOCKED_WINDOW),
             name: action.name,
             qty: bought?.qty ?? 1,
+            serving:
+              defaultServing(
+                state.vocab,
+                bought?.unit ?? defaultUnit(state.vocab)
+              ) ?? 1,
             unit: bought?.unit ?? defaultUnit(state.vocab),
           },
           ...state.pantry.filter((p) => p.name !== action.name),

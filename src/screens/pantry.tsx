@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { Dispatch } from "react";
 
-import { formatQuantity, labelOfCategory } from "../data/vocab";
+import { ServingField } from "../components/serving-field";
+import { formatQuantity, labelOfCategory, servingsLeft } from "../data/vocab";
 import type { CategoryCode } from "../data/vocab";
 import { daysLeft, daysNote, ingredientOf } from "../engine/reel";
 import { addDaysISO, daysUntil, todayISO } from "../lib/dates";
@@ -53,7 +54,7 @@ export function Pantry({ state, dispatch }: Props) {
   return (
     <div className="stack" style={{ gap: 20 }}>
       <form
-        className="add-row"
+        className="add-row add-row--wrap"
         onSubmit={(e) => {
           e.preventDefault();
           dispatch({ type: "stock/submit" });
@@ -62,7 +63,7 @@ export function Pantry({ state, dispatch }: Props) {
         <select
           aria-label="Ingredient to stock"
           className="unit-select"
-          style={{ flex: 1, minWidth: 0 }}
+          style={{ flex: "1 1 220px", minWidth: 0 }}
           value={s.name}
           onChange={(e) => patch({ name: e.target.value })}
         >
@@ -106,6 +107,12 @@ export function Pantry({ state, dispatch }: Props) {
             </option>
           ))}
         </select>
+        <ServingField
+          vocab={v}
+          unit={s.unit}
+          value={s.serving}
+          onChange={(serving) => patch({ serving })}
+        />
         <input
           aria-label="Use by date"
           className="text-input text-input--date"
@@ -214,7 +221,11 @@ export function Pantry({ state, dispatch }: Props) {
               <div>
                 <div className="pcard__name">{p.name}</div>
                 <div className="body-sm pcard__sub">
-                  {formatQuantity(v, p.qty, p.unit)} · {daysNote(left)}
+                  {formatQuantity(v, p.qty, p.unit)}
+                  {p.serving === 1
+                    ? ""
+                    : ` · ${servingsLeft(p.qty, p.serving)} ${servingsLeft(p.qty, p.serving) === 1 ? "serving" : "servings"} of ${formatQuantity(v, p.serving, p.unit)}`}{" "}
+                  · {daysNote(left)}
                 </div>
                 <div className="pcard__how">
                   <span className="body-sm">{how || "No methods ticked"}</span>

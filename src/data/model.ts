@@ -23,6 +23,8 @@ export interface PantryItem {
   name: string;
   qty: number;
   unit: string;
+  /** How much one serving is, in `unit`. 1 for units that are their own serving. */
+  serving: number;
   /** The last day it is good for, as an ISO date. Days left are derived from it. */
   expiresOn: string;
 }

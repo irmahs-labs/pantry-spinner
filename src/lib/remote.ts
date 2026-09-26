@@ -165,13 +165,16 @@ export async function loadSnapshot(
         .returns<{ id_ingredient: string; id_method: number }[]>(),
       db
         .from(PANTRY)
-        .select("id_ingredient, quantity, id_unit, date_expiration")
+        .select(
+          "id_ingredient, quantity, id_unit, serving_size, date_expiration"
+        )
         .eq("user_id", userId)
         .returns<
           {
             id_ingredient: string;
             quantity: number;
             id_unit: number;
+            serving_size: number;
             date_expiration: string;
           }[]
         >(),
@@ -281,6 +284,7 @@ export async function loadSnapshot(
               expiresOn: row.date_expiration,
               name,
               qty: Number(row.quantity),
+              serving: Number(row.serving_size),
               unit: l.unit.code.get(row.id_unit) ?? defaultUnit(vocab),
             },
           ]
@@ -378,6 +382,7 @@ export async function writeChanges(
     return (
       !before ||
       before.expiresOn !== item.expiresOn ||
+      before.serving !== item.serving ||
       before.qty !== item.qty ||
       before.unit !== item.unit
     );
@@ -414,6 +419,7 @@ export async function writeChanges(
                   id_ingredient: id,
                   id_unit: l.unit.id.get(item.unit),
                   quantity: item.qty,
+                  serving_size: item.serving,
                   user_id: userId,
                 },
               ]

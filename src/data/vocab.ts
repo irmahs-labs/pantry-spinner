@@ -58,6 +58,8 @@ export interface Unit {
   label: string;
   isCount: boolean;
   isDefault: boolean;
+  /** What a serving starts at in this unit. Null: one of the unit is a serving. */
+  defaultServing: number | null;
 }
 export interface Method {
   id: number;
@@ -227,6 +229,10 @@ export function toVocab(raw: RawVocab): Vocab {
     units: rows("meal_planner_units").map((r) => ({
       code: r.code as string,
       id: r.id as number,
+      defaultServing:
+        r.default_serving === null || r.default_serving === undefined
+          ? null
+          : Number(r.default_serving),
       isCount: r.is_count as boolean,
       isDefault: r.is_default as boolean,
       label: r.label as string,
@@ -258,6 +264,14 @@ export const kindsFor = (v: Vocab, category: CategoryCode) =>
 
 export const defaultUnit = (v: Vocab): string =>
   (v.units.find((u) => u.isDefault) ?? v.units[0])?.code ?? "";
+
+/** The serving a new item in this unit starts on, or null if the unit is its own serving. */
+export const defaultServing = (v: Vocab, unit: string): number | null =>
+  v.units.find((u) => u.code === unit)?.defaultServing ?? null;
+
+/** Whole servings left, counting a part-serving as one: 100 g at 150 g a serving is 1. */
+export const servingsLeft = (quantity: number, serving: number): number =>
+  Math.max(0, Math.ceil(quantity / serving - 1e-9));
 
 export const methodOf = (v: Vocab, code: string | null | undefined) =>
   code ? v.methods.find((m) => m.code === code) : undefined;

@@ -364,6 +364,54 @@ select:focus-visible,
   padding: 0 24px;
   letter-spacing: 0.18em;
 }
+/* The pantry's row can outgrow one line once a serving size joins it. */
+.add-row--wrap {
+  flex-wrap: wrap;
+  border-radius: 32px;
+}
+.add-row--wrap .btn {
+  margin-left: auto;
+}
+
+/* "Serving [150] g": how much one serving is, for weights and volumes. */
+.serving-field {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  padding: 0 14px;
+  border: 1.5px solid var(--hair);
+  border-radius: 999px;
+  background: var(--ground);
+  max-width: 220px;
+}
+.serving-field__label,
+.serving-field__unit {
+  font: 700 12px/1 var(--body);
+  color: var(--ink-3);
+}
+.serving-field__label {
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.add-row .serving-field input,
+.serving-field input {
+  flex: none;
+  width: 64px;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  outline: none;
+  font: 600 15px/1 var(--body);
+  color: var(--ink);
+  text-align: right;
+}
+.field .serving-field {
+  height: 48px;
+}
+
 /* The pantry's stock row carries real fields rather than one free-text box, so
    they keep their own outline instead of the bare-input rule above. */
 .add-row .text-input {

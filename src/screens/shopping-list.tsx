@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { Dispatch } from "react";
 
-import { formatQuantity } from "../data/vocab";
+import { defaultUnit, formatQuantity } from "../data/vocab";
 import { ingredientOf } from "../engine/reel";
 import type { Action, PlannerState } from "../state/planner";
 
@@ -13,6 +13,8 @@ interface Props {
 export function ShoppingList({ state, dispatch }: Props) {
   const v = state.vocab;
   const [chosen, setChosen] = useState("");
+  const [qty, setQty] = useState("1");
+  const [unit, setUnit] = useState("");
 
   const addable = state.catalogue
     .filter((i) => !state.grocery.some((g) => g.name === i.name))
@@ -22,8 +24,14 @@ export function ShoppingList({ state, dispatch }: Props) {
     if (!chosen) {
       return;
     }
-    dispatch({ name: chosen, type: "grocery/add" });
+    dispatch({
+      name: chosen,
+      qty,
+      type: "grocery/add",
+      unit: unit || defaultUnit(v),
+    });
     setChosen("");
+    setQty("1");
   };
 
   return (
@@ -55,6 +63,29 @@ export function ShoppingList({ state, dispatch }: Props) {
               </optgroup>
             ) : null;
           })}
+        </select>
+        <input
+          aria-label="How much"
+          className="text-input"
+          style={{ width: 72 }}
+          type="number"
+          min={0}
+          step="any"
+          inputMode="decimal"
+          value={qty}
+          onChange={(e) => setQty(e.target.value)}
+        />
+        <select
+          aria-label="Unit"
+          className="unit-select"
+          value={unit || defaultUnit(v)}
+          onChange={(e) => setUnit(e.target.value)}
+        >
+          {v.units.map((u) => (
+            <option key={u.code} value={u.code}>
+              {u.code}
+            </option>
+          ))}
         </select>
         <button
           type="button"

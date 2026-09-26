@@ -39,6 +39,8 @@ function read(): Snapshot | null {
       ...i,
       methods: i.methods ?? [],
     }));
+    // …and pantry items from before a serving had a size.
+    parsed.pantry = parsed.pantry.map((p) => ({ ...p, serving: p.serving ?? 1 }));
     return parsed;
   } catch {
     return null;

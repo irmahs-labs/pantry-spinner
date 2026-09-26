@@ -17,6 +17,7 @@ import {
   styleOf,
 } from "../engine/reel";
 import type { Triple } from "../engine/reel";
+import { yesterdaysMeal } from "../state/planner";
 import type { Action, PlannerState } from "../state/planner";
 
 interface DrawProps {
@@ -45,6 +46,8 @@ export function Draw({ state, dispatch, onSpin }: DrawProps) {
   const methods = state.methods ?? [null, null, null];
   const style = styleOf(picks[2], v);
   const lead = methodOf(v, methods[0]);
+
+  const yesterday = yesterdaysMeal(state);
 
   const expiring = [...state.pantry]
     .filter((p) => daysLeft(p) <= 3)
@@ -262,6 +265,20 @@ export function Draw({ state, dispatch, onSpin }: DrawProps) {
             </div>
           )}
         </div>
+
+        {yesterday && (
+          <div className="yesterday">
+            <Icon
+              className="yesterday__icon"
+              d={dishIcon(yesterday.style)}
+              size={36}
+            />
+            <div>
+              <div className="kicker">Yesterday you ate</div>
+              <div className="yesterday__dish">{yesterday.dish}</div>
+            </div>
+          </div>
+        )}
 
         {state.flash && (
           <div className="flash" role="status">

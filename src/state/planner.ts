@@ -79,7 +79,6 @@ export interface PlannerState {
   methods: Triple<string | null> | null;
   /** Diet rule codes that are on. */
   diets: string[];
-  repeatDays: number;
   weighting: boolean;
   pantryFilter: CategoryCode | "all";
   draft: AddDraft;
@@ -120,7 +119,6 @@ export function createInitialState(): PlannerState {
     pantryFilter: "all",
     picked: null,
     plan: [],
-    repeatDays: 7,
     screen: "spin",
     spinning: false,
     stock: STOCK0,
@@ -172,7 +170,6 @@ export type Action =
   | { type: "grocery/stock"; name: string }
   | { type: "method/toggle"; code: string }
   | { type: "rules/toggleDiet"; code: string }
-  | { type: "rules/repeatDays"; days: number }
   | { type: "rules/toggleWeighting" }
   | { type: "flash/clear" };
 
@@ -298,21 +295,14 @@ export function plannerReducer(
           : item
       );
 
-      // With history off there is nowhere to send it, so the draw clears and the
-      // only lasting effect is the refreshed use-by dates.
-      if (!FEATURES.history) {
-        return {
-          ...state,
-          flash: `${names.join(", ")} — good for another two weeks.`,
-          methods: null,
-          pantry,
-          picked: null,
-        };
-      }
-
+      // The meal is recorded either way; that is what "Yesterday you ate …"
+      // reads. Only landing on the Cooked screen waits on FEATURES.history.
       const method = methodOf(state.vocab, methods[0]);
       return {
         ...state,
+        flash: FEATURES.history
+          ? ""
+          : `${names.join(", ")} — good for another two weeks.`,
         methods: null,
         pantry,
         picked: null,
@@ -330,7 +320,7 @@ export function plannerReducer(
           },
           ...state.plan,
         ],
-        screen: "plan",
+        screen: FEATURES.history ? "plan" : state.screen,
       };
     }
 
@@ -535,10 +525,6 @@ export function plannerReducer(
       };
     }
 
-    case "rules/repeatDays": {
-      return { ...state, repeatDays: action.days };
-    }
-
     case "rules/toggleWeighting": {
       return { ...state, weighting: !state.weighting };
     }
@@ -554,5 +540,9 @@ export const activeRules = (state: PlannerState) =>
   state.vocab.dietRules.filter((r) => state.diets.includes(r.code));
 
 /** Methods switched on in the Cooking methods screen. */
+/** The last dish sent into the pot yesterday, if there was one. The plan is newest first. */
+export const yesterdaysMeal = (state: PlannerState): PlanEntry | undefined =>
+  state.plan.find((entry) => entry.cookedOn === addDaysISO(-1));
+
 export const methodsOn = (state: PlannerState) =>
   state.vocab.methods.filter((m) => !state.methodsOff.includes(m.code));

@@ -6,7 +6,6 @@ import type {
 } from "../data/model";
 import { defaultUnit } from "../data/vocab";
 import type { CategoryCode, Vocab } from "../data/vocab";
-import { FEATURES } from "../features";
 import { supabase } from "./supabase/client";
 
 export interface Snapshot {
@@ -176,32 +175,26 @@ export async function loadSnapshot(
             date_expiration: string;
           }[]
         >(),
-      // The history tables are not in the schema while FEATURES.history is off,
-      // so asking for them would be a guaranteed 404 on every load.
-      FEATURES.history
-        ? db
-            .from(HISTORY)
-            .select("id, name_meal, note, dish_style, id_method, date_cooked")
-            .eq("user_id", userId)
-            .order("date_cooked", { ascending: false })
-            .order("created_at", { ascending: false })
-            .returns<
-              {
-                id: string;
-                name_meal: string;
-                note: string;
-                dish_style: string;
-                id_method: number | null;
-                date_cooked: string;
-              }[]
-            >()
-        : { data: [], error: null },
-      FEATURES.history
-        ? db
-            .from(HISTORY_INGREDIENTS)
-            .select("id_history, id_ingredient")
-            .returns<{ id_history: string; id_ingredient: string }[]>()
-        : { data: [], error: null },
+      db
+        .from(HISTORY)
+        .select("id, name_meal, note, dish_style, id_method, date_cooked")
+        .eq("user_id", userId)
+        .order("date_cooked", { ascending: false })
+        .order("created_at", { ascending: false })
+        .returns<
+          {
+            id: string;
+            name_meal: string;
+            note: string;
+            dish_style: string | null;
+            id_method: number | null;
+            date_cooked: string;
+          }[]
+        >(),
+      db
+        .from(HISTORY_INGREDIENTS)
+        .select("id_history, id_ingredient")
+        .returns<{ id_history: string; id_ingredient: string }[]>(),
       db
         .from(SHOPPING_LIST)
         .select("id_ingredient, quantity, id_unit, note, acquired")
@@ -265,11 +258,11 @@ export async function loadSnapshot(
       return name
         ? [
             {
+              acquired: row.acquired,
               name,
+              note: row.note,
               qty: Number(row.quantity),
               unit: l.unit.code.get(row.id_unit) ?? defaultUnit(vocab),
-              note: row.note,
-              acquired: row.acquired,
             },
           ]
         : [];
@@ -285,22 +278,22 @@ export async function loadSnapshot(
       return name
         ? [
             {
+              expiresOn: row.date_expiration,
               name,
               qty: Number(row.quantity),
               unit: l.unit.code.get(row.id_unit) ?? defaultUnit(vocab),
-              expiresOn: row.date_expiration,
             },
           ]
         : [];
     }),
     plan: (history.data ?? []).map((row) => ({
-      id: row.id,
-      dish: row.name_meal,
-      note: row.note,
-      style: row.dish_style,
-      method: row.id_method ? (l.method.code.get(row.id_method) ?? null) : null,
       cookedOn: row.date_cooked,
+      dish: row.name_meal,
+      id: row.id,
       ingredients: linksByMeal.get(row.id) ?? [],
+      method: row.id_method ? (l.method.code.get(row.id_method) ?? null) : null,
+      note: row.note,
+      style: row.dish_style ?? "",
     })),
   };
 }
@@ -399,9 +392,9 @@ export async function writeChanges(
       before.note !== item.note
     );
   });
-  const planAdded = FEATURES.history
-    ? next.plan.filter((entry) => !prev.plan.some((p) => p.id === entry.id))
-    : [];
+  const planAdded = next.plan.filter(
+    (entry) => !prev.plan.some((p) => p.id === entry.id)
+  );
 
   const ids = await ingredientIds(userId, [
     ...pantryUpserts.map((item) => item.name),
@@ -441,7 +434,8 @@ export async function writeChanges(
       await db.from(HISTORY).insert(
         planAdded.map((entry) => ({
           date_cooked: entry.cookedOn,
-          dish_style: entry.style,
+          // Blank when the draw had no starch to take a style from.
+          dish_style: entry.style || null,
           id: entry.id,
           id_method: entry.method
             ? (l.method.id.get(entry.method) ?? null)
@@ -463,9 +457,7 @@ export async function writeChanges(
     }
   }
 
-  const planGone = FEATURES.history
-    ? removed(prev.plan, next.plan, (entry) => entry.id)
-    : [];
+  const planGone = removed(prev.plan, next.plan, (entry) => entry.id);
   if (planGone.length) {
     orThrow(
       await db.from(HISTORY).delete().eq("user_id", userId).in("id", planGone)

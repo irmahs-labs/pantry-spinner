@@ -720,6 +720,27 @@ select:focus-visible,
   color: var(--soon-fg);
 }
 
+/* what was sent into the pot yesterday */
+.yesterday {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 32px;
+  background: var(--card);
+}
+.yesterday__icon {
+  flex: none;
+  color: var(--ink-3);
+}
+.yesterday__dish {
+  font-family: var(--display);
+  font-size: 18px;
+  line-height: 1.2;
+  color: var(--ink);
+  margin-top: 6px;
+}
+
 /* ── pantry ── */
 .toolbar {
   display: flex;
@@ -1154,34 +1175,6 @@ select:focus-visible,
   border-color: var(--green);
   background: var(--fresh-bg);
   color: var(--fresh-fg);
-}
-.repeat-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-}
-.repeat-val {
-  font-family: var(--display);
-  font-size: 24px;
-  line-height: 1;
-}
-.seg {
-  display: flex;
-  gap: 8px;
-}
-.seg button {
-  flex: 1;
-  border: 0;
-  height: 44px;
-  border-radius: 999px;
-  background: var(--sunken);
-  color: var(--green);
-  font: 700 13px/1 var(--body);
-}
-.seg button[aria-pressed="true"] {
-  background: var(--green);
-  color: var(--on-green);
 }
 .weight-card {
   display: flex;

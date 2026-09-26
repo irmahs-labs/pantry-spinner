@@ -9,7 +9,7 @@ Three reels — **Protein**, **Vegetables**, **Starch** — spin from what is ac
 | Screen | What it does |
 | --- | --- |
 | **Draw** | Three reels, a payline, and one button. Click a column to hold it, draw again for the rest, then send the dish into the pot. Space draws too. Beside the dish, _Yesterday you ate …_ says what went into the pot yesterday. |
-| **Pantry** | What is stocked, soonest to go off first. Stocking something picks from the ingredients you have already described. |
+| **Pantry** | What is stocked, soonest to go off first. Stocking something picks from the ingredients you have already described. _Edit_ on a card changes how that ingredient can be cooked. |
 | **Add ingredient** | Describes a new one: its name, its reel, and its kind. The kind is what dish names and diet filters read. |
 | **Shopping list** | What to pick up. Moving something into the pantry is what lets it spin. |
 | **Cooking methods** | Which methods are in rotation. Each draw picks one and names the dish after it. |

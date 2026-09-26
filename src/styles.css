@@ -810,6 +810,22 @@ select:focus-visible,
 .pcard__sub {
   margin-top: 5px;
 }
+.pcard__how {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 5px;
+}
+.pcard__methods {
+  gap: 6px;
+  margin-top: 10px;
+}
+.chip--small {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 12px;
+}
 .bar {
   height: 5px;
   border-radius: 999px;

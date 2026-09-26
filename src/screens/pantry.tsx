@@ -1,9 +1,11 @@
+import { useState } from "react";
 import type { Dispatch } from "react";
 
 import { formatQuantity, labelOfCategory } from "../data/vocab";
 import type { CategoryCode } from "../data/vocab";
 import { daysLeft, daysNote, ingredientOf } from "../engine/reel";
 import { addDaysISO, daysUntil, todayISO } from "../lib/dates";
+import { methodsOn } from "../state/planner";
 import type { Action, PlannerState } from "../state/planner";
 
 interface Props {
@@ -20,13 +22,13 @@ export function Pantry({ state, dispatch }: Props) {
   const v = state.vocab;
   const ingredient = (name: string) => ingredientOf(state.catalogue, name);
 
-  const rows = [
-    ...state.pantry.filter(
+  const rows = state.pantry
+    .filter(
       (p) =>
         state.pantryFilter === "all" ||
         ingredient(p.name)?.category === state.pantryFilter
-    ),
-  ].sort((a, b) => a.expiresOn.localeCompare(b.expiresOn));
+    )
+    .sort((a, b) => a.expiresOn.localeCompare(b.expiresOn));
 
   const stockable = state.catalogue
     .filter((i) => !state.pantry.some((p) => p.name === i.name))
@@ -35,6 +37,13 @@ export function Pantry({ state, dispatch }: Props) {
   const s = state.stock;
   const patch = (p: Partial<typeof s>) =>
     dispatch({ patch: p, type: "stock/patch" });
+  // The card whose cooking methods are open for editing, by ingredient name.
+  const [editing, setEditing] = useState<string | null>(null);
+  // As on Add ingredient, a switched-off method is not offered. A tick it
+  // already has is kept, not cleared, so switching the method back on restores it.
+  const shown = methodsOn(state);
+  const setMethods = (name: string, codes: string[]) =>
+    dispatch({ codes, name, type: "ingredient/setMethods" });
   const methodLabels = (codes: string[]) =>
     codes
       .map((c) => v.methods.find((m) => m.code === c)?.label)
@@ -207,7 +216,55 @@ export function Pantry({ state, dispatch }: Props) {
                 <div className="body-sm pcard__sub">
                   {formatQuantity(v, p.qty, p.unit)} · {daysNote(left)}
                 </div>
-                {how && <div className="body-sm pcard__sub">{how}</div>}
+                <div className="pcard__how">
+                  <span className="body-sm">{how || "No methods ticked"}</span>
+                  {described && (
+                    <button
+                      type="button"
+                      className="text-btn"
+                      aria-expanded={editing === p.name}
+                      onClick={() =>
+                        setEditing(editing === p.name ? null : p.name)
+                      }
+                    >
+                      {editing === p.name ? "Done" : "Edit"}
+                    </button>
+                  )}
+                </div>
+                {described && editing === p.name && (
+                  <div
+                    className="chip-row pcard__methods"
+                    role="group"
+                    aria-label={`How ${p.name} can be cooked`}
+                  >
+                    {shown.map((m) => {
+                      const on = described.methods.includes(m.code);
+                      return (
+                        <button
+                          key={m.code}
+                          type="button"
+                          className="chip chip--small"
+                          aria-pressed={on}
+                          onClick={() =>
+                            setMethods(
+                              p.name,
+                              on
+                                ? described.methods.filter((c) => c !== m.code)
+                                : [...described.methods, m.code]
+                            )
+                          }
+                        >
+                          {m.label}
+                        </button>
+                      );
+                    })}
+                    {shown.length === 0 && (
+                      <span className="body-sm">
+                        Every method is switched off in Cooking methods.
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="bar" role="presentation">
                 <div

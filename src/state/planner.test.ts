@@ -167,6 +167,20 @@ describe("ticking methods on a new ingredient", () => {
     ]);
   });
 
+  it("can change an existing ingredient's methods, kept in table order", () => {
+    const s = plannerReducer(drawn, {
+      codes: ["grill", "roast"],
+      name: "chicken thighs",
+      type: "ingredient/setMethods",
+    });
+    const chicken = s.catalogue.find((i) => i.name === "Chicken Thighs");
+    expect(chicken?.methods).toEqual(["roast", "grill"]);
+    // Only that ingredient changes.
+    expect(s.catalogue.find((i) => i.name === "Broccoli")).toBe(
+      drawn.catalogue.find((i) => i.name === "Broccoli")
+    );
+  });
+
   it("drops a method at settle if the ingredient that landed does not have it", () => {
     const settled = plannerReducer(
       { ...drawn, picked: null, spinning: true },

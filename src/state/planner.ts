@@ -159,6 +159,7 @@ export type Action =
   | { type: "draft/patch"; patch: Partial<AddDraft> }
   | { type: "draft/toggleMethod"; code: string }
   | { type: "draft/setMethods"; codes: string[] }
+  | { type: "ingredient/setMethods"; name: string; codes: string[] }
   | { type: "draft/submit" }
   | { type: "stock/patch"; patch: Partial<StockDraft> }
   | { type: "stock/submit" }
@@ -342,6 +343,19 @@ export function plannerReducer(
 
     case "draft/setMethods": {
       return { ...state, draft: { ...state.draft, methods: action.codes } };
+    }
+
+    case "ingredient/setMethods": {
+      // In the table's order, like a new ingredient's, whatever order they were tapped in.
+      const codes = state.vocab.methods
+        .map((m) => m.code)
+        .filter((c) => action.codes.includes(c));
+      return {
+        ...state,
+        catalogue: state.catalogue.map((i) =>
+          same(i.name, action.name) ? { ...i, methods: codes } : i
+        ),
+      };
     }
 
     case "draft/toggleMethod": {

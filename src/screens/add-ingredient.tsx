@@ -2,6 +2,7 @@ import type { Dispatch } from "react";
 
 import { categoryIcon } from "../components/glyphs";
 import { Icon } from "../components/icon";
+import { ServingField } from "../components/serving-field";
 import { Switch } from "../components/switch";
 import { kindsFor, labelOfCategory } from "../data/vocab";
 import type { CategoryCode } from "../data/vocab";
@@ -290,6 +291,12 @@ export function AddIngredient({ state, dispatch }: Props) {
                 ))}
               </select>
             </div>
+            <ServingField
+              vocab={v}
+              unit={d.unit}
+              value={d.serving}
+              onChange={(serving) => patch({ serving })}
+            />
           </div>
         </>
       )}

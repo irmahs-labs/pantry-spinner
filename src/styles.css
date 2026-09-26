@@ -364,6 +364,54 @@ select:focus-visible,
   padding: 0 24px;
   letter-spacing: 0.18em;
 }
+/* The pantry's row can outgrow one line once a serving size joins it. */
+.add-row--wrap {
+  flex-wrap: wrap;
+  border-radius: 32px;
+}
+.add-row--wrap .btn {
+  margin-left: auto;
+}
+
+/* "Serving [150] g": how much one serving is, for weights and volumes. */
+.serving-field {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  padding: 0 14px;
+  border: 1.5px solid var(--hair);
+  border-radius: 999px;
+  background: var(--ground);
+  max-width: 220px;
+}
+.serving-field__label,
+.serving-field__unit {
+  font: 700 12px/1 var(--body);
+  color: var(--ink-3);
+}
+.serving-field__label {
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.add-row .serving-field input,
+.serving-field input {
+  flex: none;
+  width: 64px;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  outline: none;
+  font: 600 15px/1 var(--body);
+  color: var(--ink);
+  text-align: right;
+}
+.field .serving-field {
+  height: 48px;
+}
+
 /* The pantry's stock row carries real fields rather than one free-text box, so
    they keep their own outline instead of the bare-input rule above. */
 .add-row .text-input {
@@ -929,9 +977,75 @@ select:focus-visible,
   border-radius: 999px;
   background: var(--sunken);
   outline: none;
-  padding: 0 16px;
+  padding: 0 36px 0 16px;
   font: 700 14px/1 var(--body);
   color: var(--green);
+  /* Safari keeps its own square control unless the native look is dropped, so
+     the pill and its chevron are drawn here instead. */
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%233c4a30' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  cursor: pointer;
+}
+
+/* Where the browser lets the open list be styled (Chromium's customizable
+   select), it is a rounded card too; elsewhere it stays the system menu. */
+@supports (appearance: base-select) {
+  .unit-select,
+  .unit-select::picker(select) {
+    appearance: base-select;
+  }
+  /* Block with a line-height rather than flex, so a long prompt ends in an
+     ellipsis: text-overflow does not apply to a flex container. */
+  .unit-select {
+    display: block;
+    line-height: 45px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .unit-select::picker-icon {
+    display: none;
+  }
+  .unit-select::picker(select) {
+    margin-top: 6px;
+    padding: 8px;
+    border: 1.5px solid var(--hair);
+    border-radius: 24px;
+    background: var(--card);
+    box-shadow: 0 12px 32px rgba(60, 74, 48, 0.16);
+  }
+  .unit-select option {
+    padding: 10px 14px;
+    border-radius: 999px;
+    font: 600 14px/1.2 var(--body);
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--ink);
+  }
+  /* The "Stock an ingredient…" line is the closed control's prompt, not a choice. */
+  .unit-select option[value=""] {
+    display: none;
+  }
+  .unit-select option:hover,
+  .unit-select option:focus-visible {
+    background: var(--tint);
+  }
+  .unit-select option:checked {
+    background: var(--green);
+    color: var(--on-green);
+  }
+  .unit-select option::checkmark {
+    display: none;
+  }
+  .unit-select optgroup {
+    font: 700 10px/1 var(--body);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    padding: 10px 14px 4px;
+  }
 }
 .gf-toggle {
   display: flex;

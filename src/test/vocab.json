@@ -215,84 +215,64 @@
       "code": "piece",
       "label": "pieces",
       "is_count": true,
-      "is_default": true
+      "is_default": true,
+      "default_serving": null
     },
     {
       "id": 2,
       "code": "g",
       "label": "grams",
       "is_count": false,
-      "is_default": false
+      "is_default": false,
+      "default_serving": 150
     },
     {
       "id": 3,
       "code": "kg",
       "label": "kilograms",
       "is_count": false,
-      "is_default": false
+      "is_default": false,
+      "default_serving": 0.15
     },
     {
       "id": 4,
       "code": "ml",
       "label": "millilitres",
       "is_count": false,
-      "is_default": false
+      "is_default": false,
+      "default_serving": 250
     },
     {
       "id": 5,
       "code": "l",
       "label": "litres",
       "is_count": false,
-      "is_default": false
+      "is_default": false,
+      "default_serving": 0.25
     },
     {
       "id": 6,
       "code": "serving",
       "label": "servings",
       "is_count": false,
-      "is_default": false
+      "is_default": false,
+      "default_serving": null
     },
     {
       "id": 7,
       "code": "bag",
       "label": "bags",
       "is_count": false,
-      "is_default": false
-    },
-    {
-      "id": 8,
-      "code": "block",
-      "label": "blocks",
-      "is_count": false,
-      "is_default": false
-    },
-    {
-      "id": 9,
-      "code": "pack",
-      "label": "packs",
-      "is_count": false,
-      "is_default": false
-    },
-    {
-      "id": 10,
-      "code": "bunch",
-      "label": "bunches",
-      "is_count": false,
-      "is_default": false
+      "is_default": false,
+      "default_serving": null
     },
     {
       "id": 11,
       "code": "can",
       "label": "cans",
       "is_count": false,
-      "is_default": false
-    },
-    {
-      "id": 12,
-      "code": "pot",
-      "label": "pots",
-      "is_count": false,
-      "is_default": false
+      "is_default": false,
+      "default_serving": null
     }
   ],
   "meal_planner_cooking_methods": [

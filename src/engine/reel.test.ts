@@ -75,6 +75,7 @@ const stock = (name: string, days: number): PantryItem => ({
   expiresOn: addDaysISO(days),
   name,
   qty: 1,
+  serving: 1,
   unit: "piece",
 });
 

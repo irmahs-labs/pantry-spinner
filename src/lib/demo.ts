@@ -126,6 +126,7 @@ export function toDemo(
               name,
               qty: Number(r.quantity),
               unit: unitOf(r.id_unit),
+              serving: Number(r.serving_size ?? 1),
               expiresOn: addDays(Number(r.days_left)),
             },
           ]

@@ -111,6 +111,17 @@ describe("ticking methods on a new ingredient", () => {
     expect(s.draft.methods).toEqual([]);
   });
 
+  it("ticks every method at once, and a switched-off one still is not saved", () => {
+    let s = { ...loaded, draft: { ...loaded.draft, name: "Halloumi" } };
+    s = plannerReducer(s, { code: "grill", type: "method/toggle" });
+    const on = vocab.methods.map((m) => m.code).filter((c) => c !== "grill");
+    s = plannerReducer(s, { codes: on, type: "draft/setMethods" });
+    s = plannerReducer(s, { type: "draft/submit" });
+    expect(s.catalogue.find((i) => i.name === "Halloumi")?.methods).toEqual(on);
+    s = plannerReducer(s, { codes: [], type: "draft/setMethods" });
+    expect(s.draft.methods).toEqual([]);
+  });
+
   it("keeps no tick for a method switched off since it was tapped", () => {
     let s = { ...loaded, draft: { ...loaded.draft, name: "Halloumi" } };
     s = plannerReducer(s, { code: "grill", type: "draft/toggleMethod" });

@@ -48,6 +48,7 @@ export function AddIngredient({ state, dispatch }: Props) {
   // A method switched off in Cooking methods is not offered here at all.
   const shown = methodsOn(state);
   const ticked = shown.filter((m) => d.methods.includes(m.code));
+  const allTicked = shown.length > 0 && ticked.length === shown.length;
   const example =
     d.category === "protein" && ticked[0]
       ? `A draw can call it “${ticked[0].phrase} ${d.shortName.trim() || d.name.trim() || "…"}”.`
@@ -165,8 +166,24 @@ export function AddIngredient({ state, dispatch }: Props) {
       </div>
 
       <div className="field" role="group" aria-labelledby="how-label">
-        <div id="how-label" className="kicker">
-          How can it be cooked?
+        <div className="field__head">
+          <div id="how-label" className="kicker">
+            How can it be cooked?
+          </div>
+          {shown.length > 0 && (
+            <button
+              type="button"
+              className="text-btn"
+              onClick={() =>
+                dispatch({
+                  codes: allTicked ? [] : shown.map((m) => m.code),
+                  type: "draft/setMethods",
+                })
+              }
+            >
+              {allTicked ? "Clear all" : "Tick all"}
+            </button>
+          )}
         </div>
         <div className="chip-row">
           {shown.map((m) => (

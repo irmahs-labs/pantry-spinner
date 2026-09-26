@@ -160,6 +160,7 @@ export type Action =
   | { type: "dish/cook" }
   | { type: "draft/patch"; patch: Partial<AddDraft> }
   | { type: "draft/toggleMethod"; code: string }
+  | { type: "draft/setMethods"; codes: string[] }
   | { type: "draft/submit" }
   | { type: "stock/patch"; patch: Partial<StockDraft> }
   | { type: "stock/submit" }
@@ -347,6 +348,10 @@ export function plannerReducer(
           )?.glutenFree ?? false;
       }
       return { ...state, draft, flash: "" };
+    }
+
+    case "draft/setMethods": {
+      return { ...state, draft: { ...state.draft, methods: action.codes } };
     }
 
     case "draft/toggleMethod": {

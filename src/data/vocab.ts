@@ -58,8 +58,12 @@ export interface Unit {
   label: string;
   isCount: boolean;
   isDefault: boolean;
-  /** What a serving starts at in this unit. Null: one of the unit is a serving. */
+  /** What a serving starts at, in `servingUnit`. Null: one of the unit is a serving. */
   defaultServing: number | null;
+  /** The unit a serving is sized in: `g` for `kg`. Null for a unit that is its own serving. */
+  servingUnit: string | null;
+  /** How many `servingUnit` make one of this unit: 1000 for `kg`. */
+  servingFactor: number;
 }
 export interface Method {
   id: number;
@@ -179,6 +183,10 @@ export async function loadVocab(): Promise<Vocab> {
 export function toVocab(raw: RawVocab): Vocab {
   type Row = Record<string, unknown>;
   const rows = (table: (typeof TABLES)[number]): Row[] => raw[table] ?? [];
+  // A unit's serving unit is another row of the same table, referenced by id.
+  const unitCodes = new Map(
+    rows("meal_planner_units").map((r) => [r.id, String(r.code)])
+  );
 
   return {
     categories: rows("meal_planner_categories")
@@ -228,14 +236,17 @@ export function toVocab(raw: RawVocab): Vocab {
     })),
     units: rows("meal_planner_units").map((r) => ({
       code: r.code as string,
-      id: r.id as number,
       defaultServing:
         r.default_serving === null || r.default_serving === undefined
           ? null
           : Number(r.default_serving),
+      id: r.id as number,
       isCount: r.is_count as boolean,
       isDefault: r.is_default as boolean,
       label: r.label as string,
+      servingFactor: Number(r.serving_factor ?? 1),
+      servingUnit:
+        unitCodes.get(r.id_serving_unit as number | null | undefined) ?? null,
     })),
     vegetableKinds: rows("meal_planner_vegetable_kinds").map((r) => ({
       code: r.code as string,
@@ -272,6 +283,18 @@ export const defaultServing = (v: Vocab, unit: string): number | null =>
 /** Whole servings left, counting a part-serving as one: 100 g at 150 g a serving is 1. */
 export const servingsLeft = (quantity: number, serving: number): number =>
   Math.max(0, Math.ceil(quantity / serving - 1e-9));
+
+/** The unit a serving is sized in when stocking in `unit`: grams for kilograms. */
+export const servingUnitOf = (v: Vocab, unit: string): string =>
+  v.units.find((u) => u.code === unit)?.servingUnit ?? unit;
+
+/** How many serving units make one `unit`: 1000 for kilograms, 1 otherwise. */
+export const servingFactorOf = (v: Vocab, unit: string): number =>
+  v.units.find((u) => u.code === unit)?.servingFactor ?? 1;
+
+/** One serving, converted into the stock's own unit: 75 g of a kilogram item is 0.075. */
+export const servingInUnit = (v: Vocab, unit: string, serving: number) =>
+  serving / servingFactorOf(v, unit);
 
 export const methodOf = (v: Vocab, code: string | null | undefined) =>
   code ? v.methods.find((m) => m.code === code) : undefined;

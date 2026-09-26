@@ -2,7 +2,13 @@ import { useState } from "react";
 import type { Dispatch } from "react";
 
 import { ServingField } from "../components/serving-field";
-import { formatQuantity, labelOfCategory, servingsLeft } from "../data/vocab";
+import {
+  formatQuantity,
+  labelOfCategory,
+  servingFactorOf,
+  servingUnitOf,
+  servingsLeft,
+} from "../data/vocab";
 import type { CategoryCode } from "../data/vocab";
 import { daysLeft, daysNote, ingredientOf } from "../engine/reel";
 import { addDaysISO, daysUntil, todayISO } from "../lib/dates";
@@ -45,6 +51,12 @@ export function Pantry({ state, dispatch }: Props) {
   const shown = methodsOn(state);
   const setMethods = (name: string, codes: string[]) =>
     dispatch({ codes, name, type: "ingredient/setMethods" });
+  // "3 servings of 200 g": the count is in the stock's unit, the size in its
+  // serving unit, so a kilogram of rice reads in grams a serving.
+  const servingsNote = (p: (typeof state.pantry)[number]) => {
+    const n = servingsLeft(p.qty * servingFactorOf(v, p.unit), p.serving);
+    return `${n} ${n === 1 ? "serving" : "servings"} of ${formatQuantity(v, p.serving, servingUnitOf(v, p.unit))}`;
+  };
   const methodLabels = (codes: string[]) =>
     codes
       .map((c) => v.methods.find((m) => m.code === c)?.label)
@@ -222,9 +234,9 @@ export function Pantry({ state, dispatch }: Props) {
                 <div className="pcard__name">{p.name}</div>
                 <div className="body-sm pcard__sub">
                   {formatQuantity(v, p.qty, p.unit)}
-                  {p.serving === 1
+                  {p.serving === 1 && servingUnitOf(v, p.unit) === p.unit
                     ? ""
-                    : ` · ${servingsLeft(p.qty, p.serving)} ${servingsLeft(p.qty, p.serving) === 1 ? "serving" : "servings"} of ${formatQuantity(v, p.serving, p.unit)}`}{" "}
+                    : ` · ${servingsNote(p)}`}{" "}
                   · {daysNote(left)}
                 </div>
                 <div className="pcard__how">

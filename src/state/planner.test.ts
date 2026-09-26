@@ -72,7 +72,8 @@ const drawn: PlannerState = {
       expiresOn: "2026-12-22",
       name: "Jasmine Rice",
       qty: 0.3,
-      serving: 0.1,
+      // Sized in grams, as a kilogram item's serving is.
+      serving: 100,
       unit: "kg",
     },
   ],
@@ -149,7 +150,8 @@ describe("serving sizes", () => {
   it("is what was typed for a weight or volume, or the unit's default", () => {
     expect(servingOf(vocab, "g", "180")).toBe(180);
     expect(servingOf(vocab, "g", "")).toBe(150);
-    expect(servingOf(vocab, "l", "nonsense")).toBe(0.25);
+    // Litres are served in millilitres, so their default is 250 (ml).
+    expect(servingOf(vocab, "l", "nonsense")).toBe(250);
   });
 
   it("follows the unit on the stock form, and is saved with the item", () => {

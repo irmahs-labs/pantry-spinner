@@ -11,6 +11,7 @@ import {
   formatQuantity,
   labelOfCategory,
   methodOf,
+  servingInUnit,
 } from "../data/vocab";
 import type { CategoryCode, Vocab } from "../data/vocab";
 import {
@@ -192,8 +193,9 @@ const servingText = (v: Vocab, unit: string): string =>
   String(defaultServing(v, unit) ?? "");
 
 /**
- * How much one serving is, in `unit`. A unit that is its own serving (a piece,
- * a can) is always 1; otherwise what was typed, or the unit's default.
+ * How much one serving is, in `unit`'s serving unit (grams for kilograms). A
+ * unit that is its own serving (a piece, a can) is always 1; otherwise what was
+ * typed, or the unit's default.
  */
 export function servingOf(v: Vocab, unit: string, typed: string): number {
   const fallback = defaultServing(v, unit);
@@ -326,7 +328,10 @@ export function plannerReducer(
         if (!names.includes(item.name)) {
           return [item];
         }
-        const left = tidy(item.qty - item.serving);
+        // The serving is sized in the small unit (grams for a kilogram item).
+        const left = tidy(
+          item.qty - servingInUnit(state.vocab, item.unit, item.serving)
+        );
         return left > 0 ? [{ ...item, qty: left }] : [];
       });
       const usage = names.map((name) => {

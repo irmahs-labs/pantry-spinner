@@ -216,7 +216,9 @@
       "label": "pieces",
       "is_count": true,
       "is_default": true,
-      "default_serving": null
+      "default_serving": null,
+      "id_serving_unit": null,
+      "serving_factor": 1
     },
     {
       "id": 2,
@@ -224,7 +226,9 @@
       "label": "grams",
       "is_count": false,
       "is_default": false,
-      "default_serving": 150
+      "default_serving": 150,
+      "id_serving_unit": 2,
+      "serving_factor": 1
     },
     {
       "id": 3,
@@ -232,7 +236,9 @@
       "label": "kilograms",
       "is_count": false,
       "is_default": false,
-      "default_serving": 0.15
+      "default_serving": 150,
+      "id_serving_unit": 2,
+      "serving_factor": 1000
     },
     {
       "id": 4,
@@ -240,7 +246,9 @@
       "label": "millilitres",
       "is_count": false,
       "is_default": false,
-      "default_serving": 250
+      "default_serving": 250,
+      "id_serving_unit": 4,
+      "serving_factor": 1
     },
     {
       "id": 5,
@@ -248,7 +256,9 @@
       "label": "litres",
       "is_count": false,
       "is_default": false,
-      "default_serving": 0.25
+      "default_serving": 250,
+      "id_serving_unit": 4,
+      "serving_factor": 1000
     },
     {
       "id": 6,
@@ -256,7 +266,9 @@
       "label": "servings",
       "is_count": false,
       "is_default": false,
-      "default_serving": null
+      "default_serving": null,
+      "id_serving_unit": null,
+      "serving_factor": 1
     },
     {
       "id": 7,
@@ -264,7 +276,9 @@
       "label": "bags",
       "is_count": false,
       "is_default": false,
-      "default_serving": null
+      "default_serving": null,
+      "id_serving_unit": null,
+      "serving_factor": 1
     },
     {
       "id": 11,
@@ -272,7 +286,9 @@
       "label": "cans",
       "is_count": false,
       "is_default": false,
-      "default_serving": null
+      "default_serving": null,
+      "id_serving_unit": null,
+      "serving_factor": 1
     }
   ],
   "meal_planner_cooking_methods": [

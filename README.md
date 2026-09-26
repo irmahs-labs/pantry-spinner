@@ -113,12 +113,12 @@ RLS then narrows `authenticated` to your own rows. A new table needs a line in t
 | `meal_planner_vegetable_kinds` | Leafy, brassica, root, fruiting, pods, allium, mushroom — each with the `cooking_word` its dish name uses. |
 | `meal_planner_dish_styles` | Bowl, noodles, salad, tacos, skillet, roasting tray — each with a `label` and the `name_template` a dish name is filled from. |
 | `meal_planner_starch_kinds` | Grains, noodles, bread, wraps, potatoes, whole grains — each pointing at a dish style, with a gluten default. |
-| `meal_planner_units` | Eight units: `piece`, `g`, `kg`, `ml`, `l`, `serving`, `bag`, `can`. `is_count` makes one read as `×8`; `is_default` is the one a new item starts on; `default_serving` is set only for weights and volumes, and is what a serving starts at there. |
+| `meal_planner_units` | Eight units: `piece`, `g`, `kg`, `ml`, `l`, `serving`, `bag`, `can`. `is_count` makes one read as `×8`; `is_default` is the one a new item starts on; `default_serving` is set only for weights and volumes, and is what a serving starts at there, in the unit's `id_serving_unit` — grams for `g` and `kg`, millilitres for `ml` and `l` — with `serving_factor` saying how many of those make one (1000 for `kg`). |
 | `meal_planner_cooking_methods` | Ten methods, each with the `phrase` a dish name uses. |
 | `meal_planner_diet_rules` | The Reel rules chips, each described by what it excludes: `excludes_diets`, `excludes_red_meat`, `requires_gluten_free`. |
 | `meal_planner_ingredients` | Your ingredient list: `name`, `short_name`, `id_category`, one of three kind columns, and `gluten_free` for starches. |
 | `meal_planner_ingredient_methods` | The methods ticked for each ingredient. Its insert policy checks that the ingredient is yours as well as the row. |
-| `meal_planner_pantry` | What is stocked: quantity, unit, `serving_size` (in the same unit) and `date_expiration`. The reels are built from this table alone. |
+| `meal_planner_pantry` | What is stocked: quantity, unit, `serving_size` (in the unit's serving unit, so a kilogram of rice has a serving of `75`, meaning grams) and `date_expiration`. The reels are built from this table alone. |
 | `meal_planner_method_settings` | A row only for a method you switched **off**, so a new account has all ten. |
 | `meal_planner_shopping_list` | What to buy, why, and whether it has been bought. |
 | `meal_planner_history` | Every dish sent into the pot: its name, dish style (by code), method and `date_cooked`. The Draw screen reads yesterday's back. |

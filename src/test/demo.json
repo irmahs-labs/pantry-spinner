@@ -160,7 +160,7 @@
       "quantity": 1.5,
       "id_unit": 3,
       "days_left": 90,
-      "serving_size": 0.075
+      "serving_size": 75.0
     },
     {
       "id_demo_ingredient": 9,

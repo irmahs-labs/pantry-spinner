@@ -105,7 +105,7 @@ export function Draw({ state, dispatch, onSpin }: DrawProps) {
               >
                 <div className="reel__fade" />
                 {empty ? (
-                  <div className="cell" style={{ height: "100%" }}>
+                  <div className="cell reel__empty">
                     <div className="cell__name">nothing stocked</div>
                     <div className="note tone-buy">
                       add {label.toLowerCase()}
@@ -197,7 +197,9 @@ export function Draw({ state, dispatch, onSpin }: DrawProps) {
                     </span>
                   )}
                   {picks.map((ingredient, k) => {
-                    if (!ingredient) return null;
+                    if (!ingredient) {
+                      return null;
+                    }
                     const stocked = state.pantry.find(
                       (p) => p.name === ingredient.name
                     );
@@ -211,7 +213,7 @@ export function Draw({ state, dispatch, onSpin }: DrawProps) {
                     return (
                       <span
                         key={ingredient.name}
-                        className={"tag tone-" + (soon ? "soon" : "fresh")}
+                        className={`tag tone-${soon ? "soon" : "fresh"}`}
                       >
                         {ingredient.name}
                         {how ? ` · ${how}` : ""}
@@ -247,8 +249,8 @@ export function Draw({ state, dispatch, onSpin }: DrawProps) {
                     d={d}
                     size={52}
                     style={{
-                      color: "var(--green)",
                       animationDelay: `${(i * 0.75).toFixed(2)}s`,
+                      color: "var(--green)",
                     }}
                   />
                 ))}

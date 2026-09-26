@@ -442,6 +442,17 @@ select:focus-visible,
   transition-property: transform;
   transition-timing-function: cubic-bezier(0.14, 0.7, 0.16, 1);
 }
+/* An empty reel's one cell, in the payline's slot: the second of three. */
+.reel__empty {
+  position: absolute;
+  top: 84px;
+  left: 0;
+  right: 0;
+  padding: 0 6px;
+}
+.reel__empty .note {
+  white-space: nowrap;
+}
 .cell {
   height: 84px;
   display: flex;

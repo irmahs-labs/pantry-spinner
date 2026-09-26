@@ -87,7 +87,7 @@ export function Pantry({ state, dispatch }: Props) {
         <input
           aria-label="Quantity"
           className="text-input"
-          style={{ width: 90 }}
+          style={{ width: 72 }}
           type="number"
           min={0}
           step="any"

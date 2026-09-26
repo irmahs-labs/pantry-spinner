@@ -1,4 +1,4 @@
-import { defaultServing } from "../data/vocab";
+import { defaultServing, servingUnitOf } from "../data/vocab";
 import type { Vocab } from "../data/vocab";
 
 interface Props {
@@ -18,11 +18,13 @@ export function ServingField({ vocab, unit, value, onChange }: Props) {
   if (fallback === null) {
     return null;
   }
+  // Sized in the small unit: a serving of rice stocked in kilograms is in grams.
+  const small = servingUnitOf(vocab, unit);
   return (
     <label className="serving-field">
       <span className="serving-field__label">Serving</span>
       <input
-        aria-label={`One serving, in ${unit}`}
+        aria-label={`One serving, in ${small}`}
         type="number"
         min={0}
         step="any"
@@ -31,7 +33,7 @@ export function ServingField({ vocab, unit, value, onChange }: Props) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
-      <span className="serving-field__unit">{unit}</span>
+      <span className="serving-field__unit">{small}</span>
     </label>
   );
 }

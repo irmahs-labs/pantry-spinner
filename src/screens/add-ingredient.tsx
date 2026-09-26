@@ -6,7 +6,7 @@ import { Switch } from "../components/switch";
 import { kindsFor, labelOfCategory } from "../data/vocab";
 import type { CategoryCode } from "../data/vocab";
 import { addDaysISO, daysUntil, todayISO } from "../lib/dates";
-import { kindOfDraft } from "../state/planner";
+import { kindOfDraft, methodsOn } from "../state/planner";
 import type { Action, AddDraft, PlannerState } from "../state/planner";
 
 interface Props {
@@ -45,7 +45,9 @@ export function AddIngredient({ state, dispatch }: Props) {
           : { starchKind: code }
     );
 
-  const ticked = v.methods.filter((m) => d.methods.includes(m.code));
+  // A method switched off in Cooking methods is not offered here at all.
+  const shown = methodsOn(state);
+  const ticked = shown.filter((m) => d.methods.includes(m.code));
   const example =
     d.category === "protein" && ticked[0]
       ? `A draw can call it “${ticked[0].phrase} ${d.shortName.trim() || d.name.trim() || "…"}”.`
@@ -167,30 +169,25 @@ export function AddIngredient({ state, dispatch }: Props) {
           How can it be cooked?
         </div>
         <div className="chip-row">
-          {v.methods.map((m) => {
-            const off = state.methodsOff.includes(m.code);
-            return (
-              <button
-                key={m.code}
-                type="button"
-                className="chip"
-                aria-pressed={d.methods.includes(m.code)}
-                title={
-                  off
-                    ? `${m.label} is switched off in Cooking methods this week`
-                    : undefined
-                }
-                onClick={() =>
-                  dispatch({ code: m.code, type: "draft/toggleMethod" })
-                }
-              >
-                {m.label}
-                {off ? " · off" : ""}
-              </button>
-            );
-          })}
+          {shown.map((m) => (
+            <button
+              key={m.code}
+              type="button"
+              className="chip"
+              aria-pressed={d.methods.includes(m.code)}
+              onClick={() =>
+                dispatch({ code: m.code, type: "draft/toggleMethod" })
+              }
+            >
+              {m.label}
+            </button>
+          ))}
         </div>
-        <div className="body-sm">{example}</div>
+        <div className="body-sm">
+          {shown.length
+            ? example
+            : "Every method is switched off in Cooking methods."}
+        </div>
       </div>
 
       <button

@@ -22,35 +22,35 @@ const drawn: PlannerState = {
   ...loaded,
   catalogue: [
     {
+      category: "protein",
+      glutenFree: null,
+      kind: "poultry",
+      methods: ["air_fry"],
       name: "Chicken Thighs",
       shortName: "Chicken",
-      category: "protein",
-      kind: "poultry",
-      glutenFree: null,
-      methods: ["air_fry"],
     },
     {
+      category: "vegetable",
+      glutenFree: null,
+      kind: "brassica",
+      methods: [],
       name: "Broccoli",
       shortName: null,
-      category: "vegetable",
-      kind: "brassica",
-      glutenFree: null,
-      methods: [],
     },
     {
+      category: "starch",
+      glutenFree: true,
+      kind: "grain",
+      methods: [],
       name: "Jasmine Rice",
       shortName: "Rice",
-      category: "starch",
-      kind: "grain",
-      glutenFree: true,
-      methods: [],
     },
   ],
   methods: ["air_fry", null, null],
   pantry: [
-    { name: "Chicken Thighs", qty: 600, unit: "g", expiresOn: "2026-09-25" },
-    { name: "Broccoli", qty: 1, unit: "bunch", expiresOn: "2026-09-28" },
-    { name: "Jasmine Rice", qty: 1.5, unit: "kg", expiresOn: "2026-12-22" },
+    { expiresOn: "2026-09-25", name: "Chicken Thighs", qty: 600, unit: "g" },
+    { expiresOn: "2026-09-28", name: "Broccoli", qty: 1, unit: "bunch" },
+    { expiresOn: "2026-12-22", name: "Jasmine Rice", qty: 1.5, unit: "kg" },
   ],
   picked: ["Chicken Thighs", "Broccoli", "Jasmine Rice"],
 };
@@ -109,6 +109,17 @@ describe("ticking methods on a new ingredient", () => {
       "grill",
     ]);
     expect(s.draft.methods).toEqual([]);
+  });
+
+  it("keeps no tick for a method switched off since it was tapped", () => {
+    let s = { ...loaded, draft: { ...loaded.draft, name: "Halloumi" } };
+    s = plannerReducer(s, { code: "grill", type: "draft/toggleMethod" });
+    s = plannerReducer(s, { code: "pan_fry", type: "draft/toggleMethod" });
+    s = plannerReducer(s, { code: "grill", type: "method/toggle" });
+    s = plannerReducer(s, { type: "draft/submit" });
+    expect(s.catalogue.find((i) => i.name === "Halloumi")?.methods).toEqual([
+      "pan_fry",
+    ]);
   });
 
   it("drops a method at settle if the ingredient that landed does not have it", () => {

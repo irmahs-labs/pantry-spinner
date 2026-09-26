@@ -224,15 +224,15 @@ export function plannerReducer(
       return {
         ...state,
         catalogue: action.snapshot.catalogue,
-        pantry: action.snapshot.pantry,
-        plan: action.snapshot.plan,
         grocery: action.snapshot.grocery,
         methodsOff: action.snapshot.methodsOff,
+        pantry: action.snapshot.pantry,
+        plan: action.snapshot.plan,
       };
     }
 
     case "screen/go": {
-      return { ...state, screen: action.screen, flash: "" };
+      return { ...state, flash: "", screen: action.screen };
     }
 
     case "reel/toggleLock": {
@@ -244,11 +244,11 @@ export function plannerReducer(
     case "spin/start": {
       return {
         ...state,
-        idx: action.plan.idx,
         dur: action.plan.dur,
-        spinning: true,
-        picked: null,
         flash: "",
+        idx: action.plan.idx,
+        picked: null,
+        spinning: true,
       };
     }
 
@@ -317,15 +317,15 @@ export function plannerReducer(
         picked: null,
         plan: [
           {
-            id: crypto.randomUUID(),
             cookedOn: todayISO(),
             dish: dishName(picks, methods, state.vocab),
+            id: crypto.randomUUID(),
+            ingredients: names,
+            method: methods[0],
             note: method
               ? `Just drawn · ${method.label.toLowerCase()}`
               : "Just drawn",
             style: styleOf(picks[2], state.vocab)?.code ?? "",
-            method: methods[0],
-            ingredients: names,
           },
           ...state.plan,
         ],
@@ -369,8 +369,9 @@ export function plannerReducer(
         return state;
       }
 
-      // Keep the table's order rather than the order the chips were tapped in.
-      const methods = state.vocab.methods
+      // Keep the table's order rather than the order the chips were tapped in,
+      // and only the methods the form showed: a switched-off one is hidden there.
+      const methods = methodsOn(state)
         .map((m) => m.code)
         .filter((c) => d.methods.includes(c));
       const ingredient: Ingredient = {
@@ -395,21 +396,21 @@ export function plannerReducer(
           ? state.grocery.filter((g) => !same(g.name, name))
           : [
               {
+                acquired: false,
                 name,
+                note: `New on the ${reel} reel`,
                 qty: parseQuantity(d.qty),
                 unit: d.unit,
-                note: `New on the ${reel} reel`,
-                acquired: false,
               },
               ...state.grocery.filter((g) => !same(g.name, name)),
             ],
         pantry: d.have
           ? [
               {
+                expiresOn: addDaysISO(d.days),
                 name,
                 qty: parseQuantity(d.qty),
                 unit: d.unit,
-                expiresOn: addDaysISO(d.days),
               },
               ...state.pantry.filter((p) => !same(p.name, name)),
             ]
@@ -431,10 +432,10 @@ export function plannerReducer(
         grocery: state.grocery.filter((g) => g.name !== name),
         pantry: [
           {
+            expiresOn: addDaysISO(state.stock.days),
             name,
             qty: parseQuantity(state.stock.qty),
             unit: state.stock.unit || defaultUnit(state.vocab),
-            expiresOn: addDaysISO(state.stock.days),
           },
           ...state.pantry.filter((p) => p.name !== name),
         ],
@@ -501,10 +502,10 @@ export function plannerReducer(
         grocery: state.grocery.filter((g) => g.name !== action.name),
         pantry: [
           {
+            expiresOn: addDaysISO(STOCKED_WINDOW),
             name: action.name,
             qty: bought?.qty ?? 1,
             unit: bought?.unit ?? defaultUnit(state.vocab),
-            expiresOn: addDaysISO(STOCKED_WINDOW),
           },
           ...state.pantry.filter((p) => p.name !== action.name),
         ],

@@ -257,6 +257,27 @@ select:focus-visible,
   background: var(--tint);
 }
 
+/* a field's label with one quiet action on the right */
+.field__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.text-btn {
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: var(--green);
+  font: 700 12px/1 var(--body);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.text-btn:hover {
+  color: var(--ink);
+}
+
 /* option chip — used by filters, kinds, presets */
 .chip {
   height: 42px;
@@ -441,6 +462,17 @@ select:focus-visible,
   right: 0;
   transition-property: transform;
   transition-timing-function: cubic-bezier(0.14, 0.7, 0.16, 1);
+}
+/* An empty reel's one cell, in the payline's slot: the second of three. */
+.reel__empty {
+  position: absolute;
+  top: 84px;
+  left: 0;
+  right: 0;
+  padding: 0 6px;
+}
+.reel__empty .note {
+  white-space: nowrap;
 }
 .cell {
   height: 84px;

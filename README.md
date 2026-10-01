@@ -1,4 +1,4 @@
-# Spin Supper
+# Slot machine meal planner
 
 A mobile web app that decides dinner for you.
 

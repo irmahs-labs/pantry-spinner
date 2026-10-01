@@ -53,7 +53,7 @@ export default function SignIn({ onGuest, failure }: Props) {
 
   return (
     <div className="signin">
-      <h1 className="signin-brand">Spin Supper</h1>
+      <h1 className="signin-brand">Slot machine meal planner</h1>
       <p className="signin-blurb">
         {isConfigured
           ? failure

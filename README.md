@@ -49,7 +49,7 @@ Air-fried   Chicken   Rice     Bowl with roasted            broccoli
 - Plain CSS: one stylesheet, `src/styles.css`, with the palette as custom properties on `:root`
 - Hand-drawn **Lucide-style glyphs** at stroke-width 2.75, inlined rather than a package
 - **Vitest** over the reel engine — the spin maths, weighting, and dish naming
-- **Supabase** for storage and magic-link sign-in — where your ingredients, fridge, week and list live
+- **Postgres 17** for storage, with migrations applied by **dbmate**, both run in Docker — where your ingredients, fridge, week and list live
 
 ## Getting started
 
@@ -89,22 +89,30 @@ The demo stores use-by dates as _days from now_, so it is as fresh the day someo
 
 Vocabulary and demo both come from Supabase, so guest mode needs the database connected too. That's why those tables are readable without signing in.
 
-## Storage (Supabase)
+## Storage (Postgres)
 
-Every screen but Draw reads its rows from Supabase, so this is setup, not an extra.
+Every screen but Draw reads its rows from the database, so this is setup, not an extra.
+
+> **Mid-migration.** The schema now lives in plain Postgres (`db/migrations/`), applied by [dbmate](https://github.com/amacneil/dbmate). The browser app still talks to the old Supabase project until the API and Google sign-in replace it; the sections on signing in and deploying describe that old setup until then.
+
+### Running it locally
+
+Docker is the only requirement; `compose.yaml` runs Postgres 17 and dbmate.
+
+```bash
+npm run db:up               # start Postgres on localhost:5432 and apply pending migrations
+npm run db:new -- <name>    # create db/migrations/<timestamp>_<name>.sql
+npm run db:reset            # delete the local database and build it again from the migrations
+npm run db:fixtures         # regenerate src/test/*.json from the migrations
+```
+
+The local database is `postgres://sleepy:sleepy@localhost:5432/sleepy_spinner`. Those credentials belong to the local container only.
 
 ### The data
 
-The eight reference tables and the four demo tables are readable by anyone and writable by no one.
+The eight reference tables and the four demo tables are shared by everyone and owned by no one. Every other table carries the `user_id` of the account that owns the row.
 
-**Grants are explicit.** From 30 October 2025, Supabase no longer grants the Data API access to new tables automatically, so each migration grants the tables it creates. It revokes first, which gives the same result on a project that still has the old defaults. Each role gets only what the app uses:
-
-|  | `anon` | `authenticated` | `service_role` |
-| --- | --- | --- | --- |
-| Reference and demo tables | select | select | select, insert, update, delete |
-| Your data | — | select, insert, update, delete | select, insert, update, delete |
-
-RLS then narrows `authenticated` to your own rows. A new table needs a line in the grants section of the migration that creates it, or the API answers `permission denied`. Every other table carries the `user_id` of the account that owns the row, and its RLS policy compares that to `auth.uid()`. You sign in with an email; Supabase maps the address to a stable user id, so the data follows the account even if the address changes.
+The browser never reaches the database; the API does, and scopes every query to the signed-in account. The database backs that up on its own: wherever one of your rows points at another, the foreign key includes `user_id`, so a pantry entry, a ticked method, a shopping-list line or a cooked meal can only point at **your** ingredient. Postgres refuses the row otherwise, whatever the API asks for.
 
 | Table | Holds |
 | --- | --- |
@@ -117,13 +125,13 @@ RLS then narrows `authenticated` to your own rows. A new table needs a line in t
 | `meal_planner_cooking_methods` | Ten methods, each with the `phrase` a dish name uses. |
 | `meal_planner_diet_rules` | The Reel rules chips, each described by what it excludes: `excludes_diets`, `excludes_red_meat`, `requires_gluten_free`. |
 | `meal_planner_ingredients` | Your ingredient list: `name`, `short_name`, `id_category`, one of three kind columns, and `gluten_free` for starches. |
-| `meal_planner_ingredient_methods` | The methods ticked for each ingredient. Its insert policy checks that the ingredient is yours as well as the row. |
+| `meal_planner_ingredient_methods` | The methods ticked for each ingredient — always one of yours. |
 | `meal_planner_pantry` | What is stocked: quantity, unit, `serving_size` (in the unit's serving unit, so a kilogram of rice has a serving of `75`, meaning grams) and `date_expiration`. The reels are built from this table alone. |
 | `meal_planner_method_settings` | A row only for a method you switched **off**, so a new account has all ten. |
 | `meal_planner_shopping_list` | What to buy, why, and whether it has been bought. |
 | `meal_planner_history` | Every dish sent into the pot: its name, dish style (by code), method and `date_cooked`. The Draw screen reads yesterday's back. |
-| `meal_planner_history_ingredients` | Which of your ingredients each meal was drawn from. Its policy checks that the meal and the ingredient are both yours. |
-| `meal_planner_demo_*` | The demo pantry guest mode starts from: ingredients, their methods, pantry (with `days_left` instead of a date) and shopping list. Readable by anyone, owned by no one. Seeded by its own migration. |
+| `meal_planner_history_ingredients` | Which of your ingredients each meal was drawn from. Both the meal and the ingredient have to be yours. |
+| `meal_planner_demo_*` | The demo pantry guest mode starts from: ingredients, their methods, pantry (with `days_left` instead of a date) and shopping list. Owned by no one. Seeded by its own migration. |
 
 Five notes on the shape:
 
@@ -133,38 +141,15 @@ Five notes on the shape:
 - **A quantity is a number and a unit**: `600` + `g`, `1` + `bag`, `2` + `piece`. A unit marked `is_count` renders as `×2`, anything else as `600 g`.
 - **Reel rules are not stored.** Weighting is computed from `date_expiration` at draw time, so there is no rules table; the diet chips and the weighting switch live in memory and reset on reload. Cooking methods _are_ stored, because switching one off is a standing preference rather than a setting for one draw.
 
-1. **Create the project** — [supabase.com/dashboard](https://supabase.com/dashboard) → _New project_. The Free plan allows two active projects per account.
-2. **Apply the migrations** — the schema lives in `supabase/migrations/`, one timestamped file per change, and the Supabase CLI applies whatever is not applied yet:
-
-   ```bash
-   npx supabase login                          # opens a browser, stores a token
-   npx supabase link --project-ref <your-ref>  # the ref from the project URL
-   npm run db:push                             # applies pending migrations
-   ```
-
-   Or let CI do it. `.github/workflows/database.yml` runs the same CLI on every push to `main` that touches `supabase/migrations/`, and on demand from the Actions tab. It reads three repository settings (_Settings → Secrets and variables → Actions_):
-
-   |                         | Kind     | From                             |
-   | ----------------------- | -------- | -------------------------------- |
-   | `SUPABASE_ACCESS_TOKEN` | Secret   | Account → Access Tokens          |
-   | `SUPABASE_DB_PASSWORD`  | Secret   | Project Settings → Database      |
-   | `SUPABASE_PROJECT_REF`  | Variable | The subdomain of the project URL |
-
-   The workflow has two jobs. `verify` starts a throwaway local Postgres with Supabase's own auth schema and replays every migration from nothing, so a broken or out-of-order file fails before it can reach the project — it needs no secrets and runs on pull requests too. `push` runs only after `verify` passes, prints `db push --dry-run` first so the log says what was pending, and then applies.
-
-   Doing it by hand needs three things and none of them is `.env.local`: your Supabase account (the `login` step, which stores a token under `~/.supabase/`, not in the repo), the **project ref** — the subdomain of your project URL — and your **database password**, which `link` and `push` prompt for. The password was set when the project was created; if it is lost, reset it under _Project Settings → Database → Database password_. The `VITE_*` variables are for the browser app at runtime and are never read by the CLI.
-
-   `db push` records each file in the `supabase_migrations` schema, so it never runs one twice. Every migration is also written to be idempotent — `if not exists`, `on conflict do update` — which matters if you first built the database by pasting SQL into the editor: pushing then replays both files over what is already there and changes nothing it does not need to. Pasting a migration straight into _SQL Editor_ still works if you would rather not link.
-
-3. **Turn on magic links** — _Authentication → Sign In / Providers → Email_: enable the provider and leave _Confirm email_ on. Under _Authentication → URL Configuration_ set the **Site URL** to where the app runs (`http://localhost:5173` for development) and add every other origin you use to **Redirect URLs**, including the deployed one. A link only works for a listed origin.
-4. **Wire the keys** — copy `.env.example` to `.env.local` and fill in the project URL and the **anon public** key from _Project Settings → API_. This is what the running app reads, and it is separate from the migration step above. Never the service-role key: this is a browser app and the anon key is the only one meant to ship in a bundle.
-5. `npm run dev`, enter your email, open the link from the same device.
-
-A new account starts empty — no ingredients, no fridge. Create an ingredient from the Fridge screen's **New** button, or run the seed script, which fills a starting list, fridge, week and shopping list; it is kept outside the repo because it carries a real email address, and it resolves your account by that address, so run it only after a first sign-in has created the account.
+A new account starts empty — no ingredients, no fridge. Create an ingredient from the Fridge screen's **New** button.
 
 ### Changing the schema
 
-Write a new migration rather than editing an applied one — `npx supabase migration new <name>` creates the timestamped file, and `npm run db:push` applies it. `npm run db:diff` shows what the linked database has that the migrations do not, which is how a change made by hand in the dashboard gets captured back into the repo. The first file holds the whole original schema; later ones add the demo seed, meal history, and the renamed cooking methods.
+Write a new migration rather than editing an applied one: `npm run db:new -- <name>` creates the file, with a `-- migrate:up` section and a `-- migrate:down` section that undoes it. `npm run db:up` applies it and rewrites `db/schema.sql`, the full schema as it stands, which is committed so a pull request shows the effect of a migration as well as its text.
+
+`.github/workflows/database.yml` checks every change to `db/`: the migrations apply to an empty database, every `migrate:down` rolls back cleanly, and `db/schema.sql` and the test fixtures still match what the migrations build. If the reference or demo rows change, run `npm run db:fixtures` and commit the result.
+
+The first two files fold the seven Supabase migrations into one schema and one demo seed, written out as they ended up rather than replayed step by step; the new database starts empty, so there was no history to keep. They were checked against a replay of the old files: every reference and demo row is identical.
 
 Signing in loads your rows into the reducer; from then on the reducer is mirrored back into Postgres — write only what changed. The reducer stays the single source of truth in the session, so a compound action like _Into the pot_ needs no bespoke save path.
 
@@ -200,10 +185,11 @@ Take the production domain from Vercel's _Domains_ list rather than assuming it:
 
 ```
 .github/workflows/
-  database.yml          verify migrations, then apply them to the linked project
-supabase/
-  config.toml           CLI settings; carries no project identity, no secrets
-  migrations/           the schema's history, applied by `supabase db push`
+  database.yml          migrations build, roll back, and match schema.sql and the fixtures
+db/
+  migrations/           one timestamped file per change, applied by dbmate
+  schema.sql            the whole schema as it stands, written by `npm run db:up`
+compose.yaml            local Postgres and dbmate
 scripts/
   vocab-fixture.sh      regenerates src/test/*.json from the migrations
 .claude/

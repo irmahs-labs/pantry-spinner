@@ -1,92 +1,54 @@
-# Applies supabase/migrations/ to the linked project.
-#
-# The CLI is the one pinned in package-lock.json rather than a marketplace
-# action, so CI runs exactly the version `npm run db:push` runs locally.
-#
-# Repository secrets and variables this needs (Settings → Secrets and variables
-# → Actions):
-#   SUPABASE_ACCESS_TOKEN   secret    — account token, replaces `supabase login`
-#   SUPABASE_DB_PASSWORD    secret    — database password, so link/push never prompt
-#   SUPABASE_PROJECT_REF    variable  — the subdomain of the project URL
+# Checks db/migrations/ on every change: they apply to an empty database, roll
+# back cleanly, and the committed schema.sql and test fixtures still match what
+# they build. Applying them to production is the deploy's job, not this one's.
 name: Database
 
 on:
   push:
     branches: [main]
     paths:
-      - "supabase/migrations/**"
+      - "db/**"
+      - "src/test/*.json"
+      - "scripts/vocab-fixture.sh"
+      - "compose.yaml"
       - ".github/workflows/database.yml"
   pull_request:
     paths:
-      - "supabase/migrations/**"
+      - "db/**"
+      - "src/test/*.json"
+      - "scripts/vocab-fixture.sh"
+      - "compose.yaml"
       - ".github/workflows/database.yml"
   workflow_dispatch:
 
-# Never let two pushes touch the same database at once.
-concurrency:
-  group: database-${{ github.ref }}
-  cancel-in-progress: false
-
 jobs:
   verify:
-    name: Migrations apply to an empty database
+    name: Migrations build, roll back, and match the committed files
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      # A local Postgres with Supabase's own auth schema, so auth.uid() and
-      # auth.users are real rather than stubbed.
-      - name: Start a local database
-        run: npx supabase db start
-      # Replays every migration from nothing. Fails if any of them is broken,
-      # out of order, or depends on something an earlier one did not create.
-      - name: Replay every migration from scratch
-        run: npx supabase db reset
-      - name: Lint
-        run: npx supabase db lint --level warning
 
-  push:
-    name: Apply to the linked project
-    needs: verify
-    # Pull requests from forks cannot see the secrets, and should not write to
-    # the database anyway. This runs on main, or when triggered by hand.
-    if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    env:
-      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
+      - name: Apply every migration to an empty database
+        run: npm run db:up
 
-      - name: Check the credentials are actually set
+      - name: db/schema.sql is up to date
+        run: git diff --exit-code db/schema.sql
+
+      # Down then up again, so every migrate:down is known to work before it is
+      # ever needed.
+      - name: Roll everything back and apply it again
         run: |
-          missing=()
-          [ -n "$SUPABASE_ACCESS_TOKEN" ] || missing+=("SUPABASE_ACCESS_TOKEN (secret)")
-          [ -n "$SUPABASE_DB_PASSWORD" ]  || missing+=("SUPABASE_DB_PASSWORD (secret)")
-          [ -n "$SUPABASE_PROJECT_REF" ]  || missing+=("SUPABASE_PROJECT_REF (variable)")
-          if [ ${#missing[@]} -ne 0 ]; then
-            printf 'Not set in Settings → Secrets and variables → Actions:\n'
-            printf '  - %s\n' "${missing[@]}"
-            exit 1
-          fi
-          echo "All three are present."
+          count=$(ls db/migrations/*.sql | wc -l)
+          for _ in $(seq "$count"); do docker compose run --rm migrate --no-dump-schema rollback; done
+          docker compose run --rm migrate --no-dump-schema up
 
-      - name: Link
-        run: npx supabase link --project-ref "$SUPABASE_PROJECT_REF"
-
-      # Printed before anything is written, so the log says what was pending.
-      - name: What would be applied
-        run: npx supabase db push --dry-run
-
-      - name: Apply
-        run: npx supabase db push --yes
+      # Compared as data, not text: the committed files are formatted, the
+      # script's output is not, and only the rows matter.
+      - name: Test fixtures match the migrations
+        run: |
+          OUT="$RUNNER_TEMP" npm run db:fixtures
+          for f in vocab.json demo.json; do
+            python3 -c 'import json,sys; a,b=(json.load(open(p)) for p in sys.argv[1:]); sys.exit(a!=b)' \
+              "src/test/$f" "$RUNNER_TEMP/$f" \
+              || { echo "src/test/$f is stale: run npm run db:fixtures"; exit 1; }
+          done

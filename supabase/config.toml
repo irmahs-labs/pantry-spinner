@@ -1,9 +1,0 @@
-# Supabase CLI configuration. `supabase link --project-ref <ref>` writes the ref
-# into .temp/ rather than here, so this file carries no project identity and no
-# secrets — it is safe in the repo.
-project_id = "spin-supper"
-
-[db]
-# Matches the hosted project (Postgres 17.6), so a local `supabase start`
-# behaves like production.
-major_version = 17

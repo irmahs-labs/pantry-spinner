@@ -5,10 +5,3 @@ dist
 tsconfig.tsbuildinfo
 .env.local
 .env
-
-# supabase/migrations/ and config.toml are tracked on purpose: they are the
-# schema's history, and `supabase db push` applies whatever is not yet applied.
-# The CLI's link state is per-machine, and the seed script carries a real email
-# address, so neither belongs in the repo.
-supabase/.temp/
-supabase/seed.sql

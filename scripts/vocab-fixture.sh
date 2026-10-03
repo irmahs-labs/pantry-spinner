@@ -5,28 +5,21 @@
 #   src/test/vocab.json   the eight reference tables
 #   src/test/demo.json    the four demo tables
 #
-#   scripts/vocab-fixture.sh              # writes both into src/test/
+#   npm run db:fixtures                   # writes both into src/test/
 #   OUT=/some/dir scripts/vocab-fixture.sh
 #
-# Needs a local Postgres (initdb/pg_ctl/psql on PATH). Starts a throwaway
-# cluster, applies every migration, dumps each reference table as JSON, stops.
+# Needs Docker. Starts a throwaway Postgres beside any dev database, applies
+# every migration, dumps each reference table as JSON, and removes it again.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 out=${OUT:-src/test}
 
-dir=$(mktemp -d)
-trap 'pg_ctl -D "$dir/data" stop -m immediate >/dev/null 2>&1 || true; rm -rf "$dir"' EXIT
+export COMPOSE_PROJECT_NAME=sleepy-spinner-fixtures DB_PORT=
+trap 'docker compose down -v --remove-orphans >/dev/null 2>&1' EXIT
 
-initdb -D "$dir/data" -A trust -U postgres >/dev/null
-pg_ctl -D "$dir/data" -o "-k $dir -p 5439 -c listen_addresses=" -l "$dir/log" start >/dev/null
-q() { psql -h "$dir" -p 5439 -U postgres -v ON_ERROR_STOP=1 -qtA "$@"; }
-
-# Just enough of Supabase for the migration to apply.
-q -c "create schema auth;
-      create table auth.users (id uuid primary key);
-      create function auth.uid() returns uuid language sql stable as 'select null::uuid';
-      create role authenticated; create role anon; create role service_role bypassrls;"
-for f in supabase/migrations/*.sql; do q -f "$f" >/dev/null; done
+docker compose up -d --wait db >/dev/null 2>&1
+docker compose run --rm migrate --no-dump-schema up >/dev/null
+q() { docker compose exec -T db psql -U sleepy -d sleepy_spinner -v ON_ERROR_STOP=1 -qtA "$@"; }
 
 dump() {
   local file=$1; shift

@@ -1,0 +1,41 @@
+# Local development: Postgres, and dbmate to apply db/migrations to it.
+#
+#   npm run db:up               start Postgres and apply pending migrations
+#   npm run db:new -- <name>    create db/migrations/<timestamp>_<name>.sql
+#   npm run db:reset            delete the local database and rebuild it
+#
+# The credentials are for this local container only; production has its own.
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: sleepy
+      POSTGRES_PASSWORD: sleepy
+      POSTGRES_DB: sleepy_spinner
+    ports:
+      # DB_PORT= (empty) picks a free port, which is how the fixture script runs
+      # beside a dev database without a clash.
+      - "127.0.0.1:${DB_PORT-5432}:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sleepy -d sleepy_spinner"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  migrate:
+    image: ghcr.io/amacneil/dbmate:2
+    profiles: [tools]
+    environment:
+      DATABASE_URL: postgres://sleepy:sleepy@db:5432/sleepy_spinner?sslmode=disable
+      DBMATE_MIGRATIONS_DIR: /db/migrations
+      DBMATE_SCHEMA_FILE: /db/schema.sql
+    volumes:
+      - ./db:/db
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db_data:

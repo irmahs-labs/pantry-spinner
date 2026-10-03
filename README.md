@@ -110,7 +110,7 @@ The local database is `postgres://sleepy:sleepy@localhost:5432/sleepy_spinner`. 
 
 ### The data
 
-The eight reference tables and the four demo tables are shared by everyone and owned by no one. Every other table carries the `user_id` of the account that owns the row.
+The eight reference tables and the four demo tables are shared by everyone and owned by no one. Every other table carries the `user_id` of the account that owns the row: the account's UUID from the irmahs.dev account service ([irmahs-labs/auth](https://github.com/irmahs-labs/auth)), whose accounts live in that service's own database.
 
 The browser never reaches the database; the API does, and scopes every query to the signed-in account. The database backs that up on its own: wherever one of your rows points at another, the foreign key includes `user_id`, so a pantry entry, a ticked method, a shopping-list line or a cooked meal can only point at **your** ingredient. Postgres refuses the row otherwise, whatever the API asks for.
 

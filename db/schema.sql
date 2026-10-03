@@ -137,7 +137,7 @@ CREATE TABLE public.meal_planner_dish_styles (
 
 CREATE TABLE public.meal_planner_history (
     id uuid NOT NULL,
-    user_id text NOT NULL,
+    user_id uuid NOT NULL,
     name_meal text NOT NULL,
     note text DEFAULT ''::text NOT NULL,
     dish_style text,
@@ -152,7 +152,7 @@ CREATE TABLE public.meal_planner_history (
 --
 
 CREATE TABLE public.meal_planner_history_ingredients (
-    user_id text NOT NULL,
+    user_id uuid NOT NULL,
     id_history uuid NOT NULL,
     id_ingredient uuid NOT NULL
 );
@@ -163,7 +163,7 @@ CREATE TABLE public.meal_planner_history_ingredients (
 --
 
 CREATE TABLE public.meal_planner_ingredient_methods (
-    user_id text NOT NULL,
+    user_id uuid NOT NULL,
     id_ingredient uuid NOT NULL,
     id_method smallint NOT NULL
 );
@@ -175,7 +175,7 @@ CREATE TABLE public.meal_planner_ingredient_methods (
 
 CREATE TABLE public.meal_planner_ingredients (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    user_id text NOT NULL,
+    user_id uuid NOT NULL,
     name text NOT NULL,
     short_name text,
     id_category smallint NOT NULL,
@@ -199,7 +199,7 @@ END)
 --
 
 CREATE TABLE public.meal_planner_method_settings (
-    user_id text NOT NULL,
+    user_id uuid NOT NULL,
     id_method smallint NOT NULL,
     enabled boolean DEFAULT true NOT NULL
 );
@@ -211,7 +211,7 @@ CREATE TABLE public.meal_planner_method_settings (
 
 CREATE TABLE public.meal_planner_pantry (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    user_id text NOT NULL,
+    user_id uuid NOT NULL,
     id_ingredient uuid NOT NULL,
     quantity numeric DEFAULT 1 NOT NULL,
     id_unit smallint DEFAULT 1 NOT NULL,
@@ -251,7 +251,7 @@ CREATE TABLE public.meal_planner_protein_kinds (
 
 CREATE TABLE public.meal_planner_shopping_list (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    user_id text NOT NULL,
+    user_id uuid NOT NULL,
     id_ingredient uuid NOT NULL,
     quantity numeric DEFAULT 1 NOT NULL,
     id_unit smallint DEFAULT 1 NOT NULL,

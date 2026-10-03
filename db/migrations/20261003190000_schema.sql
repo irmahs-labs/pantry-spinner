@@ -14,8 +14,10 @@
 -- foreign key includes user_id as well, so the database itself refuses a row
 -- that points at someone else's.
 --
--- user_id is text with no foreign key yet: the accounts table arrives with
--- sign-in, in its own migration, which adds the references.
+-- user_id is the account's id from the irmahs.dev account service
+-- (irmahs-labs/auth), a UUID. Accounts live in that service's own database,
+-- so no foreign key reaches them from here; the API takes the id from the
+-- signed-in session and nowhere else.
 -- ─────────────────────────────────────────────────────────────────────────────
 
 
@@ -224,7 +226,7 @@ insert into public.meal_planner_diet_rules
 -- carry a protein's kind.
 create table public.meal_planner_ingredients (
   id uuid primary key default gen_random_uuid(),
-  user_id text not null,
+  user_id uuid not null,
   name text not null,
   -- What the dish name calls it: "Chicken Thighs" cooks as "Chicken". Null means
   -- the full name reads fine on its own, which is true of most vegetables.
@@ -257,7 +259,7 @@ create table public.meal_planner_ingredients (
 -- is only ever named after a method ticked here: the protein's gives {method},
 -- the vegetable's {vegetable_method}, the starch's {starch_method}.
 create table public.meal_planner_ingredient_methods (
-  user_id text not null,
+  user_id uuid not null,
   id_ingredient uuid not null,
   id_method smallint not null references public.meal_planner_cooking_methods,
   primary key (id_ingredient, id_method),
@@ -269,7 +271,7 @@ create table public.meal_planner_ingredient_methods (
 -- this table alone — an ingredient you own but have not stocked never spins.
 create table public.meal_planner_pantry (
   id uuid primary key default gen_random_uuid(),
-  user_id text not null,
+  user_id uuid not null,
   id_ingredient uuid not null,
   quantity numeric not null default 1 check (quantity >= 0),
   id_unit smallint not null default 1 references public.meal_planner_units,
@@ -290,7 +292,7 @@ comment on column public.meal_planner_pantry.serving_size is
 -- Which methods are in rotation. A row exists only for a method you have turned
 -- off, so an untouched account has every method available.
 create table public.meal_planner_method_settings (
-  user_id text not null,
+  user_id uuid not null,
   id_method smallint not null references public.meal_planner_cooking_methods,
   enabled boolean not null default true,
   primary key (user_id, id_method)
@@ -298,7 +300,7 @@ create table public.meal_planner_method_settings (
 
 create table public.meal_planner_shopping_list (
   id uuid primary key default gen_random_uuid(),
-  user_id text not null,
+  user_id uuid not null,
   id_ingredient uuid not null,
   quantity numeric not null default 1 check (quantity >= 0),
   id_unit smallint not null default 1 references public.meal_planner_units,
@@ -318,7 +320,7 @@ create table public.meal_planner_shopping_list (
 create table public.meal_planner_history (
   -- Client-generated so the app can diff its own rows without a round trip.
   id uuid primary key,
-  user_id text not null,
+  user_id uuid not null,
   name_meal text not null,
   note text not null default '',
   -- The shape the dish was drawn as, so its icon survives later changes to the
@@ -336,7 +338,7 @@ create table public.meal_planner_history (
 -- Which ingredients a meal was drawn from. Both the meal and the ingredient
 -- have to be yours.
 create table public.meal_planner_history_ingredients (
-  user_id text not null,
+  user_id uuid not null,
   id_history uuid not null,
   id_ingredient uuid not null,
   primary key (id_history, id_ingredient),

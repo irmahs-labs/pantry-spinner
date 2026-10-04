@@ -27,7 +27,7 @@ A permanent sidebar moves between them.
 
 **Categories and kinds.** An ingredient belongs to one of three categories, and within it to one _kind_. The three kind tables are separate because they are genuinely different shapes: a protein kind carries the diet it counts as and whether it is red meat; a vegetable kind carries the word its dish name uses; a starch kind carries the shape of the dish and whether it has gluten. That is what makes the diet filters real rather than a list of banned names. Each diet rule is itself a row in `meal_planner_diet_rules` that says what it keeps off in terms of those columns. _No red meat_, for example, is `excludes_red_meat = true`. So a rule works on anything you add, and a new rule is a new row.
 
-**Everything the app says comes from the database.** At startup the app reads the eight reference tables: categories, the three kind tables, dish styles, units, cooking methods and diet rules. It holds no vocabulary of its own. Rewording a method, a kind or a whole dish name is an edit in the Supabase dashboard followed by a reload, with no deploy. If those tables can't be read, the app says so rather than opening with nothing to call anything.
+**Everything the app says comes from the database.** At startup the app reads the eight reference tables: categories, the three kind tables, dish styles, units, cooking methods and diet rules. It holds no vocabulary of its own. Rewording a method, a kind or a whole dish name is a migration that updates its row; the app's code doesn't change. If those tables can't be read, the app says so rather than opening with nothing to call anything.
 
 **How an ingredient can be cooked.** When you add an ingredient you tick the methods it can be cooked with. Each draw then picks one of those ticks for each pick, leaving out anything switched off on the Cooking methods screen. An ingredient with nothing ticked gets no method. Holding a column keeps its method as well as its ingredient.
 
@@ -50,17 +50,29 @@ Air-fried   Chicken   Rice     Bowl with roasted            broccoli
 - Hand-drawn **Lucide-style glyphs** at stroke-width 2.75, inlined rather than a package
 - **Vitest** over the reel engine — the spin maths, weighting, and dish naming
 - **Postgres 17** for storage, with migrations applied by **dbmate**, both run in Docker — where your ingredients, fridge, week and list live
+- **Hono** on Node for the API in `server/`, the only thing that reaches the database
+- Sign-in through **IrmaHS Labs** ([irmahs-labs/auth](https://github.com/irmahs-labs/auth)), the Google account shared by every irmahs.dev app
 
 ## Getting started
 
+Needs Node 22+ and Docker.
+
 ```bash
 npm install
-npm run dev      # http://localhost:5173
-npm run build    # production bundle into dist/
-npm test         # reel-engine unit tests
-npm run lint     # typecheck
-npm run check    # Ultracite: oxlint + anti-slop, oxfmt — report only
-npm run fix      # the same, fixing and formatting what it can
+cp .env.example .env   # local settings for the API and the app
+npm run db:up          # Postgres on :5432, migrations applied
+npm run dev:api        # the API on :3002
+npm run dev            # the app on http://localhost:5173, which forwards /api to :3002
+```
+
+Signing in locally also needs the account service running on `:3001` (see [irmahs-labs/auth](https://github.com/irmahs-labs/auth)); without it, **Have a look around** still works.
+
+```bash
+npm run build          # the app into dist/, the server bundled into dist-server/main.js
+npm test               # reel-engine unit tests
+npm run lint           # typecheck the app and the server
+npm run check          # Ultracite: oxlint + anti-slop, oxfmt — report only
+npm run fix            # the same, fixing and formatting what it can
 ```
 
 ### Linting, and the hook
@@ -83,17 +95,17 @@ A desktop app: a permanent sidebar and a content column beside it. The Draw scre
 
 ### Signing in, or not
 
-Signing in with a magic link puts everything in Supabase under your account. **Have a look around** opens a guest tab instead, starting from a demo pantry that lives in four `meal_planner_demo_*` tables: ten ingredients with their ticked methods, eight of them stocked, and two on the shopping list. The tab copies them once when it opens. From then on the guest works on their own copy in `sessionStorage`, which survives a reload and is gone when the tab closes. Nothing a guest does reaches Supabase, and the demo tables never change.
+**Continue with Google** goes to the IrmaHS Labs sign-in page at `auth.irmahs.dev` and comes back signed in. The session cookie is shared by every `*.irmahs.dev` app, so someone already signed in on another of them is signed in here too. Signing out signs out of all of them. The app asks its own API who is signed in (`/api/me`), and the API asks the account service; the app never sees Google.
 
-The demo stores use-by dates as _days from now_, so it is as fresh the day someone opens it as the day it was written. To change the demo, edit those rows; a signed-in account never sees them. If they can't be read, the guest still gets in, just with an empty pantry.
+**Have a look around** opens a guest tab instead, starting from a demo pantry that lives in four `meal_planner_demo_*` tables: ten ingredients with their ticked methods, eight of them stocked, and two on the shopping list. The tab copies them once when it opens. From then on the guest works on their own copy in `sessionStorage`, which survives a reload and is gone when the tab closes. Nothing a guest does is saved anywhere else, and the demo tables never change.
 
-Vocabulary and demo both come from Supabase, so guest mode needs the database connected too. That's why those tables are readable without signing in.
+The demo stores use-by dates as _days from now_, so it is as fresh the day someone opens it as the day it was written. To change the demo, write a migration that edits those rows; a signed-in account never sees them. If they can't be read, the guest still gets in, just with an empty pantry.
+
+Vocabulary and demo both come from the API, so guest mode needs it and the database running too. That's why those endpoints answer without signing in.
 
 ## Storage (Postgres)
 
 Every screen but Draw reads its rows from the database, so this is setup, not an extra.
-
-> **Mid-migration.** The schema now lives in plain Postgres (`db/migrations/`), applied by [dbmate](https://github.com/amacneil/dbmate). The browser app still talks to the old Supabase project until the API and Google sign-in replace it; the sections on signing in and deploying describe that old setup until then.
 
 ### Running it locally
 
@@ -155,31 +167,38 @@ Signing in loads your rows into the reducer; from then on the reducer is mirrore
 
 Two things become honest once data outlives the session: a pantry item stores a **use-by date** rather than a frozen countdown, so days keep ticking down while the app is closed, and a history entry stores the **date it was cooked**, so tonight's dish stops calling itself "Tonight" tomorrow.
 
-## Deploying (Vercel)
+## The API
 
-Import the repo and the defaults are right — Vite is detected, `npm run build`, output `dist`. There are no client-side routes, so no rewrite config is needed.
+`server/` is a small [Hono](https://hono.dev/) server, the only thing that reaches Postgres:
 
-**Environment variables.** `.env.local` is gitignored, so Vercel never sees it: the same two variables have to be set again under _Project Settings → Environment Variables_, ticked for Production, Preview and Development.
+| Endpoint | Who | What |
+| --- | --- | --- |
+| `GET /api/vocab` | anyone | The eight reference tables, in the shape of `src/test/vocab.json` |
+| `GET /api/demo` | anyone | The four demo tables, in the shape of `src/test/demo.json` |
+| `GET /api/me` | anyone | The signed-in account, or `null` |
+| `GET /api/snapshot` | signed in | Your ingredients, pantry, plan, list and switched-off methods |
+| `PUT /api/snapshot` | signed in | Saves your snapshot as it now stands |
 
-Two things about them are easy to get wrong:
+**The account id comes only from the session.** The API forwards the browser's cookie to the account service and takes the id from its answer; nothing in a request body or URL is ever used as one. The database backs this up: foreign keys between your rows include `user_id`, so a row can only point at your own ingredient.
 
-- **They are baked in at build time.** Vite substitutes `import.meta.env.*` into the JavaScript during the build rather than reading it when the page loads. Adding or changing a variable does nothing until you **redeploy** — a deploy made before you set them will keep saying it is not connected.
-- **Anything named `VITE_*` ships inside the bundle** and is readable by anyone. That is fine for the publishable key, which is designed to be public and is backed by row-level security. It is exactly why a `sb_secret_…` key must never be given a `VITE_` name.
+**A save is all or nothing.** The body is validated first (`server/validate.ts`: strict, so unknown fields like a `user_id` are refused), then compared with what is stored, and only the differences are written, in one transaction. A unit, method or kind the reference tables don't have is a `400`, and nothing from that save is kept. The app sends one save at a time, always of the newest state, so two quick changes cannot land out of order.
 
-**Supabase URL configuration.** Under _Authentication → URL Configuration_, set the Site URL to the production domain and list every origin that may receive a magic link:
+**Writes come only from the app's own pages.** The shared cookie would otherwise vouch for a request from any `*.irmahs.dev` site, so `PUT` is refused unless its `Origin` is the app's.
 
-```
-Site URL       https://<your-project>.vercel.app
+## Deploying
 
-Redirect URLs  https://<your-project>.vercel.app
-               https://<your-project>.vercel.app/**
-               https://<your-project>-*.vercel.app/**
-               http://localhost:5173/**
-```
+The app runs on the irmahs.dev server at **https://sleepy-spinner.irmahs.dev**, behind the shared Caddy proxy ([irmahs-labs/proxy](https://github.com/irmahs-labs/proxy)).
 
-The separators in Supabase's matcher are `.` and `/`: `*` matches within one segment, `**` across several. So `<your-project>-*.vercel.app` covers preview and branch deploys (`…-a1b2c3-you.vercel.app`, `…-git-main-you.vercel.app`) but never the bare production host, which needs its own entry. Both the bare origin and the `/**` form are listed for production because the app sends `emailRedirectTo: window.location.origin`, which carries no path at all.
+One image holds both halves: the built app and the bundled server, which serves the app beside `/api` from the same origin. `compose.prod.yaml` adds the app's own Postgres on an internal network. The app joins the shared `proxy` network as `sleepy-spinner:3000`, where it also reaches the account service as `auth:3001`.
 
-Take the production domain from Vercel's _Domains_ list rather than assuming it: if the project name was taken, Vercel appends a suffix and the Site URL above would be wrong.
+Pushing to `main` deploys to `/srv/sleepy-spinner`: Postgres starts, pending migrations run, then the app is rebuilt and started. Secrets (Settings → Secrets and variables → Actions):
+
+| Secret | What |
+| --- | --- |
+| `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, `DEPLOY_HOST` | Organization level, shared with the other repos |
+| `SLEEPY_POSTGRES_PASSWORD` | The database's password. Read only when the database is first created |
+
+The settings that are not secret (`APP_URL`, `AUTH_INTERNAL_URL`) are in `compose.prod.yaml`. CI type-checks, tests, builds, and builds the image on every pull request; the Database workflow checks the migrations.
 
 ## Project structure
 
@@ -190,6 +209,15 @@ db/
   migrations/           one timestamped file per change, applied by dbmate
   schema.sql            the whole schema as it stands, written by `npm run db:up`
 compose.yaml            local Postgres and dbmate
+compose.prod.yaml       the server: Postgres, migrations, and the app on the proxy network
+Dockerfile              the built app and the bundled server in one image
+server/
+  app.ts                the /api routes, the origin check, error answers
+  session.ts            who is signed in, asked of the account service
+  snapshot.ts           an account's rows ⇄ a snapshot; saves only what changed
+  validate.ts           what a saved snapshot may look like
+  reference.ts          the shared vocabulary and demo tables
+  db.ts, env.ts, main.ts  the pool and transactions, settings, startup and static files
 scripts/
   vocab-fixture.sh      regenerates src/test/*.json from the migrations
 .claude/
@@ -200,10 +228,12 @@ oxfmt.config.ts         Ultracite formatting
 src/
   data/model.ts         the app's types — no ingredient data anywhere
   data/vocab.ts         reads the eight reference tables; holds no words of its own
+  data/snapshot.ts      the Snapshot shape, shared by the app and the server
   engine/reel.ts        the machine: reels from the pantry, weighting, spin maths, dish naming
   state/planner.ts      all app state and every action over it
-  lib/supabase/         client.ts (browser client), auth.ts (magic link, session, sign out)
-  lib/remote.ts         load a snapshot, write only what changed
+  lib/api.ts            same-origin requests to /api
+  lib/account.ts        who is signed in, the sign-in link, signing out
+  lib/remote.ts         load and save the signed-in account's snapshot
   lib/guest.ts          the guest tab: one sessionStorage key, lost with the tab
   lib/demo.ts           reads the demo tables into a guest's starting pantry
   lib/use-remote-sync.ts  hydrate on sign-in, mirror the reducer from then on
@@ -215,11 +245,11 @@ src/
   styles.css            one stylesheet; the palette lives in :root
 ```
 
-There is no `server.ts` or `middleware.ts`: this is a static single-page app with no server runtime, so the anon key plus row-level security is the whole security model.
+The browser never reaches the database. Everything it reads or saves goes through `server/`, which is where the security model lives.
 
 ## Design
 
-The _2a Basket_ skin throughout: forest green on a `#efe9d9` ground, flat fills, no shadows, Gloock over Karla. A permanent sidebar rather than a drawer, because this is a desktop app. The layout came from the `desktop-version` branch; this is that design carried into the real app, with pantry-only reels and Supabase behind it.
+The _2a Basket_ skin throughout: forest green on a `#efe9d9` ground, flat fills, no shadows, Gloock over Karla. A permanent sidebar rather than a drawer, because this is a desktop app. The layout came from the `desktop-version` branch; this is that design carried into the real app, with pantry-only reels and its own API behind it.
 
 Design rules that are load-bearing, not decoration:
 
@@ -230,6 +260,6 @@ Design rules that are load-bearing, not decoration:
 
 ## Not built, deliberately
 
-No onboarding. Cooking a dish takes one serving off each drawn item. A serving is one of the unit for pieces, bags and cans; for grams, kilograms, millilitres and litres it is set when the item is stocked, and _Into pantry_ from the shopping list uses the unit's default. An ingredient's category cannot be changed after it is created — remove the ingredient and add it again. There is no screen for adding a cooking method. A method is a row in `meal_planner_cooking_methods` with its `phrase`, so a new one is an insert in the dashboard, and it shows up on Add ingredient after a reload. The diet chips are not persisted.
+No onboarding. Cooking a dish takes one serving off each drawn item. A serving is one of the unit for pieces, bags and cans; for grams, kilograms, millilitres and litres it is set when the item is stocked, and _Into pantry_ from the shopping list uses the unit's default. An ingredient's category cannot be changed after it is created — remove the ingredient and add it again. There is no screen for adding a cooking method. A method is a row in `meal_planner_cooking_methods` with its `phrase`, so a new one is a migration that inserts it, and it shows up on Add ingredient after the deploy. The diet chips are not persisted.
 
 Three things stay in code on purpose, because they are presentation rather than vocabulary. The first is the SVG icon drawings, keyed by the database's codes, with a plain plate for any dish style the app hasn't drawn. The second is the date presets on the stocking forms. The third is form copy such as "Use by" and "Gluten-free", which labels columns rather than naming anything. The three category codes are fixed as well, because the schema fixes them: an ingredient has one kind column per category, so a fourth category is a migration, not a row. Sync is last-write-wins with no realtime channel, so two devices editing at once will talk over each other. These are the obvious next increments, not oversights.

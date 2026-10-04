@@ -1,0 +1,63 @@
+# The server. Deploys run `docker compose -f compose.prod.yaml …`; locally,
+# plain `docker compose` uses compose.yaml.
+#
+# .env beside this file is written by the deploy from GitHub secrets. The
+# database is reachable only on the internal network; Caddy reaches the app
+# on the shared `proxy` network as `sleepy-spinner:3000`, and the app reaches
+# the account service there as `auth:3001`.
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sleepy
+      # Read once, when the volume is first created. Changing the secret later
+      # does not change the database's password.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
+      POSTGRES_DB: sleepy_spinner
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sleepy -d sleepy_spinner"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+    networks: [internal]
+
+  migrate:
+    image: ghcr.io/amacneil/dbmate:2
+    profiles: [tools]
+    environment:
+      DATABASE_URL: postgres://sleepy:${POSTGRES_PASSWORD}@db:5432/sleepy_spinner?sslmode=disable
+      DBMATE_MIGRATIONS_DIR: /db/migrations
+      DBMATE_NO_DUMP_SCHEMA: "true"
+    volumes:
+      - ./db:/db:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [internal]
+
+  app:
+    build: .
+    image: sleepy-spinner
+    restart: unless-stopped
+    environment:
+      APP_URL: https://sleepy-spinner.irmahs.dev
+      AUTH_INTERNAL_URL: http://auth:3001
+      DATABASE_URL: postgres://sleepy:${POSTGRES_PASSWORD}@db:5432/sleepy_spinner
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      internal:
+      proxy:
+        aliases: [sleepy-spinner]
+
+networks:
+  internal:
+  proxy:
+    external: true
+
+volumes:
+  db_data:

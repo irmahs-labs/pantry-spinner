@@ -1,4 +1,5 @@
-import { supabase } from "../lib/supabase/client";
+import { ApiError, getJson } from "../lib/api";
+import type { TableRow } from "./rows";
 
 /**
  * The app's vocabulary, loaded from the reference tables at startup. Nothing in
@@ -103,13 +104,10 @@ export const EMPTY_VOCAB: Vocab = {
   vegetableKinds: [],
 };
 
-/** The reference tables as PostgREST returns them, keyed by table name. */
-export type RawVocab = Record<
-  (typeof TABLES)[number],
-  Record<string, unknown>[]
->;
+/** The reference tables as the API returns them, keyed by table name. */
+export type RawVocab = Record<(typeof VOCAB_TABLES)[number], TableRow[]>;
 
-const TABLES = [
+export const VOCAB_TABLES = [
   "meal_planner_categories",
   "meal_planner_protein_kinds",
   "meal_planner_vegetable_kinds",
@@ -123,66 +121,25 @@ const TABLES = [
 /**
  * Why the reference tables could not be read.
  *
- * `missing`     — the project answered but the tables are not there: the migrations have not been applied
- * `refused`     — the project answered and turned the key or the role away
- * `unreachable` — no answer at all
+ * `missing`     — the database answered but the tables are not there: the migrations have not been applied
+ * `unreachable` — the API or its database did not answer
  */
-export type LoadFailure = "missing" | "refused" | "unreachable";
+export type LoadFailure = "missing" | "unreachable";
 
-/** What `loadVocab` rejects with: a PostgrestError, which is an Error with a code. */
-export interface LoadError {
-  code?: string;
-  message: string;
-}
+/** Sorts an error from `loadVocab` by what the API said, if it said anything. */
+export const whyLoadFailed = (error: unknown): LoadFailure =>
+  error instanceof ApiError && error.reason === "missing"
+    ? "missing"
+    : "unreachable";
 
-/** Sorts an error from `loadVocab` by the PostgREST or Postgres code it carries. */
-export function whyLoadFailed({ code = "", message }: LoadError): LoadFailure {
-  // PGRST205: not in PostgREST's schema cache. 42P01: undefined_table.
-  if (code === "PGRST205" || code === "42P01") {
-    return "missing";
-  }
-  // 42501: insufficient_privilege. PGRST30x: the JWT, i.e. the anon key.
-  if (
-    code === "42501" ||
-    code.startsWith("PGRST30") ||
-    /api key|jwt/iu.test(message)
-  ) {
-    return "refused";
-  }
-  return "unreachable";
-}
-
-/** Reads every reference table in parallel. Readable without signing in. */
-export async function loadVocab(): Promise<Vocab> {
-  if (!supabase) {
-    throw new Error("Supabase is not configured");
-  }
-  const db = supabase;
-  const results = await Promise.all(
-    TABLES.map((table) =>
-      db
-        .from(table)
-        .select("*")
-        .order(table === "meal_planner_categories" ? "position" : "id")
-    )
-  );
-  const raw = {} as RawVocab;
-  results.forEach((result, i) => {
-    if (result.error) {
-      // PostgREST hands back the parsed body, not an Error: keep its code on a real one.
-      throw Object.assign(new Error(result.error.message), {
-        code: result.error.code,
-      });
-    }
-    raw[TABLES[i]] = (result.data ?? []) as Record<string, unknown>[];
-  });
-  return toVocab(raw);
-}
+/** Every reference table, in one request. Readable without signing in. */
+export const loadVocab = async (): Promise<Vocab> =>
+  toVocab(await getJson<RawVocab>("/api/vocab"));
 
 /** Turns raw rows into the app's shape. Separate from the fetch so it can be tested. */
 export function toVocab(raw: RawVocab): Vocab {
   type Row = Record<string, unknown>;
-  const rows = (table: (typeof TABLES)[number]): Row[] => raw[table] ?? [];
+  const rows = (table: (typeof VOCAB_TABLES)[number]): Row[] => raw[table] ?? [];
   // A unit's serving unit is another row of the same table, referenced by id.
   const unitCodes = new Map(
     rows("meal_planner_units").map((r) => [r.id, String(r.code)])

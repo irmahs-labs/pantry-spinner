@@ -1,3 +1,5 @@
+import * as z from "zod/mini";
+
 /**
  * The app's own API, on the same origin: /api is served beside the app in
  * production and forwarded by Vite in development. Same-origin requests carry
@@ -6,6 +8,7 @@
 
 /** An answer that was not 2xx, with the API's short reason when it gave one. */
 export class ApiError extends Error {
+  override name = "ApiError";
   readonly status: number;
   readonly reason: string;
 
@@ -16,18 +19,18 @@ export class ApiError extends Error {
   }
 }
 
+/** Every error the API sends has this shape; anything else is the network's. */
+const errorBody = z.object({ error: z.string() });
+
 const reasonOf = async (response: Response): Promise<string> => {
-  const body: unknown = await response.json().catch(() => null);
-  return typeof body === "object" &&
-    body !== null &&
-    "error" in body &&
-    typeof body.error === "string"
-    ? body.error
-    : response.statusText;
+  const parsed = errorBody.safeParse(await response.json().catch(() => null));
+  return parsed.success ? parsed.data.error : response.statusText;
 };
 
 export const getJson = async <T>(path: string): Promise<T> => {
-  const response = await fetch(path, { headers: { accept: "application/json" } });
+  const response = await fetch(path, {
+    headers: { accept: "application/json" },
+  });
   if (!response.ok) {
     throw new ApiError(response.status, await reasonOf(response));
   }
@@ -35,7 +38,7 @@ export const getJson = async <T>(path: string): Promise<T> => {
   return (await response.json()) as T;
 };
 
-export const putJson = async (path: string, body: unknown): Promise<void> => {
+export const putJson = async <T>(path: string, body: T): Promise<void> => {
   const response = await fetch(path, {
     body: JSON.stringify(body),
     headers: { "content-type": "application/json" },

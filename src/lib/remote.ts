@@ -6,7 +6,8 @@ import { getJson, putJson } from "./api";
  * which rows changed and writes them in one transaction, so the app only ever
  * sends the whole snapshot as it now stands.
  */
-export const loadSnapshot = (): Promise<Snapshot> => getJson<Snapshot>("/api/snapshot");
+export const loadSnapshot = (): Promise<Snapshot> =>
+  getJson<Snapshot>("/api/snapshot");
 
 export const saveSnapshot = (next: Snapshot): Promise<void> =>
   putJson("/api/snapshot", next);

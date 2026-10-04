@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+
+      - name: Type-check the app and the server
+        run: npx tsc -b --noEmit
+
+      - name: Tests
+        run: npm test
+
+      - name: Build the app and bundle the server
+        run: npm run build
+
+      - name: Validate production compose
+        run: POSTGRES_PASSWORD=x docker compose -f compose.prod.yaml config --quiet
+
+      - name: Docker build
+        run: docker build -t sleepy-spinner .

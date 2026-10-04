@@ -1,9 +1,4 @@
-import type {
-  GroceryItem,
-  Ingredient,
-  PantryItem,
-  PlanEntry,
-} from "./model";
+import type { GroceryItem, Ingredient, PantryItem, PlanEntry } from "./model";
 
 /**
  * Everything one account keeps: the shape the API sends and receives, the

@@ -9,15 +9,9 @@ describe("whyLoadFailed", () => {
   });
 
   it("reads anything else, a failed fetch included, as unreachable", () => {
-    expect(whyLoadFailed(new ApiError(500, "unreachable"))).toBe(
-      "unreachable"
-    );
-    expect(whyLoadFailed(new ApiError(502, "Bad Gateway"))).toBe(
-      "unreachable"
-    );
-    expect(whyLoadFailed(new TypeError("Failed to fetch"))).toBe(
-      "unreachable"
-    );
+    expect(whyLoadFailed(new ApiError(500, "unreachable"))).toBe("unreachable");
+    expect(whyLoadFailed(new ApiError(502, "Bad Gateway"))).toBe("unreachable");
+    expect(whyLoadFailed(new TypeError("Failed to fetch"))).toBe("unreachable");
     expect(whyLoadFailed("not even an error")).toBe("unreachable");
   });
 });

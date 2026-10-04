@@ -5,7 +5,8 @@ import { getJson } from "./api";
  * irmahs.dev app: this app sends people there and they come back signed in.
  * Who that is, the app asks its own API, which asks the account service.
  */
-export const AUTH_URL = import.meta.env.VITE_AUTH_URL ?? "https://auth.irmahs.dev";
+export const AUTH_URL =
+  import.meta.env.VITE_AUTH_URL ?? "https://auth.irmahs.dev";
 
 export interface Account {
   id: string;
@@ -14,8 +15,10 @@ export interface Account {
   image: string | null;
 }
 
-export const currentAccount = async (): Promise<Account | null> =>
-  (await getJson<{ account: Account | null }>("/api/me")).account;
+export const currentAccount = async (): Promise<Account | null> => {
+  const { account } = await getJson<{ account: Account | null }>("/api/me");
+  return account;
+};
 
 /** The sign-in page, set to bring the visitor back to this page. */
 export const signInUrl = (): string =>

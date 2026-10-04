@@ -1,4 +1,5 @@
 import { ApiError, getJson } from "../lib/api";
+import type { TableRow } from "./rows";
 
 /**
  * The app's vocabulary, loaded from the reference tables at startup. Nothing in
@@ -104,10 +105,7 @@ export const EMPTY_VOCAB: Vocab = {
 };
 
 /** The reference tables as the API returns them, keyed by table name. */
-export type RawVocab = Record<
-  (typeof VOCAB_TABLES)[number],
-  Record<string, unknown>[]
->;
+export type RawVocab = Record<(typeof VOCAB_TABLES)[number], TableRow[]>;
 
 export const VOCAB_TABLES = [
   "meal_planner_categories",

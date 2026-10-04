@@ -38,8 +38,7 @@ jobs:
       # ever needed.
       - name: Roll everything back and apply it again
         run: |
-          count=$(ls db/migrations/*.sql | wc -l)
-          for _ in $(seq "$count"); do docker compose run --rm migrate --no-dump-schema rollback; done
+          for _ in db/migrations/*.sql; do docker compose run --rm migrate --no-dump-schema rollback; done
           docker compose run --rm migrate --no-dump-schema up
 
       # Compared as data, not text: the committed files are formatted, the

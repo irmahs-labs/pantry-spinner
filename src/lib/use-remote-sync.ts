@@ -62,20 +62,21 @@ export const useRemoteSync = (
   // Everything else waits on this: no screen has a word to show without it.
   useEffect(() => {
     let cancelled = false;
-    loadVocab()
-      .then((vocab) => {
+    (async () => {
+      try {
+        const vocab = await loadVocab();
         if (!cancelled) {
           dispatch({ type: "vocab/load", vocab });
           setVocabReady(true);
         }
-      })
-      .catch((error: unknown) => {
+      } catch (error) {
         console.error("Could not load the reference tables", error);
         if (!cancelled) {
           setFailure(whyLoadFailed(error));
           setPhase("broken");
         }
-      });
+      }
+    })();
     return () => {
       cancelled = true;
     };
@@ -144,6 +145,7 @@ export const useRemoteSync = (
       const next = queued.current;
       queued.current = null;
       try {
+        // oxlint-disable-next-line eslint/no-await-in-loop -- one at a time is the point
         await saveSnapshot(next);
         setSaveFailed(false);
       } catch (error) {
@@ -173,6 +175,8 @@ export const useRemoteSync = (
       return;
     }
     queued.current = next;
+    // The save's state updates come after the network answers, not during this effect.
+    // oxlint-disable-next-line react/set-state-in-effect -- syncing with the server is what effects are for
     flush();
   }, [state, account, phase, isGuest, flush]);
 
@@ -185,10 +189,12 @@ export const useRemoteSync = (
     starting.current = true;
     // The demo is a nicety: if it cannot be read, the guest starts empty rather
     // than not at all.
-    const start = await loadDemo(vocab).catch((error: unknown) => {
+    let start = EMPTY;
+    try {
+      start = await loadDemo(vocab);
+    } catch (error) {
       console.error("Could not load the demo pantry", error);
-      return EMPTY;
-    });
+    }
     starting.current = false;
     guest.startGuest(start);
     dispatch({ snapshot: start, type: "state/hydrate" });

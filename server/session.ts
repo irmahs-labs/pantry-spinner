@@ -1,4 +1,18 @@
+import { z } from "zod";
+
 import { env } from "./env";
+
+/** What the account service says about a session, as far as this app reads it. */
+const sessionAnswer = z
+  .object({
+    user: z.object({
+      email: z.string(),
+      id: z.uuid(),
+      image: z.string().nullish(),
+      name: z.string().optional(),
+    }),
+  })
+  .nullable();
 
 export interface Account {
   id: string;
@@ -13,14 +27,6 @@ export interface SessionAnswer {
   // cookie back to the browser so it does not expire before the session does.
   setCookies: string[];
 }
-
-const isAccount = (value: unknown): value is Account =>
-  typeof value === "object" &&
-  value !== null &&
-  "id" in value &&
-  typeof value.id === "string" &&
-  "email" in value &&
-  typeof value.email === "string";
 
 /**
  * Who sent this request, asked of the IrmaHS Labs account service with the
@@ -39,18 +45,16 @@ export const whoIs = async (
   if (!response.ok) {
     throw new Error(`The account service answered ${response.status}`);
   }
-  const body: unknown = await response.json();
-  const user =
-    typeof body === "object" && body !== null && "user" in body
-      ? body.user
-      : null;
+  // Anything that is not a session we recognise is treated as no session.
+  const parsed = sessionAnswer.safeParse(await response.json());
+  const user = parsed.success ? parsed.data?.user : undefined;
   return {
-    account: isAccount(user)
+    account: user
       ? {
           email: user.email,
           id: user.id,
-          image: typeof user.image === "string" ? user.image : null,
-          name: typeof user.name === "string" ? user.name : "",
+          image: user.image ?? null,
+          name: user.name ?? "",
         }
       : null,
     setCookies: response.headers.getSetCookie(),

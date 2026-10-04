@@ -65,6 +65,7 @@ const snapshotSchema = z.strictObject({
 
 /** The body as a Snapshot, or the reasons it is not one. */
 export const parseSnapshot = (
+  // oxlint-disable-next-line anti-slop/no-unknown-parameters -- this is the parser at the boundary
   body: unknown
 ): { ok: true; snapshot: Snapshot } | { ok: false; issues: string[] } => {
   const result = snapshotSchema.safeParse(body);

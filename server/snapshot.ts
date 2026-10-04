@@ -11,30 +11,34 @@ import type { CategoryCode, Vocab } from "../src/data/vocab";
  * and every statement here is scoped to the account the session named.
  */
 
+/** Code ⇄ id both ways for one reference table. */
+const pair = <T extends { id: number; code: string }>(rows: T[]) => ({
+  code: new Map(rows.map((r) => [r.id, r.code])),
+  id: new Map(rows.map((r) => [r.code, r.id])),
+});
+
 /** Code ⇄ id for each reference table, from the rows the server loaded. */
-const lookups = (v: Vocab) => {
-  const pair = <T extends { id: number; code: string }>(rows: T[]) => ({
-    code: new Map(rows.map((r) => [r.id, r.code])),
-    id: new Map(rows.map((r) => [r.code, r.id])),
-  });
-  return {
-    category: pair(v.categories),
-    method: pair(v.methods),
+const lookups = (v: Vocab) => ({
+  category: pair(v.categories),
+  kind: {
     protein: pair(v.proteinKinds),
     starch: pair(v.starchKinds),
-    unit: pair(v.units),
     vegetable: pair(v.vegetableKinds),
-  };
-};
+  } satisfies Record<CategoryCode, ReturnType<typeof pair>>,
+  method: pair(v.methods),
+  unit: pair(v.units),
+});
 type Lookups = ReturnType<typeof lookups>;
 
 /** A code the reference tables do not have: the request is wrong, not the server. */
-export class UnknownCode extends Error {}
+export class UnknownCodeError extends Error {
+  override name = "UnknownCodeError";
+}
 
 const idOf = (map: Map<string, number>, code: string, what: string): number => {
   const id = map.get(code);
   if (id === undefined) {
-    throw new UnknownCode(`Unknown ${what}: ${code}`);
+    throw new UnknownCodeError(`Unknown ${what}: ${code}`);
   }
   return id;
 };
@@ -59,18 +63,13 @@ const toIngredient = (
   // the three CategoryCode values the schema's check constraint allows.
   const category = (l.category.code.get(row.id_category) ??
     "protein") as CategoryCode;
-  const kindId =
-    category === "protein"
-      ? row.id_protein_kind
-      : category === "vegetable"
-        ? row.id_vegetable_kind
-        : row.id_starch_kind;
-  const kinds =
-    category === "protein"
-      ? l.protein
-      : category === "vegetable"
-        ? l.vegetable
-        : l.starch;
+  const kindIds: Record<CategoryCode, number | null> = {
+    protein: row.id_protein_kind,
+    starch: row.id_starch_kind,
+    vegetable: row.id_vegetable_kind,
+  };
+  const kindId = kindIds[category];
+  const kinds = l.kind[category];
   return {
     category,
     glutenFree: row.gluten_free,
@@ -161,7 +160,10 @@ export const loadSnapshot = async (
   for (const t of ticks.rows) {
     const code = l.method.code.get(t.id_method);
     if (code) {
-      ticksOf.set(t.id_ingredient, [...(ticksOf.get(t.id_ingredient) ?? []), code]);
+      ticksOf.set(t.id_ingredient, [
+        ...(ticksOf.get(t.id_ingredient) ?? []),
+        code,
+      ]);
     }
   }
   for (const codes of ticksOf.values()) {
@@ -172,7 +174,10 @@ export const loadSnapshot = async (
   for (const link of links.rows) {
     const name = nameOf.get(link.id_ingredient);
     if (name) {
-      linksByMeal.set(link.id_history, [...(linksByMeal.get(link.id_history) ?? []), name]);
+      linksByMeal.set(link.id_history, [
+        ...(linksByMeal.get(link.id_history) ?? []),
+        name,
+      ]);
     }
   }
 
@@ -226,16 +231,293 @@ export const loadSnapshot = async (
   };
 };
 
-const removed = <T>(prev: T[], next: T[], key: (item: T) => string): string[] => {
+const removed = <T>(
+  prev: T[],
+  next: T[],
+  key: (item: T) => string
+): string[] => {
   const kept = new Set(next.map(key));
   return prev.map(key).filter((k) => !kept.has(k));
 };
 
 /**
+ * The rows of `next` that are new or differ from `prev`, matched by `key`.
+ * `same` says whether two versions of one row are equal.
+ */
+const changed = <T>(
+  prev: T[],
+  next: T[],
+  key: (item: T) => string,
+  same: (a: T, b: T) => boolean
+): T[] => {
+  const before = new Map(prev.map((item) => [key(item), item]));
+  return next.filter((item) => {
+    const old = before.get(key(item));
+    return !old || !same(old, item);
+  });
+};
+
+/** Ingredients and their ticked methods. Each changed ingredient's ticks are replaced whole. */
+const saveCatalogue = async (
+  db: PoolClient,
+  userId: string,
+  l: Lookups,
+  prev: Snapshot,
+  next: Snapshot
+): Promise<void> => {
+  const items = changed(
+    prev.catalogue,
+    next.catalogue,
+    (i) => i.name,
+    (a, b) =>
+      a.category === b.category &&
+      a.kind === b.kind &&
+      a.shortName === b.shortName &&
+      a.glutenFree === b.glutenFree &&
+      a.methods.join(",") === b.methods.join(",")
+  );
+  if (!items.length) {
+    return;
+  }
+  const kindOf = (i: Ingredient, category: CategoryCode) =>
+    i.category === category
+      ? idOf(l.kind[category].id, i.kind, `${category} kind`)
+      : null;
+  const { rows } = await db.query<{ id: string; name: string }>(
+    `insert into meal_planner_ingredients
+       (user_id, name, short_name, id_category, id_protein_kind,
+        id_vegetable_kind, id_starch_kind, gluten_free)
+     select $1, * from unnest($2::text[], $3::text[], $4::smallint[],
+       $5::smallint[], $6::smallint[], $7::smallint[], $8::boolean[])
+     on conflict (user_id, name) do update set
+       short_name = excluded.short_name, id_category = excluded.id_category,
+       id_protein_kind = excluded.id_protein_kind,
+       id_vegetable_kind = excluded.id_vegetable_kind,
+       id_starch_kind = excluded.id_starch_kind,
+       gluten_free = excluded.gluten_free
+     returning id, name`,
+    [
+      userId,
+      items.map((i) => i.name),
+      items.map((i) => i.shortName),
+      items.map((i) => idOf(l.category.id, i.category, "category")),
+      items.map((i) => kindOf(i, "protein")),
+      items.map((i) => kindOf(i, "vegetable")),
+      items.map((i) => kindOf(i, "starch")),
+      items.map((i) => (i.category === "starch" ? i.glutenFree : null)),
+    ]
+  );
+  const idByName = new Map(rows.map((r) => [r.name, r.id]));
+  const ticks = items.flatMap((i) =>
+    i.methods.map((code) => ({
+      ingredient: idByName.get(i.name),
+      method: idOf(l.method.id, code, "method"),
+    }))
+  );
+  await db.query(
+    `delete from meal_planner_ingredient_methods
+     where user_id = $1 and id_ingredient = any($2::uuid[])`,
+    [userId, rows.map((r) => r.id)]
+  );
+  if (ticks.length) {
+    await db.query(
+      `insert into meal_planner_ingredient_methods (user_id, id_ingredient, id_method)
+       select $1, * from unnest($2::uuid[], $3::smallint[])`,
+      [userId, ticks.map((t) => t.ingredient), ticks.map((t) => t.method)]
+    );
+  }
+};
+
+const savePantry = async (
+  db: PoolClient,
+  userId: string,
+  l: Lookups,
+  ingredientId: (name: string) => string,
+  prev: Snapshot,
+  next: Snapshot
+): Promise<void> => {
+  const items = changed(
+    prev.pantry,
+    next.pantry,
+    (i) => i.name,
+    (a, b) =>
+      a.expiresOn === b.expiresOn &&
+      a.serving === b.serving &&
+      a.qty === b.qty &&
+      a.unit === b.unit
+  );
+  if (items.length) {
+    await db.query(
+      `insert into meal_planner_pantry
+         (user_id, id_ingredient, quantity, id_unit, serving_size, date_expiration)
+       select $1, * from unnest($2::uuid[], $3::numeric[], $4::smallint[],
+         $5::numeric[], $6::date[])
+       on conflict (user_id, id_ingredient) do update set
+         quantity = excluded.quantity, id_unit = excluded.id_unit,
+         serving_size = excluded.serving_size,
+         date_expiration = excluded.date_expiration`,
+      [
+        userId,
+        items.map((i) => ingredientId(i.name)),
+        items.map((i) => i.qty),
+        items.map((i) => idOf(l.unit.id, i.unit, "unit")),
+        items.map((i) => i.serving),
+        items.map((i) => i.expiresOn),
+      ]
+    );
+  }
+  const gone = removed(prev.pantry, next.pantry, (i) => i.name);
+  if (gone.length) {
+    await db.query(
+      `delete from meal_planner_pantry
+       where user_id = $1 and id_ingredient = any($2::uuid[])`,
+      [userId, gone.map(ingredientId)]
+    );
+  }
+};
+
+/** Cooked meals are only ever added or removed, never edited. */
+const savePlan = async (
+  db: PoolClient,
+  userId: string,
+  l: Lookups,
+  ingredientId: (name: string) => string,
+  prev: Snapshot,
+  next: Snapshot
+): Promise<void> => {
+  const known = new Set(prev.plan.map((p) => p.id));
+  const added = next.plan.filter((entry) => !known.has(entry.id));
+  if (added.length) {
+    await db.query(
+      `insert into meal_planner_history
+         (user_id, id, name_meal, note, dish_style, id_method, date_cooked)
+       select $1, * from unnest($2::uuid[], $3::text[], $4::text[], $5::text[],
+         $6::smallint[], $7::date[])`,
+      [
+        userId,
+        added.map((e) => e.id),
+        added.map((e) => e.dish),
+        added.map((e) => e.note),
+        // Blank when the draw had no starch to take a style from.
+        added.map((e) => e.style || null),
+        added.map((e) =>
+          e.method ? idOf(l.method.id, e.method, "method") : null
+        ),
+        added.map((e) => e.cookedOn),
+      ]
+    );
+    const links = added.flatMap((e) =>
+      [...new Set(e.ingredients)].map((name) => ({
+        history: e.id,
+        ingredient: ingredientId(name),
+      }))
+    );
+    if (links.length) {
+      await db.query(
+        `insert into meal_planner_history_ingredients (user_id, id_history, id_ingredient)
+         select $1, * from unnest($2::uuid[], $3::uuid[])`,
+        [userId, links.map((k) => k.history), links.map((k) => k.ingredient)]
+      );
+    }
+  }
+  const gone = removed(prev.plan, next.plan, (e) => e.id);
+  if (gone.length) {
+    await db.query(
+      "delete from meal_planner_history where user_id = $1 and id = any($2::uuid[])",
+      [userId, gone]
+    );
+  }
+};
+
+const saveGrocery = async (
+  db: PoolClient,
+  userId: string,
+  l: Lookups,
+  ingredientId: (name: string) => string,
+  prev: Snapshot,
+  next: Snapshot
+): Promise<void> => {
+  const items = changed(
+    prev.grocery,
+    next.grocery,
+    (i) => i.name,
+    (a, b) =>
+      a.acquired === b.acquired &&
+      a.qty === b.qty &&
+      a.unit === b.unit &&
+      a.note === b.note
+  );
+  if (items.length) {
+    await db.query(
+      `insert into meal_planner_shopping_list
+         (user_id, id_ingredient, quantity, id_unit, note, acquired)
+       select $1, * from unnest($2::uuid[], $3::numeric[], $4::smallint[],
+         $5::text[], $6::boolean[])
+       on conflict (user_id, id_ingredient) do update set
+         quantity = excluded.quantity, id_unit = excluded.id_unit,
+         note = excluded.note, acquired = excluded.acquired`,
+      [
+        userId,
+        items.map((i) => ingredientId(i.name)),
+        items.map((i) => i.qty),
+        items.map((i) => idOf(l.unit.id, i.unit, "unit")),
+        items.map((i) => i.note),
+        items.map((i) => i.acquired),
+      ]
+    );
+  }
+  const gone = removed(prev.grocery, next.grocery, (i) => i.name);
+  if (gone.length) {
+    await db.query(
+      `delete from meal_planner_shopping_list
+       where user_id = $1 and id_ingredient = any($2::uuid[])`,
+      [userId, gone.map(ingredientId)]
+    );
+  }
+};
+
+/**
+ * A settings row exists only for a method that is off, so switching one back
+ * on deletes its row rather than storing enabled = true.
+ */
+const saveMethods = async (
+  db: PoolClient,
+  userId: string,
+  l: Lookups,
+  prev: Snapshot,
+  next: Snapshot
+): Promise<void> => {
+  const ids = (codes: string[]) =>
+    codes.map((code) => idOf(l.method.id, code, "method"));
+  const turnedOff = next.methodsOff.filter(
+    (code) => !prev.methodsOff.includes(code)
+  );
+  const turnedOn = prev.methodsOff.filter(
+    (code) => !next.methodsOff.includes(code)
+  );
+  if (turnedOff.length) {
+    await db.query(
+      `insert into meal_planner_method_settings (user_id, id_method, enabled)
+       select $1, unnest($2::smallint[]), false
+       on conflict (user_id, id_method) do update set enabled = false`,
+      [userId, ids(turnedOff)]
+    );
+  }
+  if (turnedOn.length) {
+    await db.query(
+      `delete from meal_planner_method_settings
+       where user_id = $1 and id_method = any($2::smallint[])`,
+      [userId, ids(turnedOn)]
+    );
+  }
+};
+
+/**
  * Makes the stored rows match `next`, writing only what differs from what is
- * stored now. Call inside a transaction: a failure part-way leaves nothing
- * half-saved. Ingredients are never deleted here, as before: the app has no
- * way to remove one, and pantry, list and history rows point at them.
+ * stored now, one statement per kind of change. Call inside a transaction: a
+ * failure part-way leaves nothing half-saved. Ingredients are never deleted
+ * here, as before: the app has no way to remove one, and pantry, list and
+ * history rows point at them.
  */
 export const saveSnapshot = async (
   db: PoolClient,
@@ -247,205 +529,24 @@ export const saveSnapshot = async (
   const prev = await loadSnapshot(db, userId, vocab);
 
   // Ingredients first: every other table points at one, so it has to exist.
-  const ingredientChanged = next.catalogue.filter((item) => {
-    const before = prev.catalogue.find((p) => p.name === item.name);
-    return (
-      !before ||
-      before.category !== item.category ||
-      before.kind !== item.kind ||
-      before.shortName !== item.shortName ||
-      before.glutenFree !== item.glutenFree ||
-      before.methods.join(",") !== item.methods.join(",")
-    );
-  });
-  for (const item of ingredientChanged) {
-    const kinds =
-      item.category === "protein"
-        ? l.protein
-        : item.category === "vegetable"
-          ? l.vegetable
-          : l.starch;
-    const kindId = idOf(kinds.id, item.kind, `${item.category} kind`);
-    const { rows } = await db.query<{ id: string }>(
-      `insert into meal_planner_ingredients
-         (user_id, name, short_name, id_category, id_protein_kind,
-          id_vegetable_kind, id_starch_kind, gluten_free)
-       values ($1, $2, $3, $4, $5, $6, $7, $8)
-       on conflict (user_id, name) do update set
-         short_name = excluded.short_name, id_category = excluded.id_category,
-         id_protein_kind = excluded.id_protein_kind,
-         id_vegetable_kind = excluded.id_vegetable_kind,
-         id_starch_kind = excluded.id_starch_kind,
-         gluten_free = excluded.gluten_free
-       returning id`,
-      [
-        userId,
-        item.name,
-        item.shortName,
-        idOf(l.category.id, item.category, "category"),
-        item.category === "protein" ? kindId : null,
-        item.category === "vegetable" ? kindId : null,
-        item.category === "starch" ? kindId : null,
-        item.category === "starch" ? item.glutenFree : null,
-      ]
-    );
-    const ingredientId = rows[0]?.id;
-    // Ticks are replaced whole for an ingredient whose row changed.
-    await db.query(
-      `delete from meal_planner_ingredient_methods
-       where user_id = $1 and id_ingredient = $2`,
-      [userId, ingredientId]
-    );
-    const methodIds = item.methods.map((code) => idOf(l.method.id, code, "method"));
-    if (methodIds.length) {
-      await db.query(
-        `insert into meal_planner_ingredient_methods (user_id, id_ingredient, id_method)
-         select $1, $2, unnest($3::smallint[])`,
-        [userId, ingredientId, methodIds]
-      );
-    }
-  }
+  await saveCatalogue(db, userId, l, prev, next);
 
-  // Every name below resolves to the account's own ingredient, or the write fails.
-  const { rows: idRows } = await db.query<{ id: string; name: string }>(
+  // Every name below resolves to the account's own ingredient, or the save fails.
+  const { rows } = await db.query<{ id: string; name: string }>(
     "select id, name from meal_planner_ingredients where user_id = $1",
     [userId]
   );
-  const ids = new Map(idRows.map((row) => [row.name, row.id]));
+  const ids = new Map(rows.map((row) => [row.name, row.id]));
   const ingredientId = (name: string): string => {
     const id = ids.get(name);
     if (!id) {
-      throw new UnknownCode(`Unknown ingredient: ${name}`);
+      throw new UnknownCodeError(`Unknown ingredient: ${name}`);
     }
     return id;
   };
 
-  const pantryChanged = next.pantry.filter((item) => {
-    const before = prev.pantry.find((p) => p.name === item.name);
-    return (
-      !before ||
-      before.expiresOn !== item.expiresOn ||
-      before.serving !== item.serving ||
-      before.qty !== item.qty ||
-      before.unit !== item.unit
-    );
-  });
-  for (const item of pantryChanged) {
-    await db.query(
-      `insert into meal_planner_pantry
-         (user_id, id_ingredient, quantity, id_unit, serving_size, date_expiration)
-       values ($1, $2, $3, $4, $5, $6)
-       on conflict (user_id, id_ingredient) do update set
-         quantity = excluded.quantity, id_unit = excluded.id_unit,
-         serving_size = excluded.serving_size,
-         date_expiration = excluded.date_expiration`,
-      [
-        userId,
-        ingredientId(item.name),
-        item.qty,
-        idOf(l.unit.id, item.unit, "unit"),
-        item.serving,
-        item.expiresOn,
-      ]
-    );
-  }
-  const pantryGone = removed(prev.pantry, next.pantry, (item) => item.name);
-  if (pantryGone.length) {
-    await db.query(
-      `delete from meal_planner_pantry
-       where user_id = $1 and id_ingredient = any($2::uuid[])`,
-      [userId, pantryGone.map(ingredientId)]
-    );
-  }
-
-  const planAdded = next.plan.filter((entry) => !prev.plan.some((p) => p.id === entry.id));
-  for (const entry of planAdded) {
-    await db.query(
-      `insert into meal_planner_history
-         (id, user_id, name_meal, note, dish_style, id_method, date_cooked)
-       values ($1, $2, $3, $4, $5, $6, $7)`,
-      [
-        entry.id,
-        userId,
-        entry.dish,
-        entry.note,
-        // Blank when the draw had no starch to take a style from.
-        entry.style || null,
-        entry.method ? idOf(l.method.id, entry.method, "method") : null,
-        entry.cookedOn,
-      ]
-    );
-    const linked = [...new Set(entry.ingredients)].map(ingredientId);
-    if (linked.length) {
-      await db.query(
-        `insert into meal_planner_history_ingredients (user_id, id_history, id_ingredient)
-         select $1, $2, unnest($3::uuid[])`,
-        [userId, entry.id, linked]
-      );
-    }
-  }
-  const planGone = removed(prev.plan, next.plan, (entry) => entry.id);
-  if (planGone.length) {
-    await db.query(
-      "delete from meal_planner_history where user_id = $1 and id = any($2::uuid[])",
-      [userId, planGone]
-    );
-  }
-
-  const groceryChanged = next.grocery.filter((item) => {
-    const before = prev.grocery.find((g) => g.name === item.name);
-    return (
-      !before ||
-      before.acquired !== item.acquired ||
-      before.qty !== item.qty ||
-      before.unit !== item.unit ||
-      before.note !== item.note
-    );
-  });
-  for (const item of groceryChanged) {
-    await db.query(
-      `insert into meal_planner_shopping_list
-         (user_id, id_ingredient, quantity, id_unit, note, acquired)
-       values ($1, $2, $3, $4, $5, $6)
-       on conflict (user_id, id_ingredient) do update set
-         quantity = excluded.quantity, id_unit = excluded.id_unit,
-         note = excluded.note, acquired = excluded.acquired`,
-      [
-        userId,
-        ingredientId(item.name),
-        item.qty,
-        idOf(l.unit.id, item.unit, "unit"),
-        item.note,
-        item.acquired,
-      ]
-    );
-  }
-  const groceryGone = removed(prev.grocery, next.grocery, (item) => item.name);
-  if (groceryGone.length) {
-    await db.query(
-      `delete from meal_planner_shopping_list
-       where user_id = $1 and id_ingredient = any($2::uuid[])`,
-      [userId, groceryGone.map(ingredientId)]
-    );
-  }
-
-  // A settings row exists only for a method that is off, so switching one back
-  // on deletes its row rather than storing enabled = true.
-  const turnedOff = next.methodsOff.filter((code) => !prev.methodsOff.includes(code));
-  const turnedOn = prev.methodsOff.filter((code) => !next.methodsOff.includes(code));
-  if (turnedOff.length) {
-    await db.query(
-      `insert into meal_planner_method_settings (user_id, id_method, enabled)
-       select $1, unnest($2::smallint[]), false
-       on conflict (user_id, id_method) do update set enabled = false`,
-      [userId, turnedOff.map((code) => idOf(l.method.id, code, "method"))]
-    );
-  }
-  if (turnedOn.length) {
-    await db.query(
-      `delete from meal_planner_method_settings
-       where user_id = $1 and id_method = any($2::smallint[])`,
-      [userId, turnedOn.map((code) => idOf(l.method.id, code, "method"))]
-    );
-  }
+  await savePantry(db, userId, l, ingredientId, prev, next);
+  await savePlan(db, userId, l, ingredientId, prev, next);
+  await saveGrocery(db, userId, l, ingredientId, prev, next);
+  await saveMethods(db, userId, l, prev, next);
 };

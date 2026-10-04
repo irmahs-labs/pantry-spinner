@@ -1,0 +1,41 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+          echo "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519
+
+      - name: Deploy on server
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.SLEEPY_POSTGRES_PASSWORD }}
+        run: |
+          [ -n "$POSTGRES_PASSWORD" ] || { echo "Secret SLEEPY_POSTGRES_PASSWORD is not set"; exit 1; }
+          # .env is sent over stdin so the secret never appears in a command line
+          printf 'POSTGRES_PASSWORD=%s\n' "$POSTGRES_PASSWORD" |
+          ssh deploy@${{ secrets.DEPLOY_HOST }} 'set -e
+            cd /srv/sleepy-spinner
+            [ -d .git ] || git clone https://github.com/${{ github.repository }}.git .
+            git fetch --depth 1 origin main
+            git reset --hard origin/main
+            (umask 077 && cat > .env)
+            export COMPOSE_FILE=compose.prod.yaml
+            docker compose up -d --wait db
+            docker compose run --rm migrate up
+            docker compose up -d --build --remove-orphans --wait app
+            docker image prune -f
+            docker builder prune -f --filter until=168h'

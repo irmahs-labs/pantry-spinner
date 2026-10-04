@@ -14,10 +14,10 @@ app.route("/", api);
 // the app itself, which has no routes of its own.
 if (env.staticDir) {
   const root = env.staticDir;
-  app.use("/assets/*", async (c, next) => {
-    await next();
+  app.use("/assets/*", (c, next) => {
     // Vite puts a content hash in every asset's name, so a cached copy is never stale.
     c.header("cache-control", "public, max-age=31536000, immutable");
+    return next();
   });
   app.use("*", serveStatic({ root }));
   app.get("*", serveStatic({ path: "index.html", root }));

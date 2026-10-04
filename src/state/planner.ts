@@ -25,7 +25,7 @@ import {
 import type { SpinPlan, Triple } from "../engine/reel";
 import { FEATURES } from "../features";
 import { addDaysISO, todayISO } from "../lib/dates";
-import type { Snapshot } from "../lib/remote";
+import type { Snapshot } from "../data/snapshot";
 
 export type Screen =
   | "spin"

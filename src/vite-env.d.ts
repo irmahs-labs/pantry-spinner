@@ -1,8 +1,8 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_SUPABASE_URL?: string;
-  readonly VITE_SUPABASE_ANON_KEY?: string;
+  /** The IrmaHS Labs account service. Defaults to https://auth.irmahs.dev. */
+  readonly VITE_AUTH_URL?: string;
 }
 
 interface ImportMeta {

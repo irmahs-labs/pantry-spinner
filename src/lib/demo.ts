@@ -1,46 +1,22 @@
+import type { RawDemo } from "../data/demo-tables";
 import type { Ingredient } from "../data/model";
+import { EMPTY } from "../data/snapshot";
+import type { Snapshot } from "../data/snapshot";
 import { defaultUnit } from "../data/vocab";
 import type { CategoryCode, Vocab } from "../data/vocab";
+import { getJson } from "./api";
 import { addDaysISO } from "./dates";
-import { EMPTY } from "./remote";
-import type { Snapshot } from "./remote";
-import { supabase } from "./supabase/client";
+
+export type { RawDemo } from "../data/demo-tables";
 
 /**
  * The demo pantry a guest starts from. It lives in four tables seeded by the
- * demo_seed migration — nothing about it is in the source — and is readable
+ * demo migration — nothing about it is in the source — and is readable
  * without signing in. Opening a guest tab copies it into that tab once; after
  * that the guest works on their own copy and the tables never change.
  */
-const TABLES = [
-  "meal_planner_demo_ingredients",
-  "meal_planner_demo_ingredient_methods",
-  "meal_planner_demo_pantry",
-  "meal_planner_demo_shopping_list",
-] as const;
-
-export type RawDemo = Record<
-  (typeof TABLES)[number],
-  Record<string, unknown>[]
->;
-
-export async function loadDemo(vocab: Vocab): Promise<Snapshot> {
-  if (!supabase) {
-    throw new Error("Supabase is not configured");
-  }
-  const db = supabase;
-  const results = await Promise.all(
-    TABLES.map((table) => db.from(table).select("*"))
-  );
-  const raw = {} as RawDemo;
-  results.forEach((result, i) => {
-    if (result.error) {
-      throw result.error;
-    }
-    raw[TABLES[i]] = (result.data ?? []) as Record<string, unknown>[];
-  });
-  return toDemo(raw, vocab);
-}
+export const loadDemo = async (vocab: Vocab): Promise<Snapshot> =>
+  toDemo(await getJson<RawDemo>("/api/demo"), vocab);
 
 /**
  * Turns the demo rows into a guest's starting snapshot. Use-by dates are stored

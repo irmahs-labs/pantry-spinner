@@ -1387,57 +1387,30 @@ select:focus-visible,
   text-wrap: pretty;
 }
 
-.signin-form {
+.signin-google {
   display: flex;
-  gap: 8px;
   align-items: center;
-  background: var(--sunken);
-  border-radius: 999px;
-  padding: 6px;
-}
-
-.signin-input {
-  flex: 1;
-  min-width: 0;
-  border: 0;
-  background: transparent;
-  outline: none;
-  font: 500 14px/1 var(--body);
-  color: var(--ink);
-  padding: 0 12px;
-  height: 38px;
-}
-
-.signin-input::placeholder {
-  color: var(--ink-2);
-}
-
-.signin-send {
-  flex: none;
-  height: 38px;
-  padding: 0 18px;
-  border: 0;
+  justify-content: center;
+  gap: 10px;
+  height: 46px;
   border-radius: 999px;
   background: var(--green);
   color: var(--on-green);
-  cursor: pointer;
-  font: 700 12.5px/1 var(--body);
+  font: 700 14px/1 var(--body);
+  text-decoration: none;
 }
 
-.signin-send:disabled {
-  opacity: 0.45;
-  cursor: default;
+.signin-google svg {
+  background: #fff;
+  border-radius: 50%;
+  padding: 3px;
+  width: 24px;
+  height: 24px;
 }
 
-.signin-status {
-  font: 500 12.5px/1.5 var(--body);
-  color: var(--ink-3);
-  margin: 0;
-  min-height: 19px;
-}
-
-.signin-status[data-tone="error"] {
-  color: var(--soon-fg);
+.signin-google:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 3px;
 }
 
 .signin-or {

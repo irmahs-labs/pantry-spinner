@@ -1,12 +1,12 @@
-import { EMPTY } from "./remote";
-import type { Snapshot } from "./remote";
+import { EMPTY } from "../data/snapshot";
+import type { Snapshot } from "../data/snapshot";
 
 /**
  * Guest mode: a tab you can look around in without an account. It starts from
  * the demo pantry in the database (see src/lib/demo.ts) and lives in
  * sessionStorage, which is scoped to the one tab and cleared when it closes. A
  * reload keeps the pantry; closing the tab loses it. Nothing a guest does is
- * written to Supabase.
+ * written anywhere but this tab.
  */
 const KEY = "spin-supper:guest";
 

@@ -25,8 +25,11 @@ jobs:
           POSTGRES_PASSWORD: ${{ secrets.SLEEPY_POSTGRES_PASSWORD }}
         run: |
           [ -n "$POSTGRES_PASSWORD" ] || { echo "Secret SLEEPY_POSTGRES_PASSWORD is not set"; exit 1; }
+          # Percent-encoded for the postgres:// URLs: a / or @ in the password would
+          # otherwise break them, and a parser's error can print part of it.
+          POSTGRES_PASSWORD_URL=$(python3 -c 'import os, urllib.parse; print(urllib.parse.quote(os.environ["POSTGRES_PASSWORD"], safe=""))')
           # .env is sent over stdin so the secret never appears in a command line
-          printf 'POSTGRES_PASSWORD=%s\n' "$POSTGRES_PASSWORD" |
+          printf 'POSTGRES_PASSWORD=%s\nPOSTGRES_PASSWORD_URL=%s\n' "$POSTGRES_PASSWORD" "$POSTGRES_PASSWORD_URL" |
           ssh deploy@${{ secrets.DEPLOY_HOST }} 'set -e
             cd /srv/sleepy-spinner
             [ -d .git ] || git clone https://github.com/${{ github.repository }}.git .

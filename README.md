@@ -1,4 +1,4 @@
-# Slot machine meal planner
+# What’s in my pantry?
 
 A mobile web app that decides dinner for you.
 
@@ -187,7 +187,7 @@ Two things become honest once data outlives the session: a pantry item stores a 
 
 ## Deploying
 
-The app runs on the irmahs.dev server at **https://sleepy-spinner.irmahs.dev**, behind the shared Caddy proxy ([irmahs-labs/proxy](https://github.com/irmahs-labs/proxy)).
+The app runs on the irmahs.dev server at **https://pantry-spinner.irmahs.dev**, behind the shared Caddy proxy ([irmahs-labs/proxy](https://github.com/irmahs-labs/proxy)).
 
 One image holds both halves: the built app and the bundled server, which serves the app beside `/api` from the same origin. `compose.prod.yaml` adds the app's own Postgres on an internal network. The app joins the shared `proxy` network as `sleepy-spinner:3000`, where it also reaches the account service as `auth:3001`.
 

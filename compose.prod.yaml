@@ -45,7 +45,7 @@ services:
     image: sleepy-spinner
     restart: unless-stopped
     environment:
-      APP_URL: https://sleepy-spinner.irmahs.dev
+      APP_URL: https://pantry-spinner.irmahs.dev
       AUTH_INTERNAL_URL: http://auth:3001
       DATABASE_URL: postgres://sleepy:${POSTGRES_PASSWORD_URL:?set in .env}@db:5432/sleepy_spinner
     depends_on:

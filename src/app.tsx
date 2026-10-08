@@ -159,7 +159,7 @@ export default function App() {
     <div className="shell">
       <aside className="sidebar">
         <div className="sidebar__brand">
-          <div className="sidebar__title">Slot machine meal planner</div>
+          <div className="sidebar__title">What’s in my pantry?</div>
           <div className="sidebar__sub">
             {state.pantry.length} in the pantry
           </div>

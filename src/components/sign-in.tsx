@@ -47,7 +47,7 @@ const SignIn = ({ onGuest, failure }: Props) => {
 
   return (
     <div className="signin">
-      <h1 className="signin-brand">Slot machine meal planner</h1>
+      <h1 className="signin-brand">What’s in my pantry?</h1>
       <p className="signin-blurb">
         {failure
           ? FAILURE_TEXT[failure]

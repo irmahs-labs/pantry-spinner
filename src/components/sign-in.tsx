@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import type { LoadFailure } from "../data/vocab";
 import { signInUrl } from "../lib/account";
+import { APP_NAME } from "../lib/brand";
 
 interface Props {
   onGuest: () => void | Promise<void>;
@@ -47,7 +48,7 @@ const SignIn = ({ onGuest, failure }: Props) => {
 
   return (
     <div className="signin">
-      <h1 className="signin-brand">What’s in my pantry?</h1>
+      <h1 className="signin-brand">{APP_NAME}</h1>
       <p className="signin-blurb">
         {failure
           ? FAILURE_TEXT[failure]

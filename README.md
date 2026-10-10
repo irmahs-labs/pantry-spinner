@@ -191,6 +191,8 @@ The app runs on the irmahs.dev server at **https://pantry-spinner.irmahs.dev**, 
 
 One image holds both halves: the built app and the bundled server, which serves the app beside `/api` from the same origin. `compose.prod.yaml` adds the app's own Postgres on an internal network. The app joins the shared `proxy` network as `sleepy-spinner:3000`, where it also reaches the account service as `auth:3001`.
 
+The app's public name and address changed; its internal names did not. The image, the network alias `sleepy-spinner`, the database `sleepy_spinner` and the folder `/srv/sleepy-spinner` keep the old name on purpose: renaming them would mean migrating the stored data for nothing anyone sees. The name people see lives in `src/lib/brand.ts`.
+
 Pushing to `main` deploys to `/srv/sleepy-spinner`: Postgres starts, pending migrations run, then the app is rebuilt and started. Secrets (Settings → Secrets and variables → Actions):
 
 | Secret | What |

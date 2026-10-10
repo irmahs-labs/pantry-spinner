@@ -15,6 +15,7 @@ import {
 } from "./engine/reel";
 import type { Triple } from "./engine/reel";
 import { FEATURES } from "./features";
+import { APP_NAME } from "./lib/brand";
 import { useRemoteSync } from "./lib/use-remote-sync";
 import { AddIngredient } from "./screens/add-ingredient";
 import { Cooked } from "./screens/cooked";
@@ -41,7 +42,26 @@ const TITLES: Record<Screen, string> = {
   spin: "Tonight",
 };
 
-export default function App() {
+// Space draws, except where focus is in a control that owns the key.
+const OWNS_SPACE: ReadonlySet<string> = new Set([
+  "INPUT",
+  "BUTTON",
+  "SELECT",
+  "TEXTAREA",
+]);
+
+/** The line at the foot of the sidebar: a failed save first, then guest mode. */
+const footNote = (saveFailed: boolean, guest: boolean): string => {
+  if (saveFailed) {
+    return "Not saved — check your connection.";
+  }
+  if (guest) {
+    return "Just looking. This pantry goes when the tab closes.";
+  }
+  return "The reels favour whatever is closest to going off.";
+};
+
+const App = () => {
   const [state, dispatch] = useReducer(
     plannerReducer,
     undefined,
@@ -53,7 +73,11 @@ export default function App() {
 
   useEffect(() => {
     const pending = timers.current;
-    return () => pending.forEach(clearTimeout);
+    return () => {
+      for (const timer of pending) {
+        clearTimeout(timer);
+      }
+    };
   }, []);
 
   const v = state.vocab;
@@ -75,6 +99,7 @@ export default function App() {
     });
     dispatch({ plan, type: "spin/start" });
     // Each pick is cooked one of the ways ticked for it, drawn with the dish.
+    // SAFETY: plan.target is a Triple, one index per reel, so its map is too.
     const picks = plan.target.map((t, k) =>
       reels[k][t] ? ingredientOf(state.catalogue, reels[k][t].name) : undefined
     ) as Triple<Ingredient | undefined>;
@@ -98,14 +123,11 @@ export default function App() {
       return;
     }
     const onKey = (e: KeyboardEvent) => {
-      const el = e.target as HTMLElement | null;
-      if (e.code !== "Space" || !el) {
+      const el = e.target;
+      if (e.code !== "Space" || !(el instanceof HTMLElement)) {
         return;
       }
-      if (
-        /^(INPUT|BUTTON|SELECT|TEXTAREA)$/.test(el.tagName) ||
-        el.getAttribute("role") === "button"
-      ) {
+      if (OWNS_SPACE.has(el.tagName) || el.getAttribute("role") === "button") {
         return;
       }
       e.preventDefault();
@@ -139,17 +161,15 @@ export default function App() {
     spin: "Draw a dinner",
   };
 
-  const nav: [Screen, string, number | ""][] = [
+  type NavItem = [Screen, string, number | ""];
+  const cooked: NavItem[] = FEATURES.history
+    ? [["plan", "Cooked", state.plan.length]]
+    : [];
+  const nav: NavItem[] = [
     ["spin", "Draw", ""],
     ["pantry", "Pantry", state.pantry.length],
     ["add", "Add ingredient", ""],
-    ...(FEATURES.history
-      ? ([["plan", "Cooked", state.plan.length]] as [
-          Screen,
-          string,
-          number | "",
-        ][])
-      : []),
+    ...cooked,
     ["list", "Shopping list", toBuy || ""],
     ["methods", "Cooking methods", rotation],
     ["setup", "Reel rules", ""],
@@ -159,7 +179,7 @@ export default function App() {
     <div className="shell">
       <aside className="sidebar">
         <div className="sidebar__brand">
-          <div className="sidebar__title">What’s in my pantry?</div>
+          <div className="sidebar__title">{APP_NAME}</div>
           <div className="sidebar__sub">
             {state.pantry.length} in the pantry
           </div>
@@ -180,11 +200,7 @@ export default function App() {
           ))}
         </nav>
         <div className="sidebar__foot">
-          {saveFailed
-            ? "Not saved — check your connection."
-            : guest
-              ? "Just looking. This pantry goes when the tab closes."
-              : "The reels favour whatever is closest to going off."}
+          {footNote(saveFailed, guest)}
           <br />
           <button
             type="button"
@@ -250,4 +266,6 @@ export default function App() {
       </main>
     </div>
   );
-}
+};
+
+export default App;

@@ -179,6 +179,7 @@ const App = () => {
     <div className="shell">
       <aside className="sidebar">
         <div className="sidebar__brand">
+          <img className="sidebar__logo" src="/favicon.svg" alt="" />
           <div className="sidebar__title">{APP_NAME}</div>
           <div className="sidebar__sub">
             {state.pantry.length} in the pantry

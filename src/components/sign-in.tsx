@@ -48,36 +48,42 @@ const SignIn = ({ onGuest, failure }: Props) => {
 
   return (
     <div className="signin">
-      <h1 className="signin-brand">{APP_NAME}</h1>
-      <p className="signin-blurb">
-        {failure
-          ? FAILURE_TEXT[failure]
-          : "Your pantry and your list live under your IrmaHS Labs account — the same one for every irmahs.dev app. Sign in with Google; there’s no password to remember."}
-      </p>
-      {failure ? null : (
-        <a className="signin-google" href={signInUrl()}>
-          <GoogleMark />
-          Continue with Google
-        </a>
-      )}
-
-      <div className="signin-or">
-        <button
-          type="button"
-          className="signin-guest"
-          disabled={Boolean(failure) || opening}
-          onClick={async () => {
-            setOpening(true);
-            await onGuest();
-            setOpening(false);
-          }}
-        >
-          {opening ? "Opening…" : "Have a look around"}
-        </button>
-        <p className="signin-guestNote">
-          No account. A demo pantry to play with, and nothing is kept — close
-          the tab and it’s gone.
+      <div className="signin-panel">
+        <span className="legend" aria-hidden="true">
+          welcome.txt
+        </span>
+        <img className="signin-logo" src="/favicon.svg" alt="" />
+        <h1 className="signin-brand">{APP_NAME}</h1>
+        <p className="signin-blurb">
+          {failure
+            ? FAILURE_TEXT[failure]
+            : "Your pantry and your list live under your IrmaHS Labs account — the same one for every irmahs.dev app. Sign in with Google; there’s no password to remember."}
         </p>
+        {failure ? null : (
+          <a className="signin-google" href={signInUrl()}>
+            <GoogleMark />
+            Continue with Google
+          </a>
+        )}
+
+        <div className="signin-or">
+          <button
+            type="button"
+            className="signin-guest"
+            disabled={Boolean(failure) || opening}
+            onClick={async () => {
+              setOpening(true);
+              await onGuest();
+              setOpening(false);
+            }}
+          >
+            {opening ? "Opening…" : "Have a look around"}
+          </button>
+          <p className="signin-guestNote">
+            No account. A demo pantry to play with, and nothing is kept — close
+            the tab and it’s gone.
+          </p>
+        </div>
       </div>
     </div>
   );

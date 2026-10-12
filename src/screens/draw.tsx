@@ -31,7 +31,55 @@ const listOf = (words: string[]) =>
     ? words[0]
     : `${words.slice(0, -1).join(", ")} and ${words.at(-1)}`;
 
-export function Draw({ state, dispatch, onSpin }: DrawProps) {
+/** The line under the draw button: what is missing, what is happening, or what to do next. */
+const hintFor = (
+  ready: boolean,
+  spinning: boolean,
+  settled: boolean,
+  missing: string[]
+): string => {
+  if (!ready) {
+    return `Stock ${listOf(missing)} to draw.`;
+  }
+  if (spinning) {
+    return "Turning over…";
+  }
+  if (settled) {
+    return "Click a column to hold it, then draw again.";
+  }
+  return "Draw three — or press";
+};
+
+const reelTitle = (empty: boolean, locked: boolean): string => {
+  if (empty) {
+    return "Nothing stocked";
+  }
+  return locked ? "Release this column" : "Hold this column";
+};
+
+/** How long an item on a reel has left, in the reel's short note. */
+const keepsFor = (left: number): string => {
+  if (left > 30) {
+    return "stocked";
+  }
+  if (left < 0) {
+    return "overdue";
+  }
+  if (left === 0) {
+    return "today";
+  }
+  return left === 1 ? "1 day" : `${left} days`;
+};
+
+/** When an item running out should be used, in the "use these first" list. */
+const eatBy = (left: number): string => {
+  if (left <= 0) {
+    return "today";
+  }
+  return left === 1 ? "tomorrow" : `${left} days`;
+};
+
+export const Draw = ({ state, dispatch, onSpin }: DrawProps) => {
   const v = state.vocab;
   const reels = useMemo(
     () => reelsFrom(state.pantry, state.catalogue, v),
@@ -40,6 +88,8 @@ export function Draw({ state, dispatch, onSpin }: DrawProps) {
   const ready = canSpin(reels, v);
   const settled = state.picked !== null && !state.spinning;
 
+  // SAFETY: picked is a Triple, or three nulls before the first draw, so its
+  // map has one entry per reel too.
   const picks = (state.picked ?? [null, null, null]).map((name) =>
     name ? ingredientOf(state.catalogue, name) : undefined
   ) as Triple<Ingredient | undefined>;
@@ -49,20 +99,14 @@ export function Draw({ state, dispatch, onSpin }: DrawProps) {
 
   const yesterday = yesterdaysMeal(state);
 
-  const expiring = [...state.pantry]
+  const expiring = state.pantry
     .filter((p) => daysLeft(p) <= 3)
-    .sort((a, b) => daysLeft(a) - daysLeft(b));
+    .toSorted((a, b) => daysLeft(a) - daysLeft(b));
 
   const missing = emptyReels(reels, v).map((c) =>
     labelOfCategory(v, c).toLowerCase()
   );
-  const hint = ready
-    ? state.spinning
-      ? "Turning over…"
-      : settled
-        ? "Click a column to hold it, then draw again."
-        : "Draw three — or press"
-    : `Stock ${listOf(missing)} to draw.`;
+  const hint = hintFor(ready, state.spinning, settled, missing);
 
   return (
     <div className="draw">
@@ -81,30 +125,16 @@ export function Draw({ state, dispatch, onSpin }: DrawProps) {
             const label = v.categories[k]?.label ?? "";
             const locked = state.locks[k];
             const empty = list.length === 0;
-            const toggle = () =>
-              !empty && dispatch({ reel: k, type: "reel/toggleLock" });
             return (
-              <div
+              <button
+                type="button"
                 key={v.categories[k]?.code ?? k}
                 className="reel"
-                role="button"
-                tabIndex={empty ? -1 : 0}
+                disabled={empty}
                 aria-pressed={locked}
                 aria-label={empty ? `${label} reel, empty` : `${label} reel`}
-                title={
-                  empty
-                    ? "Nothing stocked"
-                    : locked
-                      ? "Release this column"
-                      : "Hold this column"
-                }
-                onClick={toggle}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    toggle();
-                  }
-                }}
+                title={reelTitle(empty, locked)}
+                onClick={() => dispatch({ reel: k, type: "reel/toggleLock" })}
               >
                 <div className="reel__fade" />
                 {empty ? (
@@ -131,15 +161,7 @@ export function Draw({ state, dispatch, onSpin }: DrawProps) {
                             <div
                               className={`note tone-${left <= 3 ? "soon" : "fresh"}`}
                             >
-                              {left > 30
-                                ? "stocked"
-                                : left < 0
-                                  ? "overdue"
-                                  : left === 0
-                                    ? "today"
-                                    : left === 1
-                                      ? "1 day"
-                                      : `${left} days`}
+                              {keepsFor(left)}
                             </div>
                           </div>
                         );
@@ -148,7 +170,7 @@ export function Draw({ state, dispatch, onSpin }: DrawProps) {
                   </div>
                 )}
                 <div className="reel__foot">{locked ? "held" : label}</div>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -178,6 +200,9 @@ export function Draw({ state, dispatch, onSpin }: DrawProps) {
         aria-label="Tonight's dish"
       >
         <div className="recipe">
+          <span className="legend" aria-hidden="true">
+            dinner.txt
+          </span>
           {settled ? (
             <>
               <div className="recipe__art">
@@ -185,7 +210,7 @@ export function Draw({ state, dispatch, onSpin }: DrawProps) {
                   <Icon
                     d={dishIcon(style?.code)}
                     size={64}
-                    style={{ color: "var(--green)" }}
+                    style={{ color: "var(--ink)" }}
                   />
                 </div>
                 <div className="recipe__kind">{style?.label}</div>
@@ -253,7 +278,7 @@ export function Draw({ state, dispatch, onSpin }: DrawProps) {
                     size={52}
                     style={{
                       animationDelay: `${(i * 0.75).toFixed(2)}s`,
-                      color: "var(--green)",
+                      color: "var(--ink)",
                     }}
                   />
                 ))}
@@ -280,11 +305,7 @@ export function Draw({ state, dispatch, onSpin }: DrawProps) {
           </div>
         )}
 
-        {state.flash && (
-          <div className="flash" role="status">
-            {state.flash}
-          </div>
-        )}
+        {state.flash && <output className="flash">{state.flash}</output>}
 
         {expiring.length > 0 && (
           <div className="soon-list">
@@ -294,12 +315,7 @@ export function Draw({ state, dispatch, onSpin }: DrawProps) {
                 const left = daysLeft(p);
                 return (
                   <span key={p.name} className="soon-chip">
-                    {p.name} ·{" "}
-                    {left <= 0
-                      ? "today"
-                      : left === 1
-                        ? "tomorrow"
-                        : `${left} days`}
+                    {p.name} · {eatBy(left)}
                   </span>
                 );
               })}
@@ -309,4 +325,4 @@ export function Draw({ state, dispatch, onSpin }: DrawProps) {
       </section>
     </div>
   );
-}
+};

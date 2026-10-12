@@ -37,3 +37,7 @@ The name people see is `APP_NAME` in `src/lib/brand.ts`. The internal names (the
 ## Database
 
 Schema changes are new dbmate migrations in `db/migrations` (`npm run db:new`), never edits to ones already merged; commit the regenerated `db/schema.sql` with them. `npm run db:up` starts the local Postgres in Docker and applies them.
+
+## Design
+
+The app is styled in Sleek Matcha, the app look of Irma's Cute Matcha design system: its palette as the tokens at the top of `src/styles.css`, Abril Fatface for names and Lato for everything else, 2px ink outlines, flat paper panels with a filename on a bark pill (`.legend`), and bark with cream text for anything selected. Only the one action to press next in an area (`.btn`) carries the hard shadow. The logo is `public/favicon.svg`, also shown in the sidebar and on the sign-in page.

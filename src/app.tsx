@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 
+import { Header } from "./components/header";
 import SignIn from "./components/sign-in";
 import type { Ingredient } from "./data/model";
 import { labelOfCategory } from "./data/vocab";
@@ -15,7 +16,6 @@ import {
 } from "./engine/reel";
 import type { Triple } from "./engine/reel";
 import { FEATURES } from "./features";
-import { APP_NAME } from "./lib/brand";
 import { useRemoteSync } from "./lib/use-remote-sync";
 import { AddIngredient } from "./screens/add-ingredient";
 import { Cooked } from "./screens/cooked";
@@ -144,7 +144,12 @@ const App = () => {
     return <SignIn onGuest={startGuest} />;
   }
   if (phase === "booting") {
-    return <div className="shell" />;
+    return (
+      <>
+        <Header />
+        <div className="shell" />
+      </>
+    );
   }
 
   const rotation = methodsOn(state).length;
@@ -176,96 +181,99 @@ const App = () => {
   ];
 
   return (
-    <div className="shell">
-      <aside className="sidebar">
-        <div className="sidebar__brand">
-          <img className="sidebar__logo" src="/favicon.svg" alt="" />
-          <div className="sidebar__title">{APP_NAME}</div>
+    <>
+      <Header onHome={() => dispatch({ screen: "spin", type: "screen/go" })} />
+      <div className="shell">
+        <aside className="sidebar">
           <div className="sidebar__sub">
             {state.pantry.length} in the pantry
           </div>
-        </div>
-        <nav className="stack" style={{ gap: 6 }} aria-label="Main">
-          {nav.map(([key, label, count]) => (
+          <nav className="stack" style={{ gap: 6 }} aria-label="Main">
+            {nav.map(([key, label, count]) => (
+              <button
+                key={key}
+                type="button"
+                className="nav"
+                aria-current={state.screen === key ? "page" : undefined}
+                onClick={() => dispatch({ screen: key, type: "screen/go" })}
+              >
+                <span className="nav__pip" />
+                <span className="nav__label">{label}</span>
+                <span className="nav__count">{count}</span>
+              </button>
+            ))}
+          </nav>
+          <div className="sidebar__foot">
+            {footNote(saveFailed, guest)}
+            <br />
             <button
-              key={key}
               type="button"
               className="nav"
-              aria-current={state.screen === key ? "page" : undefined}
-              onClick={() => dispatch({ screen: key, type: "screen/go" })}
+              style={{ marginTop: 10, padding: "8px 0" }}
+              onClick={signOut}
             >
-              <span className="nav__pip" />
-              <span className="nav__label">{label}</span>
-              <span className="nav__count">{count}</span>
+              <span className="nav__label">
+                {guest ? "Sign in" : (email ?? "Sign out")}
+              </span>
             </button>
-          ))}
-        </nav>
-        <div className="sidebar__foot">
-          {footNote(saveFailed, guest)}
-          <br />
-          <button
-            type="button"
-            className="nav"
-            style={{ marginTop: 10, padding: "8px 0" }}
-            onClick={signOut}
-          >
-            <span className="nav__label">
-              {guest ? "Sign in" : (email ?? "Sign out")}
-            </span>
-          </button>
-        </div>
-      </aside>
-
-      <main className="main">
-        <header className="topbar">
-          <div>
-            <div className="topbar__kicker">{kickers[state.screen]}</div>
-            <h1 className="topbar__title">{TITLES[state.screen]}</h1>
           </div>
-          {ready ? (
-            <button
-              type="button"
-              className="soon-pill"
-              onClick={() => dispatch({ screen: "pantry", type: "screen/go" })}
-            >
-              {expiring} going off soon
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="soon-pill"
-              onClick={() => dispatch({ screen: "pantry", type: "screen/go" })}
-            >
-              {emptyReels(reels, v).length === v.categories.length
-                ? "Nothing stocked"
-                : `No ${labelOfCategory(v, emptyReels(reels, v)[0]).toLowerCase()}`}
-            </button>
-          )}
-        </header>
+        </aside>
 
-        {state.screen === "spin" && (
-          <Draw state={state} dispatch={dispatch} onSpin={spin} />
-        )}
-        {state.screen === "pantry" && (
-          <Pantry state={state} dispatch={dispatch} />
-        )}
-        {state.screen === "add" && (
-          <AddIngredient state={state} dispatch={dispatch} />
-        )}
-        {state.screen === "plan" && FEATURES.history && (
-          <Cooked state={state} />
-        )}
-        {state.screen === "list" && (
-          <ShoppingList state={state} dispatch={dispatch} />
-        )}
-        {state.screen === "methods" && (
-          <CookingMethods state={state} dispatch={dispatch} />
-        )}
-        {state.screen === "setup" && (
-          <ReelRules state={state} dispatch={dispatch} />
-        )}
-      </main>
-    </div>
+        <main className="main">
+          <header className="topbar">
+            <div>
+              <div className="topbar__kicker">{kickers[state.screen]}</div>
+              <h1 className="topbar__title">{TITLES[state.screen]}</h1>
+            </div>
+            {ready ? (
+              <button
+                type="button"
+                className="soon-pill"
+                onClick={() =>
+                  dispatch({ screen: "pantry", type: "screen/go" })
+                }
+              >
+                {expiring} going off soon
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="soon-pill"
+                onClick={() =>
+                  dispatch({ screen: "pantry", type: "screen/go" })
+                }
+              >
+                {emptyReels(reels, v).length === v.categories.length
+                  ? "Nothing stocked"
+                  : `No ${labelOfCategory(v, emptyReels(reels, v)[0]).toLowerCase()}`}
+              </button>
+            )}
+          </header>
+
+          {state.screen === "spin" && (
+            <Draw state={state} dispatch={dispatch} onSpin={spin} />
+          )}
+          {state.screen === "pantry" && (
+            <Pantry state={state} dispatch={dispatch} />
+          )}
+          {state.screen === "add" && (
+            <AddIngredient state={state} dispatch={dispatch} />
+          )}
+          {state.screen === "plan" && FEATURES.history && (
+            <Cooked state={state} />
+          )}
+          {state.screen === "list" && (
+            <ShoppingList state={state} dispatch={dispatch} />
+          )}
+          {state.screen === "methods" && (
+            <CookingMethods state={state} dispatch={dispatch} />
+          )}
+          {state.screen === "setup" && (
+            <ReelRules state={state} dispatch={dispatch} />
+          )}
+        </main>
+      </div>
+    </>
   );
 };
 

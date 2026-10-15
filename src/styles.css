@@ -1,31 +1,60 @@
-/* The app's desktop styles, in Sleek Matcha (the app look of the Cute Matcha
-   design system): the matcha palette, Abril Fatface for names and Lato for
-   everything else, 2px ink outlines, flat panels, and bark for whatever is
-   selected. Only the one action to press next carries the hard shadow. */
+/* The app's styles, in Cute Matcha's app look, in Light and Dark Matcha:
+   role tokens named by job, Abril Fatface for names and Lato for everything
+   else, 2px outlines, flat panels, and strong for whatever is selected. Only
+   the one action to press next carries the hard shadow. */
 :root {
+  /* Cute Matcha's role tokens, named by job: Light Matcha here, Dark Matcha
+     below. Pick one by what the thing is, never by its hex. */
   --ground: #f3f1c8;
-  --surface: #dde87e;
-  --sprout: #b8d970;
-  --paper: #f7f8de;
-  --white: #ffffff;
-  --ink: #2f3b34;
-  --bark: #3b4a42;
+  --panel: #f7f8de;
+  --raised: #ffffff;
+  --raised-hover: #e3f0c6;
+  --text: #2f3b34;
+  --text-muted: #3f6b30;
+  --outline: #2f3b34;
+  --accent: #dde87e;
+  --accent-soft: #b8d970;
+  --on-accent: #2f3b34;
+  --strong: #3b4a42;
+  --on-strong: #fff3cf;
+  /* A pressed or hovered primary: one step past strong, in either theme. */
+  --strong-hover: #2f3b34;
+  --pattern-dot: #b8d970;
+  --pattern-line: #f3f1c800;
+  --focus: #4a7fc0;
+  --danger: #f0675c;
+  color-scheme: light;
+
+  /* Fixed: they belong to drawings and marks, never to text. */
   --moss: #5c8f48;
-  --moss-deep: #3f6b30;
-  --cream: #fff3cf;
   --gold: #f2d27a;
   --terracotta: #d9786a;
-  --signal-red: #e0574b;
+  --cream: #fff3cf;
+  --white: #ffffff;
 
-  --line: 2px solid var(--ink);
-  --line-thin: 1.5px solid var(--ink);
-  --shadow-hard: 3px 3px 0 var(--ink);
+  --line: 2px solid var(--outline);
+  --line-thin: 1.5px solid var(--outline);
+  --shadow-hard: 3px 3px 0 var(--outline);
   --radius-panel: 11px;
   --radius-lg: 9px;
 
   --display: "Abril Fatface", Georgia, serif;
   --body: "Lato", "Helvetica Neue", Arial, sans-serif;
-  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --ground: #1c2420;
+  --panel: #2b3631;
+  --raised: #3b4a42;
+  --raised-hover: #485847;
+  --text: #fff3cf;
+  --text-muted: #b8d970;
+  --outline: #0f1411;
+  --strong: #dde87e;
+  --on-strong: #2f3b34;
+  --strong-hover: #c9d66b;
+  --pattern-dot: #b8d97000;
+  --pattern-line: #242e29;
+  color-scheme: dark;
 }
 
 *,
@@ -37,7 +66,7 @@ body {
   margin: 0;
   background: var(--ground);
   font-family: var(--body);
-  color: var(--ink);
+  color: var(--text);
   -webkit-font-smoothing: antialiased;
 }
 button,
@@ -50,7 +79,7 @@ button {
   cursor: pointer;
 }
 :focus-visible {
-  outline: 3px solid var(--moss);
+  outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
 
@@ -62,15 +91,15 @@ button {
   font: 700 12px/1.2 var(--body);
   letter-spacing: 1.2px;
   text-transform: uppercase;
-  color: var(--moss-deep);
+  color: var(--text-muted);
 }
 .body-sm {
   font: 400 12.5px/1.4 var(--body);
-  color: var(--moss-deep);
+  color: var(--text-muted);
 }
 .intro {
   font: 400 15px/1.5 var(--body);
-  color: var(--ink);
+  color: var(--text);
   text-wrap: pretty;
   margin: 0;
 }
@@ -86,21 +115,93 @@ button {
   left: 16px;
   padding: 2px 12px;
   border-radius: 999px;
-  background: var(--bark);
-  color: var(--cream);
+  background: var(--strong);
+  color: var(--on-strong);
   font: 700 12px/1.4 var(--body);
   letter-spacing: 1.2px;
   text-transform: uppercase;
 }
 
 /* ── layout ── */
+/* Cute Matcha's app Header: icon, name and "by Irma HS", then the end. */
+.app-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px 16px;
+  padding: 14px 28px;
+  background: var(--panel);
+  border-bottom: var(--line);
+}
+.app-header__home {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: max-content;
+  color: var(--text);
+  text-decoration: none;
+}
+.app-header__home svg {
+  flex: none;
+}
+.app-header__name {
+  display: block;
+  font: 400 24px/1.1 var(--display);
+}
+.app-header__by {
+  display: block;
+  font: 400 14px/1.3 var(--body);
+  color: var(--text-muted);
+}
+.app-header__end {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+.header-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 4px 14px;
+  border: var(--line);
+  border-radius: 999px;
+  background: var(--raised);
+  color: var(--text);
+  font: 700 14px/1 var(--body);
+}
+.header-pill:hover {
+  background: var(--panel);
+}
+@media (max-width: 600px) {
+  .app-header {
+    padding: 12px 16px;
+  }
+  .app-header__name {
+    font-size: 20px;
+  }
+  .app-header__end {
+    flex-basis: 100%;
+    justify-content: flex-start;
+  }
+}
+
 .shell {
   min-height: 100vh;
   display: grid;
   grid-template-columns: 236px minmax(0, 1fr);
   background-color: var(--ground);
-  background-image: radial-gradient(var(--sprout) 1.2px, transparent 1.4px);
-  background-size: 22px 22px;
+  background-image:
+    radial-gradient(var(--pattern-dot) 1.2px, transparent 1.4px),
+    linear-gradient(var(--pattern-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--pattern-line) 1px, transparent 1px);
+  background-size:
+    22px 22px,
+    28px 28px,
+    28px 28px;
 }
 
 .sidebar {
@@ -111,36 +212,22 @@ button {
   flex-direction: column;
   gap: 6px;
   padding: 28px 16px 24px;
-  background: var(--paper);
+  background: var(--panel);
   border-right: var(--line);
-  color: var(--ink);
-}
-.sidebar__brand {
-  padding: 0 12px 24px;
-}
-.sidebar__logo {
-  display: block;
-  width: 44px;
-  height: 44px;
-  margin-bottom: 14px;
-}
-.sidebar__title {
-  font-family: var(--display);
-  font-size: 24px;
-  line-height: 1.1;
+  color: var(--text);
 }
 .sidebar__sub {
+  padding: 0 12px 16px;
   font: 700 12px/1.2 var(--body);
   letter-spacing: 1.2px;
   text-transform: uppercase;
-  color: var(--moss-deep);
-  margin-top: 10px;
+  color: var(--text-muted);
 }
 .sidebar__foot {
   margin-top: auto;
   padding: 0 12px;
   font: italic 400 12.5px/1.5 var(--body);
-  color: var(--moss-deep);
+  color: var(--text-muted);
   text-wrap: pretty;
 }
 .nav {
@@ -154,12 +241,12 @@ button {
   border-radius: 999px;
   padding: 10px 14px;
   background: transparent;
-  color: var(--ink);
+  color: var(--text);
   font: 700 14px/1.2 var(--body);
 }
 .nav:hover {
-  border-color: var(--ink);
-  background: var(--white);
+  border-color: var(--outline);
+  background: var(--raised);
 }
 .nav__pip {
   flex: none;
@@ -167,26 +254,26 @@ button {
   height: 10px;
   border-radius: 999px;
   border: var(--line-thin);
-  background: var(--sprout);
+  background: var(--accent-soft);
 }
 .nav__label {
   flex: 1;
 }
 .nav__count {
   font: 700 12px/1 var(--body);
-  color: var(--moss-deep);
+  color: var(--text-muted);
 }
 .nav[aria-current="page"] {
-  border-color: var(--ink);
-  background: var(--bark);
-  color: var(--cream);
+  border-color: var(--outline);
+  background: var(--strong);
+  color: var(--on-strong);
 }
 .nav[aria-current="page"] .nav__pip {
-  border-color: var(--cream);
-  background: var(--surface);
+  border-color: var(--on-strong);
+  background: var(--accent);
 }
 .nav[aria-current="page"] .nav__count {
-  color: var(--cream);
+  color: var(--on-strong);
 }
 
 .main {
@@ -207,7 +294,7 @@ button {
   font: 700 12px/1.2 var(--body);
   letter-spacing: 1.2px;
   text-transform: uppercase;
-  color: var(--moss-deep);
+  color: var(--text-muted);
 }
 .topbar__title {
   font-family: var(--display);
@@ -224,12 +311,12 @@ button {
   padding: 0 16px;
   border: var(--line);
   border-radius: 999px;
-  background: var(--white);
-  color: var(--ink);
+  background: var(--raised);
+  color: var(--text);
   font: 700 14px/1 var(--body);
 }
 .soon-pill:hover {
-  background: var(--paper);
+  background: var(--panel);
 }
 .soon-pill::before {
   content: "";
@@ -237,7 +324,7 @@ button {
   height: 10px;
   border-radius: 999px;
   border: var(--line-thin);
-  background: var(--signal-red);
+  background: var(--danger);
 }
 
 /* ── buttons ── */
@@ -245,25 +332,25 @@ button {
 .btn {
   border: var(--line);
   border-radius: 999px;
-  background: var(--bark);
-  color: var(--cream);
+  background: var(--strong);
+  color: var(--on-strong);
   box-shadow: var(--shadow-hard);
   font: 700 14px/1.2 var(--body);
 }
 .btn:hover {
-  background: var(--ink);
+  background: var(--strong-hover);
 }
 .btn:active {
-  box-shadow: 1px 1px 0 var(--ink);
+  box-shadow: 1px 1px 0 var(--outline);
   transform: translate(2px, 2px);
 }
 .btn--outline {
-  background: var(--white);
-  color: var(--ink);
+  background: var(--raised);
+  color: var(--text);
   box-shadow: none;
 }
 .btn--outline:hover {
-  background: var(--paper);
+  background: var(--panel);
 }
 .btn--outline:active {
   box-shadow: none;
@@ -276,7 +363,7 @@ button {
 }
 .btn--muted:hover,
 .btn--muted:active {
-  background: var(--bark);
+  background: var(--strong);
   box-shadow: var(--shadow-hard);
   transform: none;
 }
@@ -287,12 +374,12 @@ button {
   border: 2px solid transparent;
   border-radius: 999px;
   background: transparent;
-  color: var(--ink);
+  color: var(--text);
   font: 700 18px/1 var(--body);
 }
 .icon-x:hover {
-  border-color: var(--ink);
-  background: var(--white);
+  border-color: var(--outline);
+  background: var(--raised);
 }
 
 /* a field's label with one quiet action on the right */
@@ -306,14 +393,14 @@ button {
   padding: 4px 0;
   border: 0;
   background: none;
-  color: var(--moss-deep);
+  color: var(--text-muted);
   font: 700 13px/1 var(--body);
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
 }
 .text-btn:hover {
-  color: var(--ink);
+  color: var(--text);
 }
 
 /* option chip — used by filters, kinds, presets */
@@ -322,16 +409,16 @@ button {
   padding: 0 16px;
   border: var(--line);
   border-radius: 999px;
-  background: var(--white);
-  color: var(--ink);
+  background: var(--raised);
+  color: var(--text);
   font: 700 14px/1 var(--body);
 }
 .chip:hover {
-  background: var(--paper);
+  background: var(--panel);
 }
 .chip[aria-pressed="true"] {
-  background: var(--bark);
-  color: var(--cream);
+  background: var(--strong);
+  color: var(--on-strong);
 }
 .chip-row {
   display: flex;
@@ -347,7 +434,7 @@ button {
   height: 28px;
   border: var(--line);
   border-radius: 999px;
-  background: var(--white);
+  background: var(--raised);
   transition: background 0.15s ease;
 }
 .switch::after {
@@ -358,15 +445,15 @@ button {
   width: 20px;
   height: 20px;
   border-radius: 999px;
-  background: var(--ink);
+  background: var(--text);
   transition: left 0.15s ease;
 }
 .switch--on {
-  background: var(--bark);
+  background: var(--strong);
 }
 .switch--on::after {
   left: 24px;
-  background: var(--surface);
+  background: var(--on-strong);
 }
 .switch--lg {
   width: 60px;
@@ -385,7 +472,7 @@ button {
   display: flex;
   gap: 10px;
   align-items: center;
-  background: var(--paper);
+  background: var(--panel);
   border: var(--line);
   border-radius: var(--radius-panel);
   padding: 8px;
@@ -397,9 +484,9 @@ button {
   padding: 0 14px;
   border: var(--line-thin);
   border-radius: var(--radius-lg);
-  background: var(--white);
+  background: var(--raised);
   font: 400 15px/1 var(--body);
-  color: var(--ink);
+  color: var(--text);
 }
 .add-row .btn {
   flex: none;
@@ -424,13 +511,13 @@ button {
   padding: 0 14px;
   border: var(--line-thin);
   border-radius: var(--radius-lg);
-  background: var(--white);
+  background: var(--raised);
   max-width: 220px;
 }
 .serving-field__label,
 .serving-field__unit {
   font: 700 13px/1 var(--body);
-  color: var(--moss-deep);
+  color: var(--text-muted);
 }
 .add-row .serving-field input,
 .serving-field input {
@@ -442,14 +529,14 @@ button {
   border-radius: 0;
   background: transparent;
   font: 700 15px/1 var(--body);
-  color: var(--ink);
+  color: var(--text);
   text-align: right;
 }
 .serving-field input:focus-visible {
   outline: none;
 }
 .serving-field:focus-within {
-  outline: 3px solid var(--moss);
+  outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
 .field .serving-field {
@@ -486,7 +573,7 @@ button {
   font: 700 12px/1.2 var(--body);
   letter-spacing: 1.2px;
   text-transform: uppercase;
-  color: var(--moss-deep);
+  color: var(--text-muted);
 }
 .day-head__title {
   font-family: var(--display);
@@ -498,7 +585,7 @@ button {
 .day-head__rule {
   width: 44px;
   height: 2px;
-  background: var(--ink);
+  background: var(--outline);
   margin-top: 6px;
 }
 
@@ -515,8 +602,8 @@ button {
   height: 84px;
   z-index: 5;
   pointer-events: none;
-  border-top: 2px dashed var(--bark);
-  border-bottom: 2px dashed var(--bark);
+  border-top: 2px dashed var(--strong);
+  border-bottom: 2px dashed var(--strong);
 }
 /* Each reel is a button that holds or releases its column. */
 .reel {
@@ -531,7 +618,7 @@ button {
   border: var(--line);
   border-radius: var(--radius-panel);
   overflow: hidden;
-  background: var(--paper);
+  background: var(--panel);
   cursor: pointer;
 }
 .reel:disabled {
@@ -543,10 +630,10 @@ button {
   z-index: 3;
   pointer-events: none;
   background: linear-gradient(
-    var(--paper) 0%,
+    var(--panel) 0%,
     rgba(247, 248, 222, 0) 28%,
     rgba(247, 248, 222, 0) 72%,
-    var(--paper) 100%
+    var(--panel) 100%
   );
 }
 .reel__strip {
@@ -582,7 +669,7 @@ button {
   font-size: 18px;
   line-height: 1.12;
   text-align: center;
-  color: var(--ink);
+  color: var(--text);
 }
 .note {
   font: 700 10px/1 var(--body);
@@ -603,33 +690,33 @@ button {
   align-items: center;
   justify-content: center;
   border-top: var(--line);
-  background: var(--sprout);
-  color: var(--ink);
+  background: var(--accent-soft);
+  color: var(--on-accent);
   font: 700 11px/1 var(--body);
   letter-spacing: 1.2px;
   text-transform: uppercase;
 }
 .reel[aria-pressed="true"] .reel__foot {
-  background: var(--bark);
-  color: var(--cream);
+  background: var(--strong);
+  color: var(--on-strong);
 }
 
 /* Use it soon is the one warm mark; fresh is green; to buy is plain. */
 .tone-soon {
   background: var(--gold);
-  color: var(--ink);
+  color: var(--on-accent);
 }
 .tone-fresh {
-  background: var(--sprout);
-  color: var(--ink);
+  background: var(--accent-soft);
+  color: var(--on-accent);
 }
 .tone-buy {
-  background: var(--white);
-  color: var(--ink);
+  background: var(--raised);
+  color: var(--text);
 }
 .tone-green {
-  background: var(--bark);
-  color: var(--cream);
+  background: var(--strong);
+  color: var(--on-strong);
 }
 
 .draw__cta {
@@ -649,7 +736,7 @@ button {
   align-items: center;
   gap: 10px;
   font: italic 400 13px/1.5 var(--body);
-  color: var(--moss-deep);
+  color: var(--text-muted);
   text-align: center;
 }
 .kbd {
@@ -658,13 +745,13 @@ button {
   padding: 5px 8px;
   border: var(--line-thin);
   border-radius: 6px;
-  background: var(--white);
-  color: var(--ink);
+  background: var(--raised);
+  color: var(--text);
 }
 
 .recipe {
   position: relative;
-  background: var(--paper);
+  background: var(--panel);
   border: var(--line);
   border-radius: var(--radius-panel);
   padding: 24px 18px 18px;
@@ -702,7 +789,7 @@ button {
   font-family: var(--display);
   font-size: 24px;
   line-height: 1.2;
-  color: var(--ink);
+  color: var(--text);
   text-wrap: pretty;
 }
 .progress {
@@ -710,7 +797,7 @@ button {
   height: 8px;
   border: var(--line-thin);
   border-radius: 999px;
-  background: var(--white);
+  background: var(--raised);
   overflow: hidden;
 }
 .progress::after {
@@ -750,19 +837,20 @@ button {
   height: 236px;
   border: var(--line-thin);
   border-radius: var(--radius-lg);
-  background: var(--sprout);
+  background: var(--accent-soft);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 14px;
+  color: var(--on-accent);
 }
 .recipe__disc {
   width: 124px;
   height: 124px;
   border: var(--line);
   border-radius: 999px;
-  background: var(--paper);
+  background: var(--panel);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -771,7 +859,7 @@ button {
   font: 700 12px/1.2 var(--body);
   letter-spacing: 1.2px;
   text-transform: uppercase;
-  color: var(--ink);
+  color: var(--text);
 }
 .recipe__body {
   display: flex;
@@ -820,7 +908,7 @@ button {
   border: var(--line-thin);
   border-radius: 999px;
   background: var(--gold);
-  color: var(--ink);
+  color: var(--on-accent);
 }
 
 /* what was sent into the pot yesterday */
@@ -831,17 +919,17 @@ button {
   padding: 14px 18px;
   border: var(--line);
   border-radius: var(--radius-panel);
-  background: var(--paper);
+  background: var(--panel);
 }
 .yesterday__icon {
   flex: none;
-  color: var(--ink);
+  color: var(--text);
 }
 .yesterday__dish {
   font-family: var(--display);
   font-size: 18px;
   line-height: 1.2;
-  color: var(--ink);
+  color: var(--text);
   margin-top: 6px;
 }
 
@@ -872,13 +960,13 @@ button {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  background: var(--paper);
+  background: var(--panel);
   border: var(--line);
   border-radius: var(--radius-panel);
   padding: 18px 18px 16px;
 }
 .pcard--soon {
-  background: var(--white);
+  background: var(--raised);
 }
 .pcard__head {
   display: flex;
@@ -901,11 +989,11 @@ button {
 }
 .badge--dark {
   background: var(--gold);
-  color: var(--ink);
+  color: var(--on-accent);
 }
 .badge--line {
-  background: var(--white);
-  color: var(--ink);
+  background: var(--raised);
+  color: var(--text);
 }
 .pcard__name {
   font-family: var(--display);
@@ -935,7 +1023,7 @@ button {
   height: 8px;
   border: var(--line-thin);
   border-radius: 999px;
-  background: var(--white);
+  background: var(--raised);
   overflow: hidden;
 }
 .bar > div {
@@ -949,7 +1037,7 @@ button {
 /* ── add ingredient ── */
 .form {
   max-width: 680px;
-  background: var(--paper);
+  background: var(--panel);
   border: var(--line);
   border-radius: var(--radius-panel);
   padding: 26px;
@@ -966,10 +1054,10 @@ button {
   height: 48px;
   border: var(--line-thin);
   border-radius: var(--radius-lg);
-  background: var(--white);
+  background: var(--raised);
   padding: 0 14px;
   font: 400 15px/1 var(--body);
-  color: var(--ink);
+  color: var(--text);
 }
 .text-input--name {
   height: 54px;
@@ -980,7 +1068,7 @@ button {
   height: 46px;
   padding: 0 14px;
   font: 700 14px/1 var(--body);
-  accent-color: var(--bark);
+  accent-color: var(--strong);
 }
 .cat-cards {
   display: grid;
@@ -995,15 +1083,15 @@ button {
   padding: 18px 10px 16px;
   border: var(--line);
   border-radius: var(--radius-lg);
-  background: var(--white);
-  color: var(--ink);
+  background: var(--raised);
+  color: var(--text);
 }
 .cat-card:hover {
-  background: var(--paper);
+  background: var(--panel);
 }
 .cat-card[aria-pressed="true"] {
-  background: var(--bark);
-  color: var(--cream);
+  background: var(--strong);
+  color: var(--on-strong);
 }
 .cat-card span {
   font: 700 14px/1 var(--body);
@@ -1032,10 +1120,10 @@ button {
   height: 48px;
   border: var(--line-thin);
   border-radius: var(--radius-lg);
-  background: var(--white);
+  background: var(--raised);
   padding: 0 36px 0 14px;
   font: 700 14px/1 var(--body);
-  color: var(--ink);
+  color: var(--text);
   /* Safari keeps its own square control unless the native look is dropped, so
      the box and its chevron are drawn here instead. */
   appearance: none;
@@ -1069,7 +1157,7 @@ button {
     padding: 6px;
     border: var(--line);
     border-radius: var(--radius-panel);
-    background: var(--paper);
+    background: var(--panel);
     box-shadow: var(--shadow-hard);
   }
   .unit-select option {
@@ -1078,7 +1166,7 @@ button {
     font: 700 14px/1.2 var(--body);
     letter-spacing: normal;
     text-transform: none;
-    color: var(--ink);
+    color: var(--text);
   }
   /* The "Stock an ingredient…" line is the closed control's prompt, not a choice. */
   .unit-select option[value=""] {
@@ -1086,11 +1174,12 @@ button {
   }
   .unit-select option:hover,
   .unit-select option:focus-visible {
-    background: var(--sprout);
+    background: var(--accent-soft);
+    color: var(--on-accent);
   }
   .unit-select option:checked {
-    background: var(--bark);
-    color: var(--cream);
+    background: var(--strong);
+    color: var(--on-strong);
   }
   .unit-select option::checkmark {
     display: none;
@@ -1099,7 +1188,7 @@ button {
     font: 700 12px/1.2 var(--body);
     letter-spacing: 1.2px;
     text-transform: uppercase;
-    color: var(--moss-deep);
+    color: var(--text-muted);
     padding: 10px 12px 4px;
   }
 }
@@ -1113,32 +1202,36 @@ button {
   background: transparent;
   padding: 0;
   font: 700 14px/1.2 var(--body);
-  color: var(--ink);
+  color: var(--text);
 }
 .check-card {
   display: flex;
   align-items: center;
   gap: 14px;
   border: var(--line);
-  background: var(--white);
+  background: var(--raised);
   border-radius: var(--radius-lg);
   padding: 14px 16px;
   text-align: left;
 }
 .check-card[aria-checked="true"] {
-  background: var(--sprout);
+  background: var(--accent-soft);
+  color: var(--on-accent);
 }
 .check-card__title {
   display: block;
   font: 700 14px/1.2 var(--body);
-  color: var(--ink);
+  color: var(--text);
+}
+.check-card[aria-checked="true"] .check-card__title {
+  color: var(--on-accent);
 }
 .check-card__sub {
   display: block;
   margin-top: 3px;
 }
 .check-card[aria-checked="true"] .check-card__sub {
-  color: var(--ink);
+  color: var(--on-accent);
 }
 .tick {
   flex: none;
@@ -1146,15 +1239,15 @@ button {
   height: 28px;
   border: var(--line);
   border-radius: 999px;
-  background: var(--white);
+  background: var(--raised);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--cream);
+  color: var(--on-strong);
   font: 700 14px/1 var(--body);
 }
 .tick--on {
-  background: var(--bark);
+  background: var(--strong);
 }
 .submit {
   height: 54px;
@@ -1165,8 +1258,8 @@ button {
   padding: 12px 18px;
   border: var(--line);
   border-radius: 999px;
-  background: var(--bark);
-  color: var(--cream);
+  background: var(--strong);
+  color: var(--on-strong);
   font: 700 14px/1.3 var(--body);
 }
 
@@ -1178,13 +1271,14 @@ button {
   align-items: start;
 }
 .stat {
-  background: var(--paper);
+  background: var(--panel);
   border: var(--line);
   border-radius: var(--radius-panel);
   padding: 20px;
 }
 .stat--fresh {
-  background: var(--sprout);
+  background: var(--accent-soft);
+  color: var(--on-accent);
 }
 .stat__num {
   font-family: var(--display);
@@ -1193,11 +1287,11 @@ button {
 }
 .stat__cap {
   font: 700 13px/1.35 var(--body);
-  color: var(--moss-deep);
+  color: var(--text-muted);
   margin-top: 6px;
 }
 .stat--fresh .stat__cap {
-  color: var(--ink);
+  color: var(--on-accent);
 }
 .history {
   grid-column: span 2;
@@ -1213,7 +1307,7 @@ button {
   display: flex;
   align-items: center;
   gap: 18px;
-  background: var(--paper);
+  background: var(--panel);
   border: var(--line);
   border-radius: var(--radius-panel);
   padding: 14px 20px 14px 14px;
@@ -1224,21 +1318,22 @@ button {
   height: 60px;
   border: var(--line);
   border-radius: 999px;
-  background: var(--white);
-  color: var(--ink);
+  background: var(--raised);
+  color: var(--text);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .hrow--latest {
-  background: var(--sprout);
+  background: var(--accent-soft);
+  color: var(--on-accent);
 }
 .hrow--latest .hrow__icon {
-  background: var(--bark);
-  color: var(--cream);
+  background: var(--strong);
+  color: var(--on-strong);
 }
 .hrow--latest .body-sm {
-  color: var(--ink);
+  color: var(--on-accent);
 }
 .hrow__dish {
   font-family: var(--display);
@@ -1254,10 +1349,10 @@ button {
   font: 700 12px/1 var(--body);
   letter-spacing: 1.2px;
   text-transform: uppercase;
-  color: var(--moss-deep);
+  color: var(--text-muted);
 }
 .hrow--latest .hrow__day {
-  color: var(--ink);
+  color: var(--on-accent);
 }
 
 /* ── list rows (shopping, methods) ── */
@@ -1279,7 +1374,7 @@ button {
   display: flex;
   align-items: center;
   gap: 16px;
-  background: var(--paper);
+  background: var(--panel);
   border: var(--line);
   border-radius: var(--radius-panel);
   padding: 12px 14px 12px 18px;
@@ -1301,10 +1396,10 @@ button {
 .lrow__name {
   display: block;
   font: 700 15.5px/1.2 var(--body);
-  color: var(--ink);
+  color: var(--text);
 }
 .lrow--done .lrow__name {
-  color: var(--moss-deep);
+  color: var(--text-muted);
 }
 .lrow--done .lrow__main .lrow__name {
   text-decoration: line-through;
@@ -1312,7 +1407,7 @@ button {
 .lrow__why {
   display: block;
   font: 400 13px/1.35 var(--body);
-  color: var(--moss-deep);
+  color: var(--text-muted);
   margin-top: 3px;
 }
 .stock-btn {
@@ -1320,13 +1415,13 @@ button {
   min-height: 40px;
   padding: 0 16px;
   border: var(--line);
-  background: var(--white);
-  color: var(--ink);
+  background: var(--raised);
+  color: var(--text);
   border-radius: 999px;
   font: 700 14px/1 var(--body);
 }
 .stock-btn:hover {
-  background: var(--paper);
+  background: var(--panel);
 }
 .method-toggle {
   flex: none;
@@ -1338,7 +1433,7 @@ button {
   background: transparent;
   padding: 0 4px;
   font: 700 14px/1 var(--body);
-  color: var(--ink);
+  color: var(--text);
 }
 
 /* ── rules ── */
@@ -1350,7 +1445,7 @@ button {
   align-items: start;
 }
 .rcard {
-  background: var(--paper);
+  background: var(--panel);
   border: var(--line);
   border-radius: var(--radius-panel);
   padding: 22px;
@@ -1361,18 +1456,18 @@ button {
 .diet-chip {
   min-height: 42px;
   border: var(--line);
-  background: var(--white);
-  color: var(--ink);
+  background: var(--raised);
+  color: var(--text);
   border-radius: 999px;
   padding: 0 16px;
   font: 700 14px/1 var(--body);
 }
 .diet-chip:hover {
-  background: var(--paper);
+  background: var(--panel);
 }
 .diet-chip[aria-pressed="true"] {
-  background: var(--bark);
-  color: var(--cream);
+  background: var(--strong);
+  color: var(--on-strong);
 }
 .weight-card {
   display: flex;
@@ -1381,31 +1476,35 @@ button {
   width: 100%;
   text-align: left;
   border: var(--line);
-  background: var(--paper);
+  background: var(--panel);
   border-radius: var(--radius-panel);
   padding: 22px;
 }
 .weight-card[aria-checked="true"] {
-  background: var(--sprout);
+  background: var(--accent-soft);
+  color: var(--on-accent);
 }
 .weight-card__title {
   display: block;
   font: 700 17px/1.3 var(--body);
-  color: var(--ink);
+  color: var(--text);
+}
+.weight-card[aria-checked="true"] .weight-card__title {
+  color: var(--on-accent);
 }
 .weight-card__body {
   display: block;
   font: 400 14px/1.5 var(--body);
-  color: var(--moss-deep);
+  color: var(--text-muted);
   margin-top: 6px;
 }
 .weight-card[aria-checked="true"] .weight-card__body {
-  color: var(--ink);
+  color: var(--on-accent);
 }
 .footnote {
   padding: 6px 8px;
   font: italic 400 13px/1.55 var(--body);
-  color: var(--moss-deep);
+  color: var(--text-muted);
   text-wrap: pretty;
   margin: 0;
 }
@@ -1437,15 +1536,20 @@ button {
 /* ── sign in ── */
 /* A single paper panel in the middle of the dotted ground. */
 .signin {
-  position: absolute;
-  inset: 0;
+  min-height: calc(100vh - 70px);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 28px 16px;
   background-color: var(--ground);
-  background-image: radial-gradient(var(--sprout) 1.2px, transparent 1.4px);
-  background-size: 22px 22px;
+  background-image:
+    radial-gradient(var(--pattern-dot) 1.2px, transparent 1.4px),
+    linear-gradient(var(--pattern-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--pattern-line) 1px, transparent 1px);
+  background-size:
+    22px 22px,
+    28px 28px,
+    28px 28px;
 }
 
 .signin-panel {
@@ -1458,12 +1562,7 @@ button {
   padding: 30px 24px 24px;
   border: var(--line);
   border-radius: var(--radius-panel);
-  background: var(--paper);
-}
-
-.signin-logo {
-  width: 56px;
-  height: 56px;
+  background: var(--panel);
 }
 
 .signin-brand {
@@ -1476,7 +1575,7 @@ button {
 
 .signin-blurb {
   font: 400 15px/1.5 var(--body);
-  color: var(--ink);
+  color: var(--text);
   margin: 0;
   text-wrap: pretty;
 }
@@ -1489,17 +1588,18 @@ button {
   min-height: 48px;
   border: var(--line);
   border-radius: 999px;
-  background: var(--bark);
-  color: var(--cream);
+  background: var(--strong);
+  color: var(--on-strong);
   box-shadow: var(--shadow-hard);
   font: 700 15px/1 var(--body);
   text-decoration: none;
 }
 
 .signin-google:hover {
-  background: var(--ink);
+  background: var(--strong-hover);
 }
 
+/* A third-party mark sits on untinted white in both themes. */
 .signin-google svg {
   background: var(--white);
   border-radius: 50%;
@@ -1522,8 +1622,8 @@ button {
   padding: 0 16px;
   border: var(--line);
   border-radius: 999px;
-  background: var(--white);
-  color: var(--ink);
+  background: var(--raised);
+  color: var(--text);
   cursor: pointer;
   font: 700 14px/1 var(--body);
 }
@@ -1539,7 +1639,7 @@ button {
 
 .signin-guestNote {
   font: 400 12.5px/1.4 var(--body);
-  color: var(--moss-deep);
+  color: var(--text-muted);
   margin: 0;
   text-wrap: pretty;
 }

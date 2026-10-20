@@ -13,7 +13,7 @@ interface Props {
  * is its own serving (a piece, a can) has nothing to ask, so this renders
  * nothing — which units ask is the units table's `default_serving`, not code.
  */
-export function ServingField({ vocab, unit, value, onChange }: Props) {
+export const ServingField = ({ vocab, unit, value, onChange }: Props) => {
   const fallback = defaultServing(vocab, unit);
   if (fallback === null) {
     return null;
@@ -36,4 +36,4 @@ export function ServingField({ vocab, unit, value, onChange }: Props) {
       <span className="serving-field__unit">{small}</span>
     </label>
   );
-}
+};

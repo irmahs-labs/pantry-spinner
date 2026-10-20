@@ -5,7 +5,7 @@ import { Icon } from "../components/icon";
 import { ServingField } from "../components/serving-field";
 import { Switch } from "../components/switch";
 import { kindsFor, labelOfCategory } from "../data/vocab";
-import type { CategoryCode } from "../data/vocab";
+import type { CategoryCode, Method } from "../data/vocab";
 import { addDaysISO, daysUntil, todayISO } from "../lib/dates";
 import { kindOfDraft, methodsOn } from "../state/planner";
 import type { Action, AddDraft, PlannerState } from "../state/planner";
@@ -23,12 +23,45 @@ const DATE_PRESETS: [number, string][] = [
   [30, "1 month"],
 ];
 
+/** The draft field that holds the kind, for the reel being described. */
+const kindPatch = (category: CategoryCode, code: string): Partial<AddDraft> => {
+  if (category === "protein") {
+    return { proteinKind: code };
+  }
+  if (category === "vegetable") {
+    return { vegetableKind: code };
+  }
+  return { starchKind: code };
+};
+
+/** What the ticks under "How can it be cooked?" will do to a dish's name. */
+const methodsNote = (d: AddDraft, ticked: Method[]): string => {
+  const [first] = ticked;
+  const name = d.shortName.trim() || d.name.trim() || "…";
+  if (d.category === "protein" && first) {
+    return `A draw can call it “${first.phrase} ${name}”.`;
+  }
+  if (d.category === "vegetable" && first) {
+    return `A draw can serve it “with ${first.phrase.toLowerCase()} ${name.toLowerCase()}”.`;
+  }
+  if (ticked.length) {
+    return `${ticked.length} ticked.`;
+  }
+  if (d.category === "protein") {
+    return "Nothing ticked: its dishes will be named without a method.";
+  }
+  if (d.category === "vegetable") {
+    return "Nothing ticked: its dishes use the word its kind comes with.";
+  }
+  return "Nothing ticked: fine for most starches.";
+};
+
 /**
  * Describing a new ingredient: its name, which reel it spins on, what kind it is,
  * and the ways it can be cooked. The kind and the ticks are what dish names and
  * diet filters read, which is why they are asked for once here, not guessed later.
  */
-export function AddIngredient({ state, dispatch }: Props) {
+export const AddIngredient = ({ state, dispatch }: Props) => {
   const v = state.vocab;
   const d = state.draft;
   const patch = (p: Partial<AddDraft>) =>
@@ -37,31 +70,13 @@ export function AddIngredient({ state, dispatch }: Props) {
   const current = kindOfDraft(d);
   const hint = kinds.find((k) => k.code === current)?.examples;
 
-  const pickKind = (code: string) =>
-    patch(
-      d.category === "protein"
-        ? { proteinKind: code }
-        : d.category === "vegetable"
-          ? { vegetableKind: code }
-          : { starchKind: code }
-    );
+  const pickKind = (code: string) => patch(kindPatch(d.category, code));
 
   // A method switched off in Cooking methods is not offered here at all.
   const shown = methodsOn(state);
   const ticked = shown.filter((m) => d.methods.includes(m.code));
   const allTicked = shown.length > 0 && ticked.length === shown.length;
-  const example =
-    d.category === "protein" && ticked[0]
-      ? `A draw can call it “${ticked[0].phrase} ${d.shortName.trim() || d.name.trim() || "…"}”.`
-      : d.category === "vegetable" && ticked[0]
-        ? `A draw can serve it “with ${ticked[0].phrase.toLowerCase()} ${(d.shortName.trim() || d.name.trim() || "…").toLowerCase()}”.`
-        : ticked.length
-          ? `${ticked.length} ticked.`
-          : d.category === "protein"
-            ? "Nothing ticked: its dishes will be named without a method."
-            : d.category === "vegetable"
-              ? "Nothing ticked: its dishes use the word its kind comes with."
-              : "Nothing ticked: fine for most starches.";
+  const example = methodsNote(d, ticked);
 
   const dateSub =
     d.days === 0
@@ -113,6 +128,7 @@ export function AddIngredient({ state, dispatch }: Props) {
         </div>
       </div>
 
+      {/* oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a <fieldset> brings its own border, padding and min-width into the .field layout; role="group" gives assistive tech the same group */}
       <div className="field" role="group" aria-labelledby="which-reel">
         <div id="which-reel" className="kicker">
           Which reel?
@@ -124,7 +140,7 @@ export function AddIngredient({ state, dispatch }: Props) {
               type="button"
               className="cat-card"
               aria-pressed={d.category === c.code}
-              onClick={() => patch({ category: c.code as CategoryCode })}
+              onClick={() => patch({ category: c.code })}
             >
               <Icon d={categoryIcon(c.code)} size={32} />
               <span>{c.label}</span>
@@ -133,6 +149,7 @@ export function AddIngredient({ state, dispatch }: Props) {
         </div>
       </div>
 
+      {/* oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a <fieldset> brings its own border, padding and min-width into the .field layout; role="group" gives assistive tech the same group */}
       <div className="field" role="group" aria-labelledby="kind-label">
         <div id="kind-label" className="kicker">
           {d.category === "protein" ? "What kind" : "What type"}
@@ -166,6 +183,7 @@ export function AddIngredient({ state, dispatch }: Props) {
         )}
       </div>
 
+      {/* oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a <fieldset> brings its own border, padding and min-width into the .field layout; role="group" gives assistive tech the same group */}
       <div className="field" role="group" aria-labelledby="how-label">
         <div className="field__head">
           <div id="how-label" className="kicker">
@@ -211,6 +229,7 @@ export function AddIngredient({ state, dispatch }: Props) {
       <button
         type="button"
         className="check-card"
+        // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- the whole card (tick, title, sub-line) is the control, and an <input type="checkbox"> cannot hold content
         role="checkbox"
         aria-checked={d.have}
         onClick={() => patch({ have: !d.have })}
@@ -308,11 +327,7 @@ export function AddIngredient({ state, dispatch }: Props) {
       >
         Add to the {labelOfCategory(v, d.category).toLowerCase()} reel
       </button>
-      {state.flash && (
-        <div className="flash" role="status">
-          {state.flash}
-        </div>
-      )}
+      {state.flash && <output className="flash">{state.flash}</output>}
     </form>
   );
-}
+};

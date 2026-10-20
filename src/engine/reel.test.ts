@@ -24,6 +24,8 @@ import {
 import type { PickContext, Triple } from "./reel";
 
 // The vocabulary exactly as the migration seeds it — see scripts/vocab-fixture.sh.
+// SAFETY: vocab.json is that script's dump of every reference table, one array
+// of rows per table, which is the shape RawVocab names.
 const vocab = toVocab(raw as RawVocab);
 const rule = (code: string) => vocab.dietRules.filter((r) => r.code === code);
 
@@ -71,6 +73,11 @@ const CATALOGUE: Ingredient[] = [
   }),
 ];
 const named = (name: string) => ingredientOf(CATALOGUE, name);
+const namedPicks = (
+  p: string,
+  v: string,
+  s: string
+): Triple<Ingredient | undefined> => [named(p), named(v), named(s)];
 const stock = (name: string, days: number): PantryItem => ({
   expiresOn: addDaysISO(days),
   name,
@@ -125,7 +132,9 @@ describe("the vocabulary the migration seeds", () => {
       "vegetable_method",
     ];
     for (const style of vocab.dishStyles) {
-      const used = [...style.template.matchAll(/\{(\w+)\}/g)].map((m) => m[1]);
+      const used = [...style.template.matchAll(/\{(?<key>\w+)\}/gu)].map(
+        (m) => m[1]
+      );
       for (const key of used) {
         expect(known, `${style.code}: {${key}}`).toContain(key);
       }
@@ -139,8 +148,9 @@ describe("the vocabulary the migration seeds", () => {
   it("only excludes diets that protein kinds actually use", () => {
     const diets = new Set(vocab.proteinKinds.map((k) => k.diet));
     for (const r of vocab.dietRules) {
-      for (const d of r.excludesDiets)
+      for (const d of r.excludesDiets) {
         expect(diets.has(d), `${r.code}: ${d}`).toBe(true);
+      }
     }
   });
 });
@@ -241,19 +251,19 @@ describe("weighting and the spin", () => {
   it("leaves every target on the payline once the strip settles", () => {
     const plan = planSpin([0, 0, 0], [false, false, false], reels, ctx);
     const rest = settledIdx(plan.target, reels);
-    plan.target.forEach((t, k) =>
-      expect(paylineOf(rest[k], reels[k].length)).toBe(t)
-    );
+    for (const [k, t] of plan.target.entries()) {
+      expect(paylineOf(rest[k], reels[k].length)).toBe(t);
+    }
     expect(plan.dur).toEqual(["1.50s", "1.92s", "2.34s"]);
   });
 });
 
 describe("cooking methods come from the ticks", () => {
-  const picks = [
+  const picks: Triple<Ingredient | undefined> = [
     named("Chicken Thighs"),
     named("Broccoli"),
     named("Jasmine Rice"),
-  ] as Triple<Ingredient | undefined>;
+  ];
   const free: Triple<boolean> = [false, false, false];
 
   it("picks only from what was ticked for each ingredient", () => {
@@ -266,11 +276,11 @@ describe("cooking methods come from the ticks", () => {
   });
 
   it("gives no method to an ingredient with nothing ticked", () => {
-    const plain = [
+    const plain: Triple<Ingredient | undefined> = [
       named("Ground Beef"),
       named("Baby Spinach"),
       named("Orzo"),
-    ] as Triple<Ingredient | undefined>;
+    ];
     expect(chooseMethods(plain, [], free, null)).toEqual([null, null, null]);
   });
 
@@ -291,13 +301,10 @@ describe("cooking methods come from the ticks", () => {
 });
 
 describe("dish names are filled from the templates table", () => {
-  const picks = (p: string, v: string, s: string) =>
-    [named(p), named(v), named(s)] as Triple<Ingredient | undefined>;
-
   it("uses the protein method in front and the vegetable method behind", () => {
     expect(
       dishName(
-        picks("Chicken Thighs", "Broccoli", "Jasmine Rice"),
+        namedPicks("Chicken Thighs", "Broccoli", "Jasmine Rice"),
         ["air_fry", "roast", null],
         vocab
       )
@@ -307,7 +314,7 @@ describe("dish names are filled from the templates table", () => {
   it("falls back to the vegetable kind word when nothing is ticked for it", () => {
     expect(
       dishName(
-        picks("Chicken Thighs", "Baby Spinach", "Jasmine Rice"),
+        namedPicks("Chicken Thighs", "Baby Spinach", "Jasmine Rice"),
         ["bake", null, null],
         vocab
       )
@@ -317,7 +324,7 @@ describe("dish names are filled from the templates table", () => {
   it("drops the participle cleanly when the protein has no method", () => {
     expect(
       dishName(
-        picks("Ground Beef", "Broccoli", "Jasmine Rice"),
+        namedPicks("Ground Beef", "Broccoli", "Jasmine Rice"),
         [null, null, null],
         vocab
       )
@@ -328,7 +335,7 @@ describe("dish names are filled from the templates table", () => {
     expect(styleOf(named("Corn Tortillas"), vocab)?.label).toBe("Tacos");
     expect(
       dishName(
-        picks("Firm Tofu", "Broccoli", "Corn Tortillas"),
+        namedPicks("Firm Tofu", "Broccoli", "Corn Tortillas"),
         ["pan_fry", null, null],
         vocab
       )
@@ -338,7 +345,7 @@ describe("dish names are filled from the templates table", () => {
   it("can use the starch method where the template asks for it", () => {
     expect(
       dishName(
-        picks("Chicken Thighs", "Broccoli", "Sweet Potato"),
+        namedPicks("Chicken Thighs", "Broccoli", "Sweet Potato"),
         ["bake", "roast", "roast"],
         vocab
       )

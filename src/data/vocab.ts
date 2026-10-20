@@ -127,24 +127,26 @@ export const VOCAB_TABLES = [
 export type LoadFailure = "missing" | "unreachable";
 
 /** Sorts an error from `loadVocab` by what the API said, if it said anything. */
-export const whyLoadFailed = (error: unknown): LoadFailure =>
-  error instanceof ApiError && error.reason === "missing"
+export const whyLoadFailed = (cause: unknown): LoadFailure =>
+  cause instanceof ApiError && cause.reason === "missing"
     ? "missing"
     : "unreachable";
 
-/** Every reference table, in one request. Readable without signing in. */
-export const loadVocab = async (): Promise<Vocab> =>
-  toVocab(await getJson<RawVocab>("/api/vocab"));
-
 /** Turns raw rows into the app's shape. Separate from the fetch so it can be tested. */
-export function toVocab(raw: RawVocab): Vocab {
-  type Row = Record<string, unknown>;
-  const rows = (table: (typeof VOCAB_TABLES)[number]): Row[] => raw[table] ?? [];
+export const toVocab = (raw: RawVocab): Vocab => {
+  const rows = (table: (typeof VOCAB_TABLES)[number]): TableRow[] =>
+    raw[table] ?? [];
   // A unit's serving unit is another row of the same table, referenced by id.
   const unitCodes = new Map(
     rows("meal_planner_units").map((r) => [r.id, String(r.code)])
   );
 
+  // SAFETY: every row is a reference table's row as Postgres's json_agg wrote
+  // it (server/reference.ts, and scripts/vocab-fixture.sh for the fixtures), so
+  // each column has its schema type: smallint is a number, text a string,
+  // boolean a boolean and text[] an array of strings, and only default_serving
+  // and id_serving_unit can be null. Category codes are cast only after the
+  // filter has kept the rows whose code is in CATEGORY_CODES.
   return {
     categories: rows("meal_planner_categories")
       .filter((r) => CATEGORY_CODES.has(String(r.code)))
@@ -154,7 +156,7 @@ export function toVocab(raw: RawVocab): Vocab {
         label: r.label as string,
         position: r.position as number,
       }))
-      .sort((a, b) => a.position - b.position),
+      .toSorted((a, b) => a.position - b.position),
     dietRules: rows("meal_planner_diet_rules").map((r) => ({
       code: r.code as string,
       excludesDiets: (r.excludes_diets as string[]) ?? [],
@@ -202,8 +204,7 @@ export function toVocab(raw: RawVocab): Vocab {
       isDefault: r.is_default as boolean,
       label: r.label as string,
       servingFactor: Number(r.serving_factor ?? 1),
-      servingUnit:
-        unitCodes.get(r.id_serving_unit as number | null | undefined) ?? null,
+      servingUnit: unitCodes.get(r.id_serving_unit) ?? null,
     })),
     vegetableKinds: rows("meal_planner_vegetable_kinds").map((r) => ({
       code: r.code as string,
@@ -213,7 +214,11 @@ export function toVocab(raw: RawVocab): Vocab {
       word: r.cooking_word as string,
     })),
   };
-}
+};
+
+/** Every reference table, in one request. Readable without signing in. */
+export const loadVocab = async (): Promise<Vocab> =>
+  toVocab(await getJson<RawVocab>("/api/vocab"));
 
 // ── Reading it ───────────────────────────────────────────────────────────────
 
@@ -223,12 +228,15 @@ export const categoryCodes = (v: Vocab): CategoryCode[] =>
 export const labelOfCategory = (v: Vocab, code: CategoryCode) =>
   v.categories.find((c) => c.code === code)?.label ?? "";
 
-export const kindsFor = (v: Vocab, category: CategoryCode) =>
-  category === "protein"
-    ? v.proteinKinds
-    : category === "vegetable"
-      ? v.vegetableKinds
-      : v.starchKinds;
+export const kindsFor = (v: Vocab, category: CategoryCode) => {
+  if (category === "protein") {
+    return v.proteinKinds;
+  }
+  if (category === "vegetable") {
+    return v.vegetableKinds;
+  }
+  return v.starchKinds;
+};
 
 export const defaultUnit = (v: Vocab): string =>
   (v.units.find((u) => u.isDefault) ?? v.units[0])?.code ?? "";
@@ -257,12 +265,11 @@ export const methodOf = (v: Vocab, code: string | null | undefined) =>
   code ? v.methods.find((m) => m.code === code) : undefined;
 
 /** "×8" for a count, "600 g" for anything else — which is which is a column. */
-export function formatQuantity(
+export const formatQuantity = (
   v: Vocab,
   quantity: number,
   unit: string
-): string {
-  return v.units.find((u) => u.code === unit)?.isCount
+): string =>
+  v.units.find((u) => u.code === unit)?.isCount
     ? `×${quantity}`
     : `${quantity} ${unit}`;
-}

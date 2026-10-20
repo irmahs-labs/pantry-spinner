@@ -7,7 +7,12 @@
  * 24px glyphs at stroke-width 2.75; multiple paths are separated by "|".
  */
 
-const DISH: Record<string, string> = {
+/** SVG paths by a database code; a code may be missing, so lookups fall back. */
+interface PathsByCode {
+  [code: string]: string;
+}
+
+const DISH: PathsByCode = {
   bowl: "M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9Z|M7 21h10|M5 12a7 6 0 0 1 14 0|M10 8h.01|M14 9h.01|M12 6h.01",
   noodles:
     "M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9Z|M7 21h10|M13 3l-3 9|M19 3l-5 9|M6 12c0-1.5 1.5-1.5 1.5-3|M9.5 12c0-1.5 1.5-1.5 1.5-3",
@@ -42,7 +47,7 @@ const PLATE =
   "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z|M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z";
 
 /** Lucide: egg, carrot, wheat — by category code. */
-const CATEGORY: Record<string, string> = {
+const CATEGORY: PathsByCode = {
   protein: CAT[0],
   starch: CAT[2],
   vegetable: CAT[1],

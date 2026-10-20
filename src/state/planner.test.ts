@@ -21,6 +21,7 @@ import type { PlannerState } from "./planner";
 // SAFETY: vocab.json is scripts/vocab-fixture.sh's dump of every reference
 // table, one array of rows per table, which is the shape RawVocab names.
 const vocab = toVocab(raw as RawVocab);
+
 const loaded = plannerReducer(createInitialState(), {
   type: "vocab/load",
   vocab,
@@ -110,6 +111,7 @@ describe("into the pot", () => {
         p.name === "Chicken Thighs" ? { ...p, qty: 150 } : p
       ),
     };
+
     const cooked = plannerReducer(low, { type: "dish/cook" });
     expect(cooked.pantry.some((p) => p.name === "Chicken Thighs")).toBe(false);
   });
@@ -120,6 +122,7 @@ describe("into the pot", () => {
       "Air-fried Chicken Rice Bowl with charred broccoli"
     );
     expect(after.plan[0].cookedOn).toBe(todayISO());
+
     if (FEATURES.history) {
       expect(after.screen).toBe("plan");
     } else {
@@ -161,6 +164,7 @@ describe("serving sizes", () => {
       patch: { name: "Chicken Thighs", unit: "g" },
       type: "stock/patch",
     });
+
     expect(s.stock.serving).toBe("150");
     s = { ...s, catalogue: drawn.catalogue };
     s = plannerReducer(s, {
@@ -181,6 +185,7 @@ describe("adding to the shopping list", () => {
       type: "grocery/add",
       unit: "kg",
     });
+
     expect(s.grocery[0]).toMatchObject({
       name: "Jasmine Rice",
       qty: 2,
@@ -210,6 +215,7 @@ describe("yesterday's meal", () => {
         planEntry("before", addDaysISO(-2)),
       ],
     };
+
     expect(yesterdaysMeal(state)?.id).toBe("late");
   });
 
@@ -221,6 +227,7 @@ describe("yesterday's meal", () => {
         planEntry("before", addDaysISO(-2)),
       ],
     };
+
     expect(yesterdaysMeal(state)).toBeUndefined();
   });
 });
@@ -266,6 +273,7 @@ describe("ticking methods on a new ingredient", () => {
       name: "chicken thighs",
       type: "ingredient/setMethods",
     });
+
     const chicken = s.catalogue.find((i) => i.name === "Chicken Thighs");
     expect(chicken?.methods).toEqual(["roast", "grill"]);
     // Only that ingredient changes.
@@ -283,6 +291,7 @@ describe("ticking methods on a new ingredient", () => {
         type: "spin/settle",
       }
     );
+
     // Chicken is ticked for air-fry only; broccoli for nothing.
     expect(settled.methods).toEqual([null, null, null]);
   });

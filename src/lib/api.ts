@@ -24,6 +24,7 @@ const errorBody = z.object({ error: z.string() });
 
 const reasonOf = async (response: Response): Promise<string> => {
   const parsed = errorBody.safeParse(await response.json().catch(() => null));
+
   return parsed.success ? parsed.data.error : response.statusText;
 };
 
@@ -31,9 +32,11 @@ export const getJson = async <T>(path: string): Promise<T> => {
   const response = await fetch(path, {
     headers: { accept: "application/json" },
   });
+
   if (!response.ok) {
     throw new ApiError(response.status, await reasonOf(response));
   }
+
   // SAFETY: each caller names the shape its own endpoint answers with.
   return (await response.json()) as T;
 };
@@ -44,6 +47,7 @@ export const putJson = async <T>(path: string, body: T): Promise<void> => {
     headers: { "content-type": "application/json" },
     method: "PUT",
   });
+
   if (!response.ok) {
     throw new ApiError(response.status, await reasonOf(response));
   }

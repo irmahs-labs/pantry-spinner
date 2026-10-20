@@ -65,18 +65,21 @@ export const useRemoteSync = (
     (async () => {
       try {
         const vocab = await loadVocab();
+
         if (!cancelled) {
           dispatch({ type: "vocab/load", vocab });
           setVocabReady(true);
         }
       } catch (error) {
         console.error("Could not load the reference tables", error);
+
         if (!cancelled) {
           setFailure(whyLoadFailed(error));
           setPhase("broken");
         }
       }
     })();
+
     return () => {
       cancelled = true;
     };
@@ -87,6 +90,7 @@ export const useRemoteSync = (
     if (!vocabReady || !isGuest || synced.current) {
       return;
     }
+
     const stored = guest.loadGuest();
     dispatch({ snapshot: stored, type: "state/hydrate" });
     synced.current = stored;
@@ -99,34 +103,44 @@ export const useRemoteSync = (
     if (!vocabReady || isGuest) {
       return;
     }
+
     let cancelled = false;
     (async () => {
       try {
         const who = await currentAccount();
+
         if (cancelled) {
           return;
         }
+
         setAccount(who);
+
         if (!who) {
           setPhase("signed-out");
+
           return;
         }
+
         const stored = await loadSnapshot();
+
         if (cancelled) {
           return;
         }
+
         dispatch({ snapshot: stored, type: "state/hydrate" });
         synced.current = stored;
         setSaveFailed(false);
         setPhase("ready");
       } catch (error) {
         console.error("Could not load your pantry", error);
+
         if (!cancelled) {
           setSaveFailed(true);
           setPhase("ready");
         }
       }
     })();
+
     return () => {
       cancelled = true;
     };
@@ -136,14 +150,18 @@ export const useRemoteSync = (
   // out of order and leave the older one stored.
   const queued = useRef<Snapshot | null>(null);
   const saving = useRef(false);
+
   const flush = useCallback(async () => {
     if (saving.current) {
       return;
     }
+
     saving.current = true;
+
     while (queued.current) {
       const next = queued.current;
       queued.current = null;
+
       try {
         // oxlint-disable-next-line eslint/no-await-in-loop -- one at a time is the point
         await saveSnapshot(next);
@@ -153,27 +171,35 @@ export const useRemoteSync = (
         setSaveFailed(true);
       }
     }
+
     saving.current = false;
   }, []);
 
   useEffect(() => {
     const prev = synced.current;
+
     if (phase !== "ready" || !prev) {
       return;
     }
+
     const next = snapshotOf(state);
+
     if (sameSnapshot(prev, next)) {
       return;
     }
+
     synced.current = next;
 
     if (isGuest) {
       guest.saveGuest(next);
+
       return;
     }
+
     if (!account) {
       return;
     }
+
     queued.current = next;
     // The save's state updates come after the network answers, not during this effect.
     // oxlint-disable-next-line react/set-state-in-effect -- syncing with the server is what effects are for
@@ -182,19 +208,23 @@ export const useRemoteSync = (
 
   const starting = useRef(false);
   const { vocab } = state;
+
   const startGuest = useCallback(async () => {
     if (!vocabReady || starting.current) {
       return;
     }
+
     starting.current = true;
     // The demo is a nicety: if it cannot be read, the guest starts empty rather
     // than not at all.
     let start = EMPTY;
+
     try {
       start = await loadDemo(vocab);
     } catch (error) {
       console.error("Could not load the demo pantry", error);
     }
+
     starting.current = false;
     guest.startGuest(start);
     dispatch({ snapshot: start, type: "state/hydrate" });
@@ -210,8 +240,10 @@ export const useRemoteSync = (
       dispatch({ snapshot: EMPTY, type: "state/hydrate" });
       setIsGuest(false);
       setPhase("signed-out");
+
       return;
     }
+
     signOutEverywhere();
   }, [isGuest, dispatch]);
 

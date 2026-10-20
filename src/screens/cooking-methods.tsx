@@ -15,6 +15,7 @@ interface Props {
  */
 export const CookingMethods = ({ state, dispatch }: Props) => {
   const v = state.vocab;
+
   const usedBy = (code: string) =>
     state.catalogue.filter((i) => i.methods.includes(code)).length;
 
@@ -29,6 +30,7 @@ export const CookingMethods = ({ state, dispatch }: Props) => {
         {v.methods.map((m) => {
           const enabled = !state.methodsOff.includes(m.code);
           const count = usedBy(m.code);
+
           return (
             <li key={m.code} className={`lrow${enabled ? "" : " lrow--done"}`}>
               <span className="lrow__main" style={{ cursor: "default" }}>

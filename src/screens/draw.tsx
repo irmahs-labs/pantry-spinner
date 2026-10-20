@@ -42,12 +42,15 @@ const hintFor = (
   if (!ready) {
     return `Stock ${listOf(missing)} to draw.`;
   }
+
   if (spinning) {
     return "Turning over…";
   }
+
   if (settled) {
     return "Click a column to hold it, then draw again.";
   }
+
   return "Draw three — or press";
 };
 
@@ -55,6 +58,7 @@ const reelTitle = (empty: boolean, locked: boolean): string => {
   if (empty) {
     return "Nothing stocked";
   }
+
   return locked ? "Release this column" : "Hold this column";
 };
 
@@ -63,12 +67,15 @@ const keepsFor = (left: number): string => {
   if (left > 30) {
     return "stocked";
   }
+
   if (left < 0) {
     return "overdue";
   }
+
   if (left === 0) {
     return "today";
   }
+
   return left === 1 ? "1 day" : `${left} days`;
 };
 
@@ -77,15 +84,18 @@ const eatBy = (left: number): string => {
   if (left <= 0) {
     return "today";
   }
+
   return left === 1 ? "tomorrow" : `${left} days`;
 };
 
 export const Draw = ({ state, dispatch, onSpin }: DrawProps) => {
   const v = state.vocab;
+
   const reels = useMemo(
     () => reelsFrom(state.pantry, state.catalogue, v),
     [state.pantry, state.catalogue, v]
   );
+
   const ready = canSpin(reels, v);
   const settled = state.picked !== null && !state.spinning;
 
@@ -94,6 +104,7 @@ export const Draw = ({ state, dispatch, onSpin }: DrawProps) => {
   const picks = (state.picked ?? [null, null, null]).map((name) =>
     name ? ingredientOf(state.catalogue, name) : undefined
   ) as Triple<Ingredient | undefined>;
+
   const methods = state.methods ?? [null, null, null];
   const style = styleOf(picks[2], v);
   const lead = methodOf(v, methods[0]);
@@ -107,6 +118,7 @@ export const Draw = ({ state, dispatch, onSpin }: DrawProps) => {
   const missing = emptyReels(reels, v).map((c) =>
     labelOfCategory(v, c).toLowerCase()
   );
+
   const hint = hintFor(ready, state.spinning, settled, missing);
 
   return (
@@ -124,6 +136,7 @@ export const Draw = ({ state, dispatch, onSpin }: DrawProps) => {
             const label = v.categories[k]?.label ?? "";
             const locked = state.locks[k];
             const empty = list.length === 0;
+
             return (
               <button
                 type="button"
@@ -154,6 +167,7 @@ export const Draw = ({ state, dispatch, onSpin }: DrawProps) => {
                     {Array.from({ length: STRIP_REPEATS }, (_, r) =>
                       list.map((item, i) => {
                         const left = daysLeft(item);
+
                         return (
                           <div key={`${r}:${i}`} className="cell">
                             <div className="cell__name">{item.name}</div>
@@ -227,16 +241,20 @@ export const Draw = ({ state, dispatch, onSpin }: DrawProps) => {
                     if (!ingredient) {
                       return null;
                     }
+
                     const stocked = state.pantry.find(
                       (p) => p.name === ingredient.name
                     );
+
                     const soon =
                       stocked !== undefined && daysLeft(stocked) <= 3;
+
                     // The protein's method is the lead tag; the others ride on their own tag.
                     const how =
                       k > 0
                         ? methodOf(v, methods[k])?.phrase.toLowerCase()
                         : undefined;
+
                     return (
                       <span
                         key={ingredient.name}
@@ -312,6 +330,7 @@ export const Draw = ({ state, dispatch, onSpin }: DrawProps) => {
             <div className="chip-row">
               {expiring.map((p) => {
                 const left = daysLeft(p);
+
                 return (
                   <span key={p.name} className="soon-chip">
                     {p.name} · {eatBy(left)}

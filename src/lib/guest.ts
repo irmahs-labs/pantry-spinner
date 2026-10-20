@@ -13,9 +13,11 @@ const KEY = "spin-supper:guest";
 const read = (): Snapshot | null => {
   try {
     const raw = sessionStorage.getItem(KEY);
+
     if (!raw) {
       return null;
     }
+
     // SAFETY: only write() below stores this key, and only from a Snapshot. The
     // fields older tabs lacked are filled in next; text that is not JSON, or has
     // no catalogue and pantry arrays, throws into the catch: no guest session.
@@ -30,6 +32,7 @@ const read = (): Snapshot | null => {
       ...p,
       serving: p.serving ?? 1,
     }));
+
     return parsed;
   } catch {
     return null;

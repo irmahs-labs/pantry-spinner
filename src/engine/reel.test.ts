@@ -72,12 +72,15 @@ const CATALOGUE: Ingredient[] = [
     methods: ["roast"],
   }),
 ];
+
 const named = (name: string) => ingredientOf(CATALOGUE, name);
+
 const namedPicks = (
   p: string,
   v: string,
   s: string
 ): Triple<Ingredient | undefined> => [named(p), named(v), named(s)];
+
 const stock = (name: string, days: number): PantryItem => ({
   expiresOn: addDaysISO(days),
   name,
@@ -97,6 +100,7 @@ const PANTRY: PantryItem[] = [
 ];
 
 const reels = reelsFrom(PANTRY, CATALOGUE, vocab);
+
 const ctx: PickContext = {
   catalogue: CATALOGUE,
   rules: [],
@@ -131,10 +135,12 @@ describe("the vocabulary the migration seeds", () => {
       "vegetable",
       "vegetable_method",
     ];
+
     for (const style of vocab.dishStyles) {
       const used = [...style.template.matchAll(/\{(?<key>\w+)\}/gu)].map(
         (m) => m[1]
       );
+
       for (const key of used) {
         expect(known, `${style.code}: {${key}}`).toContain(key);
       }
@@ -147,6 +153,7 @@ describe("the vocabulary the migration seeds", () => {
 
   it("only excludes diets that protein kinds actually use", () => {
     const diets = new Set(vocab.proteinKinds.map((k) => k.diet));
+
     for (const r of vocab.dietRules) {
       for (const d of r.excludesDiets) {
         expect(diets.has(d), `${r.code}: ${d}`).toBe(true);
@@ -227,6 +234,7 @@ describe("diet rules are rows", () => {
         requiresGlutenFree: false,
       },
     ];
+
     expect(allowed(named("Salmon Fillet"), noFish, vocab)).toBe(false);
     expect(allowed(named("Chicken Thighs"), noFish, vocab)).toBe(true);
   });
@@ -251,9 +259,11 @@ describe("weighting and the spin", () => {
   it("leaves every target on the payline once the strip settles", () => {
     const plan = planSpin([0, 0, 0], [false, false, false], reels, ctx);
     const rest = settledIdx(plan.target, reels);
+
     for (const [k, t] of plan.target.entries()) {
       expect(paylineOf(rest[k], reels[k].length)).toBe(t);
     }
+
     expect(plan.dur).toEqual(["1.50s", "1.92s", "2.34s"]);
   });
 });
@@ -264,6 +274,7 @@ describe("cooking methods come from the ticks", () => {
     named("Broccoli"),
     named("Jasmine Rice"),
   ];
+
   const free: Triple<boolean> = [false, false, false];
 
   it("picks only from what was ticked for each ingredient", () => {
@@ -281,6 +292,7 @@ describe("cooking methods come from the ticks", () => {
       named("Baby Spinach"),
       named("Orzo"),
     ];
+
     expect(chooseMethods(plain, [], free, null)).toEqual([null, null, null]);
   });
 
@@ -288,6 +300,7 @@ describe("cooking methods come from the ticks", () => {
     for (let r = 0; r < 30; r += 1) {
       expect(chooseMethods(picks, ["air_fry"], free, null)[0]).toBe("bake");
     }
+
     expect(chooseMethods(picks, ["air_fry", "bake"], free, null)[0]).toBeNull();
   });
 

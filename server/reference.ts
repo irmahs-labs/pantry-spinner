@@ -30,10 +30,12 @@ const readTables = async <T extends string>(
       )
     )
   );
+
   const entries = tables.map((table, i) => [
     table,
     results[i]?.rows[0]?.rows ?? [],
   ]);
+
   // SAFETY: built from `tables` itself, so every name in T has its entry.
   return Object.fromEntries(entries) as Record<T, TableRow[]>;
 };

@@ -28,6 +28,7 @@ const lookups = (v: Vocab) => ({
   method: pair(v.methods),
   unit: pair(v.units),
 });
+
 type Lookups = ReturnType<typeof lookups>;
 
 /** A code the reference tables do not have: the request is wrong, not the server. */
@@ -37,9 +38,11 @@ export class UnknownCodeError extends Error {
 
 const idOf = (map: Map<string, number>, code: string, what: string): number => {
   const id = map.get(code);
+
   if (id === undefined) {
     throw new UnknownCodeError(`Unknown ${what}: ${code}`);
   }
+
   return id;
 };
 
@@ -63,13 +66,16 @@ const toIngredient = (
   // the three CategoryCode values the schema's check constraint allows.
   const category = (l.category.code.get(row.id_category) ??
     "protein") as CategoryCode;
+
   const kindIds: Record<CategoryCode, number | null> = {
     protein: row.id_protein_kind,
     starch: row.id_starch_kind,
     vegetable: row.id_vegetable_kind,
   };
+
   const kindId = kindIds[category];
   const kinds = l.kind[category];
+
   return {
     category,
     glutenFree: row.gluten_free,
@@ -87,6 +93,7 @@ export const loadSnapshot = async (
   vocab: Vocab
 ): Promise<Snapshot> => {
   const l = lookups(vocab);
+
   const [ingredients, ticks, pantry, history, links, list, methods] =
     await Promise.all([
       db.query<IngredientRow>(
@@ -157,8 +164,10 @@ export const loadSnapshot = async (
   // In the table's own order, so a ticked list reads the same everywhere.
   const methodOrder = new Map(vocab.methods.map((m, i) => [m.code, i]));
   const ticksOf = new Map<string, string[]>();
+
   for (const t of ticks.rows) {
     const code = l.method.code.get(t.id_method);
+
     if (code) {
       ticksOf.set(t.id_ingredient, [
         ...(ticksOf.get(t.id_ingredient) ?? []),
@@ -166,13 +175,16 @@ export const loadSnapshot = async (
       ]);
     }
   }
+
   for (const codes of ticksOf.values()) {
     codes.sort((a, b) => (methodOrder.get(a) ?? 0) - (methodOrder.get(b) ?? 0));
   }
 
   const linksByMeal = new Map<string, string[]>();
+
   for (const link of links.rows) {
     const name = nameOf.get(link.id_ingredient);
+
     if (name) {
       linksByMeal.set(link.id_history, [
         ...(linksByMeal.get(link.id_history) ?? []),
@@ -187,6 +199,7 @@ export const loadSnapshot = async (
     ),
     grocery: list.rows.flatMap((row) => {
       const name = nameOf.get(row.id_ingredient);
+
       return name
         ? [
             {
@@ -203,10 +216,12 @@ export const loadSnapshot = async (
       .filter((row) => !row.enabled)
       .flatMap((row) => {
         const code = l.method.code.get(row.id_method);
+
         return code ? [code] : [];
       }),
     pantry: pantry.rows.flatMap((row) => {
       const name = nameOf.get(row.id_ingredient);
+
       return name
         ? [
             {
@@ -237,7 +252,12 @@ const removed = <T>(
   key: (item: T) => string
 ): string[] => {
   const kept = new Set(next.map(key));
-  return prev.map(key).filter((k) => !kept.has(k));
+
+  return prev.flatMap((item) => {
+    const k = key(item);
+
+    return kept.has(k) ? [] : [k];
+  });
 };
 
 /**
@@ -251,8 +271,10 @@ const changed = <T>(
   same: (a: T, b: T) => boolean
 ): T[] => {
   const before = new Map(prev.map((item) => [key(item), item]));
+
   return next.filter((item) => {
     const old = before.get(key(item));
+
     return !old || !same(old, item);
   });
 };
@@ -276,13 +298,16 @@ const saveCatalogue = async (
       a.glutenFree === b.glutenFree &&
       a.methods.join(",") === b.methods.join(",")
   );
+
   if (!items.length) {
     return;
   }
+
   const kindOf = (i: Ingredient, category: CategoryCode) =>
     i.category === category
       ? idOf(l.kind[category].id, i.kind, `${category} kind`)
       : null;
+
   const { rows } = await db.query<{ id: string; name: string }>(
     `insert into meal_planner_ingredients
        (user_id, name, short_name, id_category, id_protein_kind,
@@ -307,18 +332,22 @@ const saveCatalogue = async (
       items.map((i) => (i.category === "starch" ? i.glutenFree : null)),
     ]
   );
+
   const idByName = new Map(rows.map((r) => [r.name, r.id]));
+
   const ticks = items.flatMap((i) =>
     i.methods.map((code) => ({
       ingredient: idByName.get(i.name),
       method: idOf(l.method.id, code, "method"),
     }))
   );
+
   await db.query(
     `delete from meal_planner_ingredient_methods
      where user_id = $1 and id_ingredient = any($2::uuid[])`,
     [userId, rows.map((r) => r.id)]
   );
+
   if (ticks.length) {
     await db.query(
       `insert into meal_planner_ingredient_methods (user_id, id_ingredient, id_method)
@@ -346,6 +375,7 @@ const savePantry = async (
       a.qty === b.qty &&
       a.unit === b.unit
   );
+
   if (items.length) {
     await db.query(
       `insert into meal_planner_pantry
@@ -366,7 +396,9 @@ const savePantry = async (
       ]
     );
   }
+
   const gone = removed(prev.pantry, next.pantry, (i) => i.name);
+
   if (gone.length) {
     await db.query(
       `delete from meal_planner_pantry
@@ -387,6 +419,7 @@ const savePlan = async (
 ): Promise<void> => {
   const known = new Set(prev.plan.map((p) => p.id));
   const added = next.plan.filter((entry) => !known.has(entry.id));
+
   if (added.length) {
     await db.query(
       `insert into meal_planner_history
@@ -406,12 +439,14 @@ const savePlan = async (
         added.map((e) => e.cookedOn),
       ]
     );
+
     const links = added.flatMap((e) =>
       [...new Set(e.ingredients)].map((name) => ({
         history: e.id,
         ingredient: ingredientId(name),
       }))
     );
+
     if (links.length) {
       await db.query(
         `insert into meal_planner_history_ingredients (user_id, id_history, id_ingredient)
@@ -420,7 +455,9 @@ const savePlan = async (
       );
     }
   }
+
   const gone = removed(prev.plan, next.plan, (e) => e.id);
+
   if (gone.length) {
     await db.query(
       "delete from meal_planner_history where user_id = $1 and id = any($2::uuid[])",
@@ -447,6 +484,7 @@ const saveGrocery = async (
       a.unit === b.unit &&
       a.note === b.note
   );
+
   if (items.length) {
     await db.query(
       `insert into meal_planner_shopping_list
@@ -466,7 +504,9 @@ const saveGrocery = async (
       ]
     );
   }
+
   const gone = removed(prev.grocery, next.grocery, (i) => i.name);
+
   if (gone.length) {
     await db.query(
       `delete from meal_planner_shopping_list
@@ -489,12 +529,15 @@ const saveMethods = async (
 ): Promise<void> => {
   const ids = (codes: string[]) =>
     codes.map((code) => idOf(l.method.id, code, "method"));
+
   const turnedOff = next.methodsOff.filter(
     (code) => !prev.methodsOff.includes(code)
   );
+
   const turnedOn = prev.methodsOff.filter(
     (code) => !next.methodsOff.includes(code)
   );
+
   if (turnedOff.length) {
     await db.query(
       `insert into meal_planner_method_settings (user_id, id_method, enabled)
@@ -503,6 +546,7 @@ const saveMethods = async (
       [userId, ids(turnedOff)]
     );
   }
+
   if (turnedOn.length) {
     await db.query(
       `delete from meal_planner_method_settings
@@ -536,12 +580,16 @@ export const saveSnapshot = async (
     "select id, name from meal_planner_ingredients where user_id = $1",
     [userId]
   );
+
   const ids = new Map(rows.map((row) => [row.name, row.id]));
+
   const ingredientId = (name: string): string => {
     const id = ids.get(name);
+
     if (!id) {
       throw new UnknownCodeError(`Unknown ingredient: ${name}`);
     }
+
     return id;
   };
 

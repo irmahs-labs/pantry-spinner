@@ -24,9 +24,11 @@ const freshnessBadge = (soon: boolean, mid: boolean) => {
   if (soon) {
     return { label: "Use it", tone: "badge--dark" };
   }
+
   if (mid) {
     return { label: "Fresh", tone: "tone-fresh" };
   }
+
   return { label: "Stocked", tone: "tone-buy" };
 };
 
@@ -52,25 +54,34 @@ export const Pantry = ({ state, dispatch }: Props) => {
     .toSorted((a, b) => a.name.localeCompare(b.name));
 
   const s = state.stock;
+
   const patch = (p: Partial<typeof s>) =>
     dispatch({ patch: p, type: "stock/patch" });
+
   // The card whose cooking methods are open for editing, by ingredient name.
   const [editing, setEditing] = useState<string | null>(null);
   // As on Add ingredient, a switched-off method is not offered. A tick it
   // already has is kept, not cleared, so switching the method back on restores it.
   const shown = methodsOn(state);
+
   const setMethods = (name: string, codes: string[]) =>
     dispatch({ codes, name, type: "ingredient/setMethods" });
+
   // "3 servings of 200 g": the count is in the stock's unit, the size in its
   // serving unit, so a kilogram of rice reads in grams a serving.
   const servingsNote = (p: (typeof state.pantry)[number]) => {
     const n = servingsLeft(p.qty * servingFactorOf(v, p.unit), p.serving);
+
     return `${n} ${n === 1 ? "serving" : "servings"} of ${formatQuantity(v, p.serving, servingUnitOf(v, p.unit))}`;
   };
+
   const methodLabels = (codes: string[]) =>
     codes
-      .map((c) => v.methods.find((m) => m.code === c)?.label)
-      .filter(Boolean)
+      .flatMap((c) => {
+        const label = v.methods.find((m) => m.code === c)?.label;
+
+        return label ? [label] : [];
+      })
       .join(" · ");
 
   return (
@@ -96,6 +107,7 @@ export const Pantry = ({ state, dispatch }: Props) => {
           </option>
           {v.categories.map((c) => {
             const items = stockable.filter((i) => i.category === c.code);
+
             return items.length ? (
               <optgroup key={c.code} label={c.label}>
                 {items.map((i) => (
@@ -212,6 +224,7 @@ export const Pantry = ({ state, dispatch }: Props) => {
           const badge = freshnessBadge(soon, mid);
           const described = ingredient(p.name);
           const how = methodLabels(described?.methods ?? []);
+
           return (
             <article
               key={p.name}
@@ -270,6 +283,7 @@ export const Pantry = ({ state, dispatch }: Props) => {
                   >
                     {shown.map((m) => {
                       const on = described.methods.includes(m.code);
+
                       return (
                         <button
                           key={m.code}

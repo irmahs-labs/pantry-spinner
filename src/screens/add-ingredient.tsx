@@ -28,9 +28,11 @@ const kindPatch = (category: CategoryCode, code: string): Partial<AddDraft> => {
   if (category === "protein") {
     return { proteinKind: code };
   }
+
   if (category === "vegetable") {
     return { vegetableKind: code };
   }
+
   return { starchKind: code };
 };
 
@@ -38,21 +40,27 @@ const kindPatch = (category: CategoryCode, code: string): Partial<AddDraft> => {
 const methodsNote = (d: AddDraft, ticked: Method[]): string => {
   const [first] = ticked;
   const name = d.shortName.trim() || d.name.trim() || "…";
+
   if (d.category === "protein" && first) {
     return `A draw can call it “${first.phrase} ${name}”.`;
   }
+
   if (d.category === "vegetable" && first) {
     return `A draw can serve it “with ${first.phrase.toLowerCase()} ${name.toLowerCase()}”.`;
   }
+
   if (ticked.length) {
     return `${ticked.length} ticked.`;
   }
+
   if (d.category === "protein") {
     return "Nothing ticked: its dishes will be named without a method.";
   }
+
   if (d.category === "vegetable") {
     return "Nothing ticked: its dishes use the word its kind comes with.";
   }
+
   return "Nothing ticked: fine for most starches.";
 };
 
@@ -64,8 +72,10 @@ const methodsNote = (d: AddDraft, ticked: Method[]): string => {
 export const AddIngredient = ({ state, dispatch }: Props) => {
   const v = state.vocab;
   const d = state.draft;
+
   const patch = (p: Partial<AddDraft>) =>
     dispatch({ patch: p, type: "draft/patch" });
+
   const kinds = kindsFor(v, d.category);
   const current = kindOfDraft(d);
   const hint = kinds.find((k) => k.code === current)?.examples;

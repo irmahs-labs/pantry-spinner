@@ -39,15 +39,19 @@ export const whoIs = async (
   if (!cookie) {
     return { account: null, setCookies: [] };
   }
+
   const response = await fetch(`${env.authUrl}/api/auth/get-session`, {
     headers: { cookie },
   });
+
   if (!response.ok) {
     throw new Error(`The account service answered ${response.status}`);
   }
+
   // Anything that is not a session we recognise is treated as no session.
   const parsed = sessionAnswer.safeParse(await response.json());
   const user = parsed.success ? parsed.data?.user : undefined;
+
   return {
     account: user
       ? {

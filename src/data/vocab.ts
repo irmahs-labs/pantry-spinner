@@ -12,6 +12,7 @@ import type { TableRow } from "./rows";
  * so a fourth category would be a migration, not a row.
  */
 export type CategoryCode = "protein" | "vegetable" | "starch";
+
 const CATEGORY_CODES: ReadonlySet<string> = new Set<CategoryCode>([
   "protein",
   "vegetable",
@@ -24,6 +25,7 @@ export interface Category {
   label: string;
   position: number;
 }
+
 export interface ProteinKind {
   id: number;
   code: string;
@@ -32,6 +34,7 @@ export interface ProteinKind {
   diet: string;
   redMeat: boolean;
 }
+
 export interface VegetableKind {
   id: number;
   code: string;
@@ -39,6 +42,7 @@ export interface VegetableKind {
   examples: string;
   word: string;
 }
+
 export interface StarchKind {
   id: number;
   code: string;
@@ -47,12 +51,14 @@ export interface StarchKind {
   styleId: number;
   glutenFree: boolean;
 }
+
 export interface DishStyle {
   id: number;
   code: string;
   label: string;
   template: string;
 }
+
 export interface Unit {
   id: number;
   code: string;
@@ -66,12 +72,14 @@ export interface Unit {
   /** How many `servingUnit` make one of this unit: 1000 for `kg`. */
   servingFactor: number;
 }
+
 export interface Method {
   id: number;
   code: string;
   label: string;
   phrase: string;
 }
+
 export interface DietRule {
   id: number;
   code: string;
@@ -136,6 +144,7 @@ export const whyLoadFailed = (cause: unknown): LoadFailure =>
 export const toVocab = (raw: RawVocab): Vocab => {
   const rows = (table: (typeof VOCAB_TABLES)[number]): TableRow[] =>
     raw[table] ?? [];
+
   // A unit's serving unit is another row of the same table, referenced by id.
   const unitCodes = new Map(
     rows("meal_planner_units").map((r) => [r.id, String(r.code)])
@@ -232,9 +241,11 @@ export const kindsFor = (v: Vocab, category: CategoryCode) => {
   if (category === "protein") {
     return v.proteinKinds;
   }
+
   if (category === "vegetable") {
     return v.vegetableKinds;
   }
+
   return v.starchKinds;
 };
 

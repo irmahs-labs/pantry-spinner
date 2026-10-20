@@ -151,9 +151,11 @@ export const kindOfDraft = (d: AddDraft): string => {
   if (d.category === "protein") {
     return d.proteinKind;
   }
+
   if (d.category === "vegetable") {
     return d.vegetableKind;
   }
+
   return d.starchKind;
 };
 
@@ -198,10 +200,13 @@ const servingText = (v: Vocab, unit: string): string =>
  */
 export const servingOf = (v: Vocab, unit: string, typed: string): number => {
   const fallback = defaultServing(v, unit);
+
   if (fallback === null) {
     return 1;
   }
+
   const value = Number(typed);
+
   return Number.isFinite(value) && value > 0 ? value : fallback;
 };
 
@@ -211,6 +216,7 @@ const tidy = (n: number) => Math.round(n * 1e6) / 1e6;
 /** A blank or nonsense entry means one of the thing, not NaN. */
 const parseQuantity = (typed: string): number => {
   const value = Number(typed);
+
   return Number.isFinite(value) && value > 0 ? value : 1;
 };
 
@@ -234,6 +240,7 @@ export const plannerReducer = (
       const v = action.vocab;
       const unit = defaultUnit(v);
       const [starch] = v.starchKinds;
+
       return {
         ...state,
         draft: {
@@ -274,6 +281,7 @@ export const plannerReducer = (
     case "reel/toggleLock": {
       const locks: Triple<boolean> = [...state.locks];
       locks[action.reel] = !locks[action.reel];
+
       return { ...state, locks };
     }
 
@@ -292,20 +300,26 @@ export const plannerReducer = (
       // The pantry can change while the reels turn, so read the targets back
       // against the reels as they are now rather than as they were planned.
       const reels = reelsFrom(state.pantry, state.catalogue, state.vocab);
+
       // SAFETY: map keeps the length of the Triple it is called on.
       const target = action.target.map((t, k) =>
         reels[k].length ? t % reels[k].length : 0
       ) as Triple<number>;
+
       const picked = pickedNames(target, reels);
+
       // A method only survives if the ingredient that landed still has it ticked.
       // SAFETY: map keeps the length of the Triple it is called on.
       const methods = action.methods.map((code, k) => {
         const name = picked[k];
+
         const ingredient = name
           ? ingredientOf(state.catalogue, name)
           : undefined;
+
         return code && ingredient?.methods.includes(code) ? code : null;
       }) as Triple<string | null>;
+
       return {
         ...state,
         dur: ["0s", "0s", "0s"],
@@ -320,7 +334,9 @@ export const plannerReducer = (
       if (!state.picked) {
         return state;
       }
+
       const names = state.picked.filter((n): n is string => n !== null);
+
       if (!names.length) {
         return state;
       }
@@ -329,21 +345,27 @@ export const plannerReducer = (
       const picks = state.picked.map((n) =>
         n ? ingredientOf(state.catalogue, n) : undefined
       ) as Triple<Ingredient | undefined>;
+
       const methods = state.methods ?? [null, null, null];
+
       // Cooking uses one serving of everything drawn. The last serving (or what
       // is left of one) takes the item out of the pantry altogether.
       const pantry = state.pantry.flatMap((item) => {
         if (!names.includes(item.name)) {
           return [item];
         }
+
         // The serving is sized in the small unit (grams for a kilogram item).
         const left = tidy(
           item.qty - servingInUnit(state.vocab, item.unit, item.serving)
         );
+
         return left > 0 ? [{ ...item, qty: left }] : [];
       });
+
       const usage = names.map((name) => {
         const item = pantry.find((p) => p.name === name);
+
         return item
           ? `${name}: ${formatQuantity(state.vocab, item.qty, item.unit)} left`
           : `${name}: used up`;
@@ -352,6 +374,7 @@ export const plannerReducer = (
       // The meal is recorded either way; that is what "Yesterday you ate …"
       // reads. Only landing on the Cooked screen waits on FEATURES.history.
       const method = methodOf(state.vocab, methods[0]);
+
       return {
         ...state,
         flash: FEATURES.history ? "" : `${usage.join(" · ")}.`,
@@ -378,6 +401,7 @@ export const plannerReducer = (
 
     case "draft/patch": {
       const draft = { ...state.draft, ...action.patch };
+
       // Choosing a starch kind carries its gluten default across, unless the
       // same patch said otherwise.
       if (
@@ -389,6 +413,7 @@ export const plannerReducer = (
             (k) => k.code === action.patch.starchKind
           )?.glutenFree ?? false;
       }
+
       // A new unit brings its own serving size, unless the same patch set one.
       if (
         action.patch.unit !== undefined &&
@@ -396,6 +421,7 @@ export const plannerReducer = (
       ) {
         draft.serving = servingText(state.vocab, action.patch.unit);
       }
+
       return { ...state, draft, flash: "" };
     }
 
@@ -408,6 +434,7 @@ export const plannerReducer = (
       const codes = state.vocab.methods
         .map((m) => m.code)
         .filter((c) => action.codes.includes(c));
+
       return {
         ...state,
         catalogue: state.catalogue.map((i) =>
@@ -418,6 +445,7 @@ export const plannerReducer = (
 
     case "draft/toggleMethod": {
       const on = state.draft.methods.includes(action.code);
+
       return {
         ...state,
         draft: {
@@ -432,6 +460,7 @@ export const plannerReducer = (
     case "draft/submit": {
       const d = state.draft;
       const name = d.name.trim();
+
       if (!name) {
         return state;
       }
@@ -441,6 +470,7 @@ export const plannerReducer = (
       const methods = methodsOn(state)
         .map((m) => m.code)
         .filter((c) => d.methods.includes(c));
+
       const ingredient: Ingredient = {
         category: d.category,
         glutenFree: d.category === "starch" ? d.glutenFree : null,
@@ -449,6 +479,7 @@ export const plannerReducer = (
         name,
         shortName: d.shortName.trim() || null,
       };
+
       const reel = labelOfCategory(state.vocab, d.category).toLowerCase();
 
       return {
@@ -488,20 +519,24 @@ export const plannerReducer = (
 
     case "stock/patch": {
       const stock = { ...state.stock, ...action.patch };
+
       if (
         action.patch.unit !== undefined &&
         action.patch.serving === undefined
       ) {
         stock.serving = servingText(state.vocab, action.patch.unit);
       }
+
       return { ...state, stock };
     }
 
     case "stock/submit": {
       const name = state.stock.name.trim();
+
       if (!name || !state.catalogue.some((i) => i.name === name)) {
         return state;
       }
+
       return {
         ...state,
         grocery: state.grocery.filter((g) => g.name !== name),
@@ -540,14 +575,17 @@ export const plannerReducer = (
 
     case "grocery/add": {
       const name = action.name.trim();
+
       if (!name || state.grocery.some((g) => same(g.name, name))) {
         return state;
       }
+
       // Only something you have described can go on the list, since the pantry
       // and the reels both need to know its category.
       if (!state.catalogue.some((i) => i.name === name)) {
         return state;
       }
+
       return {
         ...state,
         grocery: [
@@ -581,6 +619,7 @@ export const plannerReducer = (
 
     case "grocery/stock": {
       const bought = state.grocery.find((g) => g.name === action.name);
+
       return {
         ...state,
         grocery: state.grocery.filter((g) => g.name !== action.name),
@@ -631,6 +670,7 @@ export const plannerReducer = (
       // Unreachable: every action has its case above, and this line stops
       // compiling if one is added without one.
       action satisfies never;
+
       return state;
     }
   }

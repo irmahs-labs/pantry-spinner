@@ -17,6 +17,7 @@ export type { RawDemo } from "../data/demo-tables";
 // nicety, and a guest still gets in without it.
 const id = z.number();
 const optionalId = z.nullable(z.number());
+
 const tables = {
   ingredients: z.array(
     z.object({
@@ -55,6 +56,7 @@ const rowsOf = <T>(
   rows: readonly TableRow[] | undefined
 ): T[] => {
   const parsed = schema.safeParse(rows);
+
   return parsed.success ? parsed.data : [];
 };
 
@@ -68,6 +70,7 @@ const CATEGORIES: ReadonlySet<string> = new Set<CategoryCode>([
   "vegetable",
   "starch",
 ]);
+
 const isCategory = (code: string | undefined): code is CategoryCode =>
   code !== undefined && CATEGORIES.has(code);
 
@@ -83,6 +86,7 @@ export const toDemo = (
 ): Snapshot => {
   const unitOf = (unitId: number) =>
     codeOf(vocab.units, unitId) ?? defaultUnit(vocab);
+
   const methodOrder = (code: string) =>
     vocab.methods.findIndex((m) => m.code === code);
 
@@ -90,14 +94,17 @@ export const toDemo = (
     tables.ingredients,
     raw.meal_planner_demo_ingredients
   );
+
   const nameOf = new Map(ingredients.map((r) => [r.id, r.name]));
 
   const ticks = new Map<number, string[]>();
+
   for (const t of rowsOf(
     tables.methods,
     raw.meal_planner_demo_ingredient_methods
   )) {
     const code = codeOf(vocab.methods, t.id_method);
+
     if (code) {
       ticks.set(t.id_demo_ingredient, [
         ...(ticks.get(t.id_demo_ingredient) ?? []),
@@ -108,14 +115,17 @@ export const toDemo = (
 
   const catalogue: Ingredient[] = ingredients.flatMap((r) => {
     const category = codeOf(vocab.categories, r.id_category);
+
     if (!isCategory(category)) {
       return [];
     }
+
     const kinds = {
       protein: codeOf(vocab.proteinKinds, r.id_protein_kind),
       starch: codeOf(vocab.starchKinds, r.id_starch_kind),
       vegetable: codeOf(vocab.vegetableKinds, r.id_vegetable_kind),
     } satisfies Record<CategoryCode, string | undefined>;
+
     return [
       {
         category,
@@ -138,6 +148,7 @@ export const toDemo = (
       raw.meal_planner_demo_shopping_list
     ).flatMap((r) => {
       const name = nameOf.get(r.id_demo_ingredient);
+
       return name
         ? [
             {
@@ -152,6 +163,7 @@ export const toDemo = (
     }),
     pantry: rowsOf(tables.pantry, raw.meal_planner_demo_pantry).flatMap((r) => {
       const name = nameOf.get(r.id_demo_ingredient);
+
       return name
         ? [
             {

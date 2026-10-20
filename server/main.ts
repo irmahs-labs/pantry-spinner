@@ -6,7 +6,9 @@ import { api } from "./app";
 import { env } from "./env";
 
 const app = new Hono();
+
 app.get("/healthz", (c) => c.text("ok"));
+
 app.route("/", api);
 
 // Production: the built app from the same origin as the API, so the session
@@ -17,6 +19,7 @@ if (env.staticDir) {
   app.use("/assets/*", (c, next) => {
     // Vite puts a content hash in every asset's name, so a cached copy is never stale.
     c.header("cache-control", "public, max-age=31536000, immutable");
+
     return next();
   });
   app.use("*", serveStatic({ root }));

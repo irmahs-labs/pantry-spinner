@@ -69,6 +69,7 @@ export const parseSnapshot = (
   body: unknown
 ): { ok: true; snapshot: Snapshot } | { ok: false; issues: string[] } => {
   const result = snapshotSchema.safeParse(body);
+
   return result.success
     ? { ok: true, snapshot: result.data }
     : {

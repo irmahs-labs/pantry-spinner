@@ -21,6 +21,7 @@ export const api = new Hono().basePath("/api");
 // worth a cache between the browser and the database.
 api.use("*", (c, next) => {
   c.header("cache-control", "no-store");
+
   return next();
 });
 
@@ -35,6 +36,7 @@ api.use("*", async (c, next) => {
       403
     );
   }
+
   return await next();
 });
 
@@ -43,45 +45,56 @@ const requireAccount = async (
   c: Context
 ): Promise<{ account: Account } | { denied: Response }> => {
   const { account } = await whoIs(c.req.header("cookie"));
+
   return account
     ? { account }
     : { denied: c.json({ error: "Sign in to see your own pantry." }, 401) };
 };
 
 api.get("/vocab", async (c) => c.json(await readVocab()));
+
 api.get("/demo", async (c) => c.json(await readDemo()));
 
 api.get("/me", async (c) => {
   const { account, setCookies } = await whoIs(c.req.header("cookie"));
+
   for (const cookie of setCookies) {
     c.header("set-cookie", cookie, { append: true });
   }
+
   return c.json({ account });
 });
 
 api.get("/snapshot", async (c) => {
   const who = await requireAccount(c);
+
   if ("denied" in who) {
     return who.denied;
   }
+
   const snapshot = await inTransaction(async (db) =>
     loadSnapshot(db, who.account.id, await loadVocab(db))
   );
+
   return c.json(snapshot);
 });
 
 api.put("/snapshot", async (c) => {
   const who = await requireAccount(c);
+
   if ("denied" in who) {
     return who.denied;
   }
+
   const parsed = parseSnapshot(await c.req.json().catch(() => null));
+
   if (!parsed.ok) {
     return c.json(
       { error: "That is not a pantry.", issues: parsed.issues },
       400
     );
   }
+
   try {
     await inTransaction(async (db) =>
       saveSnapshot(db, who.account.id, parsed.snapshot, await loadVocab(db))
@@ -90,8 +103,10 @@ api.put("/snapshot", async (c) => {
     if (error instanceof UnknownCodeError) {
       return c.json({ error: error.message }, 400);
     }
+
     throw error;
   }
+
   return c.body(null, 204);
 });
 
@@ -106,6 +121,7 @@ const missingTable = z.object({ code: z.literal("42P01") });
 api.onError((error, c) => {
   console.error(`${c.req.method} ${c.req.path} failed`, error);
   const missing = missingTable.safeParse(error).success;
+
   return c.json(
     { error: missing ? "missing" : "unreachable" },
     missing ? 503 : 500

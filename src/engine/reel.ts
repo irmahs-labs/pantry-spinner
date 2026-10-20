@@ -9,6 +9,7 @@ export const STRIP_REPEATS = 10;
 export const SETTLE_MS = 2500;
 
 export type Triple<T> = [T, T, T];
+
 /** One reel per category, in the order the categories table gives. */
 export type Reels = Triple<PantryItem[]>;
 
@@ -66,10 +67,12 @@ export const allowed = (
 
   if (ingredient.category === "protein") {
     const kind = vocab.proteinKinds.find((k) => k.code === ingredient.kind);
+
     if (kind) {
       if (rules.some((r) => r.excludesDiets.includes(kind.diet))) {
         return false;
       }
+
       if (kind.redMeat && rules.some((r) => r.excludesRedMeat)) {
         return false;
       }
@@ -81,6 +84,7 @@ export const allowed = (
     rules.some((r) => r.requiresGlutenFree)
   ) {
     const kind = vocab.starchKinds.find((k) => k.code === ingredient.kind);
+
     if (!(ingredient.glutenFree ?? kind?.glutenFree ?? false)) {
       return false;
     }
@@ -94,16 +98,21 @@ export const weightOf = (item: PantryItem, weighting: boolean): number => {
   if (!weighting) {
     return 1;
   }
+
   const left = daysLeft(item);
+
   if (left <= 2) {
     return 6;
   }
+
   if (left <= 4) {
     return 3;
   }
+
   if (left <= 10) {
     return 1.6;
   }
+
   return 1;
 };
 
@@ -130,18 +139,24 @@ export const pickIndex = (
   const pool = list.filter((item) =>
     allowed(ingredientOf(ctx.catalogue, item.name), ctx.rules, ctx.vocab)
   );
+
   const source = pool.length ? pool : list;
+
   let r =
     random() *
     source.reduce((sum, item) => sum + weightOf(item, ctx.weighting), 0);
+
   for (const item of source) {
     r -= weightOf(item, ctx.weighting);
+
     if (r <= 0) {
       return list.indexOf(item);
     }
   }
+
   // Rounding can leave r a hair above zero after the loop; the last item takes it.
   const last = source.at(-1);
+
   return last ? list.indexOf(last) : -1;
 };
 
@@ -171,10 +186,12 @@ export const planSpin = (
   for (const [k, list] of reels.entries()) {
     const len = list.length;
     const cur = paylineOf(idx[k], len);
+
     if (locks[k] || len === 0) {
       out.target[k] = cur;
       continue;
     }
+
     const chosen = pickIndex(list, ctx, random);
     out.idx[k] = cur + len - 1 + 4 * len + k * len + mod(chosen - cur, len);
     out.dur[k] = `${(1.5 + k * 0.42).toFixed(2)}s`;
@@ -221,9 +238,11 @@ export const chooseMethods = (
   picks.map((ingredient, k) => {
     const options = methodsFor(ingredient, methodsOff);
     const kept = previous?.[k] ?? null;
+
     if (held[k] && kept && options.includes(kept)) {
       return kept;
     }
+
     return options.length
       ? options[Math.floor(random() * options.length)]
       : null;
@@ -231,6 +250,7 @@ export const chooseMethods = (
 
 export const styleOf = (starch: Ingredient | undefined, vocab: Vocab) => {
   const kind = vocab.starchKinds.find((k) => k.code === starch?.kind);
+
   return vocab.dishStyles.find((s) => s.id === kind?.styleId);
 };
 
@@ -251,6 +271,7 @@ export const fillTemplate = (
     .replaceAll(/\s+/gu, " ")
     .replace(/\s+[,&]\s*$/u, "")
     .trim();
+
   return filled.charAt(0).toUpperCase() + filled.slice(1);
 };
 
@@ -261,17 +282,20 @@ export const dishName = (
 ): string => {
   const [protein, vegetable, starch] = picks;
   const present = picks.filter((i): i is Ingredient => i !== undefined);
+
   if (!present.length) {
     return "";
   }
 
   const style = styleOf(starch, vocab);
+
   if (!protein || !vegetable || !starch || !style) {
     return present.map((i) => i.name).join(" & ");
   }
 
   const phrase = (code: string | null) =>
     vocab.methods.find((m) => m.code === code)?.phrase ?? "";
+
   const vegKindWord =
     vocab.vegetableKinds.find((k) => k.code === vegetable.kind)?.word ?? "";
 
@@ -289,14 +313,18 @@ export const daysNote = (days: number): string => {
   if (days > 30) {
     return "keeps for months";
   }
+
   if (days < 0) {
     return "past its date";
   }
+
   if (days === 0) {
     return "use today";
   }
+
   if (days === 1) {
     return "use tomorrow";
   }
+
   return `use within ${days} days`;
 };

@@ -70,7 +70,7 @@ Signing in locally also needs the account service running on `:3001` (see [irmah
 ```bash
 npm run build          # the app into dist/, the server bundled into dist-server/main.js
 npm test               # reel-engine unit tests
-npm run lint           # typecheck the app and the server
+npm run typecheck      # the app and the server
 npm run check          # Ultracite: oxlint + anti-slop, oxfmt — report only
 npm run fix            # the same, fixing and formatting what it can
 ```

@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build && npm run build:server",
     "preview": "vite preview",
-    "lint": "tsc -b --noEmit",
+    "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
     "db:up": "docker compose up -d --wait db && docker compose run --rm migrate up",
     "db:new": "docker compose run --rm migrate new",

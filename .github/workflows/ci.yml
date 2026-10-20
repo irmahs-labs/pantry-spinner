@@ -10,76 +10,22 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-# One job per check, so a pull request lists each one with its own result.
 jobs:
-  lint:
-    name: Lint and format
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
-      - name: Ultracite
-        run: npm run check
-
-  typecheck:
-    name: Type-check
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
-      - name: Type-check the app and the server
-        run: npx tsc -b --noEmit
-
-  test:
-    name: Tests
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
-      - run: npm test
-
-  build:
-    name: Build
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
-      - name: Build the app and bundle the server
-        run: npm run build
-
-  docker:
-    name: Docker build
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v7
-      - name: Validate production compose
-        run: POSTGRES_PASSWORD=x POSTGRES_PASSWORD_URL=x docker compose -f compose.prod.yaml config --quiet
-
-      - name: Docker build
-        run: docker build -t sleepy-spinner .
+  # Lint and format, Type-check, Tests, Build and Docker build, shared by every
+  # irmahs-labs repo (irmahs-labs/workflows); only what differs here is passed.
+  app:
+    uses: irmahs-labs/workflows/.github/workflows/app-ci.yml@main
+    with:
+      typecheck: npx tsc -b --noEmit
+      compose-check: POSTGRES_PASSWORD=x POSTGRES_PASSWORD_URL=x docker compose -f compose.prod.yaml config --quiet
+      docker-image: sleepy-spinner
 
   # The branch rules require a check named "checks". It fails if any job
   # above failed, was cancelled or skipped; list new jobs in needs.
   checks:
     name: checks
     if: always()
-    needs: [lint, typecheck, test, build, docker]
+    needs: [app]
     runs-on: ubuntu-24.04
     steps:
       - name: A job did not pass

@@ -8,6 +8,10 @@ const toISO = (date: Date): string => {
 
 export const todayISO = (): string => toISO(new Date());
 
+/** Today's weekday in full, as the draw screen's heading shows it. */
+export const todayWeekday = (): string =>
+  new Date().toLocaleDateString("en-GB", { weekday: "long" });
+
 export const addDaysISO = (days: number, from: Date = new Date()): string => {
   const date = new Date(from);
   date.setDate(date.getDate() + days);

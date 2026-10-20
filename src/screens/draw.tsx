@@ -17,6 +17,7 @@ import {
   styleOf,
 } from "../engine/reel";
 import type { Triple } from "../engine/reel";
+import { todayWeekday } from "../lib/dates";
 import { yesterdaysMeal } from "../state/planner";
 import type { Action, PlannerState } from "../state/planner";
 
@@ -112,9 +113,7 @@ export const Draw = ({ state, dispatch, onSpin }: DrawProps) => {
     <div className="draw">
       <section className="draw__left" aria-label="Reels">
         <div className="day-head">
-          <div className="day-head__day">
-            {new Date().toLocaleDateString("en-GB", { weekday: "long" })}
-          </div>
+          <div className="day-head__day">{todayWeekday()}</div>
           <h2 className="day-head__title">what the pantry holds</h2>
           <div className="day-head__rule" />
         </div>

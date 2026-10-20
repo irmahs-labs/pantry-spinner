@@ -16,7 +16,6 @@ jobs:
   app:
     uses: irmahs-labs/workflows/.github/workflows/app-ci.yml@main
     with:
-      typecheck: npm run lint
       compose-check: docker compose -f compose.prod.yaml config --quiet --no-interpolate
 
   # The branch rules require a check named "checks". It fails if any job

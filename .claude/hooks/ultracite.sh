@@ -11,13 +11,14 @@ cd "${CLAUDE_PROJECT_DIR:-$(dirname "$0")/../..}" || exit 0
 file=$(jq -r '.tool_response.filePath // .tool_input.file_path // empty')
 [ -n "$file" ] && [ -f "$file" ] || exit 0
 
-# Only what Ultracite handles, only inside this project, never dependencies or output.
+# Only what Ultracite handles, only inside this project, never dependencies or
+# build output (.next for Next.js, dist and dist-server for Vite and Node).
 case "$file" in
   *.ts | *.tsx | *.js | *.jsx | *.mjs | *.cjs | *.json | *.jsonc | *.css | *.md) ;;
   *) exit 0 ;;
 esac
 case "$(realpath "$file")" in
-  "$PWD"/node_modules/* | "$PWD"/dist/*) exit 0 ;;
+  "$PWD"/node_modules/* | "$PWD"/.next/* | "$PWD"/dist/* | "$PWD"/dist-server/*) exit 0 ;;
   "$PWD"/*) ;;
   *) exit 0 ;;
 esac
@@ -38,7 +39,7 @@ esac
 
 types=""
 case "$file" in
-  *.ts | *.tsx) types=$(npx --no-install tsc -b --noEmit 2>&1) || true ;;
+  *.ts | *.tsx) types=$(npx --no-install tsc --noEmit 2>&1) || true ;;
 esac
 
 [ "$count" -eq 0 ] && [ -z "$types" ] && exit 0

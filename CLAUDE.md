@@ -29,7 +29,7 @@ npm test          # vitest
 npm run build     # the app and the bundled server
 ```
 
-The PostToolUse hook in `.claude/hooks/ultracite.sh` runs Ultracite on every file you edit.
+The PostToolUse hook in `.claude/hooks/ultracite.sh` runs Ultracite and the typecheck on every file you edit.
 
 ## Names
 

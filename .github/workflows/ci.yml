@@ -10,8 +10,10 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# One job per check, so a pull request lists each one with its own result.
 jobs:
-  checks:
+  typecheck:
+    name: Type-check
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
@@ -20,18 +22,53 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-
       - name: Type-check the app and the server
         run: npx tsc -b --noEmit
 
-      - name: Tests
-        run: npm test
+  test:
+    name: Tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
 
+  build:
+    name: Build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
       - name: Build the app and bundle the server
         run: npm run build
 
+  docker:
+    name: Docker build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
       - name: Validate production compose
         run: POSTGRES_PASSWORD=x POSTGRES_PASSWORD_URL=x docker compose -f compose.prod.yaml config --quiet
 
       - name: Docker build
         run: docker build -t sleepy-spinner .
+
+  # The branch rules require a check named "checks". It fails if any job
+  # above failed, was cancelled or skipped; list new jobs in needs.
+  checks:
+    name: checks
+    if: always()
+    needs: [typecheck, test, build, docker]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: A job did not pass
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped')
+        run: exit 1

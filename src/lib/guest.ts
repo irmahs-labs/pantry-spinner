@@ -10,29 +10,15 @@ import type { Snapshot } from "../data/snapshot";
  */
 const KEY = "spin-supper:guest";
 
-export const isGuest = () => read() !== null;
-
-export function startGuest(start: Snapshot = EMPTY): void {
-  write(start);
-}
-
-export const loadGuest = (): Snapshot => read() ?? EMPTY;
-export const saveGuest = (snapshot: Snapshot) => write(snapshot);
-
-export function endGuest(): void {
-  try {
-    sessionStorage.removeItem(KEY);
-  } catch {
-    // Storage can be unavailable; losing guest data is the expected outcome.
-  }
-}
-
-function read(): Snapshot | null {
+const read = (): Snapshot | null => {
   try {
     const raw = sessionStorage.getItem(KEY);
     if (!raw) {
       return null;
     }
+    // SAFETY: only write() below stores this key, and only from a Snapshot. The
+    // fields older tabs lacked are filled in next; text that is not JSON, or has
+    // no catalogue and pantry arrays, throws into the catch: no guest session.
     const parsed = JSON.parse(raw) as Snapshot;
     // An older tab may hold ingredients from before methods could be ticked.
     parsed.catalogue = parsed.catalogue.map((i) => ({
@@ -40,18 +26,38 @@ function read(): Snapshot | null {
       methods: i.methods ?? [],
     }));
     // …and pantry items from before a serving had a size.
-    parsed.pantry = parsed.pantry.map((p) => ({ ...p, serving: p.serving ?? 1 }));
+    parsed.pantry = parsed.pantry.map((p) => ({
+      ...p,
+      serving: p.serving ?? 1,
+    }));
     return parsed;
   } catch {
     return null;
   }
-}
+};
 
-function write(snapshot: Snapshot): void {
+const write = (snapshot: Snapshot): void => {
   try {
     sessionStorage.setItem(KEY, JSON.stringify(snapshot));
   } catch {
     // Private windows and full quotas both land here. The session still works in
     // memory; it just will not survive a reload, which guest mode allows for.
   }
-}
+};
+
+export const isGuest = () => read() !== null;
+
+export const startGuest = (start: Snapshot = EMPTY): void => {
+  write(start);
+};
+
+export const loadGuest = (): Snapshot => read() ?? EMPTY;
+export const saveGuest = (snapshot: Snapshot) => write(snapshot);
+
+export const endGuest = (): void => {
+  try {
+    sessionStorage.removeItem(KEY);
+  } catch {
+    // Storage can be unavailable; losing guest data is the expected outcome.
+  }
+};

@@ -18,6 +18,8 @@ import type { PlannerState } from "./planner";
  * dates move, but nothing is recorded. These assertions follow the flag, so
  * they keep meaning something when it is turned on.
  */
+// SAFETY: vocab.json is scripts/vocab-fixture.sh's dump of every reference
+// table, one array of rows per table, which is the shape RawVocab names.
 const vocab = toVocab(raw as RawVocab);
 const loaded = plannerReducer(createInitialState(), {
   type: "vocab/load",
@@ -187,25 +189,25 @@ describe("adding to the shopping list", () => {
   });
 });
 
-describe("yesterday's meal", () => {
-  const entry = (id: string, cookedOn: string) => ({
-    cookedOn,
-    dish: `Dish ${id}`,
-    id,
-    ingredients: [],
-    method: null,
-    note: "",
-    style: "bowl",
-  });
+const planEntry = (id: string, cookedOn: string) => ({
+  cookedOn,
+  dish: `Dish ${id}`,
+  id,
+  ingredients: [],
+  method: null,
+  note: "",
+  style: "bowl",
+});
 
+describe("yesterday's meal", () => {
   it("is the newest dish cooked yesterday", () => {
     const state = {
       ...loaded,
       plan: [
-        entry("tonight", todayISO()),
-        entry("late", addDaysISO(-1)),
-        entry("early", addDaysISO(-1)),
-        entry("before", addDaysISO(-2)),
+        planEntry("tonight", todayISO()),
+        planEntry("late", addDaysISO(-1)),
+        planEntry("early", addDaysISO(-1)),
+        planEntry("before", addDaysISO(-2)),
       ],
     };
     expect(yesterdaysMeal(state)?.id).toBe("late");
@@ -214,7 +216,10 @@ describe("yesterday's meal", () => {
   it("is nothing when yesterday went unrecorded", () => {
     const state = {
       ...loaded,
-      plan: [entry("tonight", todayISO()), entry("before", addDaysISO(-2))],
+      plan: [
+        planEntry("tonight", todayISO()),
+        planEntry("before", addDaysISO(-2)),
+      ],
     };
     expect(yesterdaysMeal(state)).toBeUndefined();
   });

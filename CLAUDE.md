@@ -23,12 +23,13 @@ Always name the branch after the feature or fix it contains, never a random or g
 ## Checks before pushing
 
 ```sh
+npm run check     # Ultracite (oxlint + oxfmt); CI fails on it
 npm run lint      # typecheck (tsc -b)
 npm test          # vitest
 npm run build     # the app and the bundled server
 ```
 
-`npm run check` runs Ultracite (oxlint + oxfmt) and is report-only; the PostToolUse hook in `.claude/hooks/ultracite.sh` runs it on every file you edit.
+The PostToolUse hook in `.claude/hooks/ultracite.sh` runs Ultracite and the typecheck on every file you edit.
 
 ## Names
 

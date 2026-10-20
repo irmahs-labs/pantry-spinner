@@ -9,7 +9,6 @@ import {
   servingUnitOf,
   servingsLeft,
 } from "../data/vocab";
-import type { CategoryCode } from "../data/vocab";
 import { daysLeft, daysNote, ingredientOf } from "../engine/reel";
 import { addDaysISO, daysUntil, todayISO } from "../lib/dates";
 import { methodsOn } from "../state/planner";
@@ -20,12 +19,23 @@ interface Props {
   dispatch: Dispatch<Action>;
 }
 
+/** A pantry card's badge: its tone and its word, by how soon it goes off. */
+const freshnessBadge = (soon: boolean, mid: boolean) => {
+  if (soon) {
+    return { label: "Use it", tone: "badge--dark" };
+  }
+  if (mid) {
+    return { label: "Fresh", tone: "tone-fresh" };
+  }
+  return { label: "Stocked", tone: "tone-buy" };
+};
+
 /**
  * The pantry is what the reels draw from. Stocking something picks from the
  * ingredients you have already described — the dropdown is the whole list, minus
  * whatever is in the pantry already.
  */
-export function Pantry({ state, dispatch }: Props) {
+export const Pantry = ({ state, dispatch }: Props) => {
   const v = state.vocab;
   const ingredient = (name: string) => ingredientOf(state.catalogue, name);
 
@@ -35,11 +45,11 @@ export function Pantry({ state, dispatch }: Props) {
         state.pantryFilter === "all" ||
         ingredient(p.name)?.category === state.pantryFilter
     )
-    .sort((a, b) => a.expiresOn.localeCompare(b.expiresOn));
+    .toSorted((a, b) => a.expiresOn.localeCompare(b.expiresOn));
 
   const stockable = state.catalogue
     .filter((i) => !state.pantry.some((p) => p.name === i.name))
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .toSorted((a, b) => a.name.localeCompare(b.name));
 
   const s = state.stock;
   const patch = (p: Partial<typeof s>) =>
@@ -163,7 +173,7 @@ export function Pantry({ state, dispatch }: Props) {
             aria-pressed={state.pantryFilter === c.code}
             onClick={() =>
               dispatch({
-                filter: c.code as CategoryCode,
+                filter: c.code,
                 type: "pantry/filter",
               })
             }
@@ -199,6 +209,7 @@ export function Pantry({ state, dispatch }: Props) {
           const left = daysLeft(p);
           const soon = left <= 3;
           const mid = left <= 10;
+          const badge = freshnessBadge(soon, mid);
           const described = ingredient(p.name);
           const how = methodLabels(described?.methods ?? []);
           return (
@@ -208,11 +219,7 @@ export function Pantry({ state, dispatch }: Props) {
             >
               <div className="pcard__head">
                 <div className="chip-row" style={{ gap: 6 }}>
-                  <span
-                    className={`badge ${soon ? "badge--dark" : mid ? "tone-fresh" : "tone-buy"}`}
-                  >
-                    {soon ? "Use it" : mid ? "Fresh" : "Stocked"}
-                  </span>
+                  <span className={`badge ${badge.tone}`}>{badge.label}</span>
                   <span className="badge badge--line">
                     {described
                       ? labelOfCategory(v, described.category)
@@ -257,6 +264,7 @@ export function Pantry({ state, dispatch }: Props) {
                 {described && editing === p.name && (
                   <div
                     className="chip-row pcard__methods"
+                    // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a <fieldset> brings its own border, padding and min-width into the chip row; role="group" gives assistive tech the same group
                     role="group"
                     aria-label={`How ${p.name} can be cooked`}
                   >
@@ -302,4 +310,4 @@ export function Pantry({ state, dispatch }: Props) {
       </div>
     </div>
   );
-}
+};

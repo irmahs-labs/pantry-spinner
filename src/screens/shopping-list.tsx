@@ -10,7 +10,7 @@ interface Props {
   dispatch: Dispatch<Action>;
 }
 
-export function ShoppingList({ state, dispatch }: Props) {
+export const ShoppingList = ({ state, dispatch }: Props) => {
   const v = state.vocab;
   const [chosen, setChosen] = useState("");
   const [qty, setQty] = useState("1");
@@ -18,7 +18,7 @@ export function ShoppingList({ state, dispatch }: Props) {
 
   const addable = state.catalogue
     .filter((i) => !state.grocery.some((g) => g.name === i.name))
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .toSorted((a, b) => a.name.localeCompare(b.name));
 
   const add = () => {
     if (!chosen) {
@@ -105,6 +105,7 @@ export function ShoppingList({ state, dispatch }: Props) {
             <button
               type="button"
               className="lrow__main"
+              // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- the whole row (tick, name, note) is the control, and an <input type="checkbox"> cannot hold content
               role="checkbox"
               aria-checked={g.acquired}
               onClick={() => dispatch({ name: g.name, type: "grocery/toggle" })}
@@ -144,4 +145,4 @@ export function ShoppingList({ state, dispatch }: Props) {
       </ul>
     </div>
   );
-}
+};

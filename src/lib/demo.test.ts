@@ -18,6 +18,8 @@ import { toDemo } from "./demo";
 import type { RawDemo } from "./demo";
 
 // Both fixtures come straight from the migrations — see scripts/vocab-fixture.sh.
+// SAFETY: vocab.json is that script's dump of every reference table, one array
+// of rows per table, which is the shape RawVocab names.
 const vocab = toVocab(rawVocab as RawVocab);
 const today = "2026-09-23";
 const addDays = (n: number) => {
@@ -25,6 +27,8 @@ const addDays = (n: number) => {
   d.setDate(d.getDate() + n);
   return d.toISOString().slice(0, 10);
 };
+// SAFETY: demo.json is the same script's dump of the four demo tables, one
+// array of rows per table, which is the shape RawDemo names.
 const demo = toDemo(rawDemo as RawDemo, vocab, addDays);
 
 describe("the demo seed", () => {
@@ -65,7 +69,7 @@ describe("the demo seed", () => {
     expect(chicken?.methods.length).toBeGreaterThan(0);
     expect(spinach?.methods).toEqual([]);
 
-    const picks = [chicken, spinach, rice] as Triple<Ingredient | undefined>;
+    const picks: Triple<Ingredient | undefined> = [chicken, spinach, rice];
     const methods = chooseMethods(
       picks,
       [],

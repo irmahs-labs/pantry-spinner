@@ -4,6 +4,7 @@ import type {
   PantryItem,
   PlanEntry,
 } from "../data/model";
+import type { Snapshot } from "../data/snapshot";
 import {
   EMPTY_VOCAB,
   defaultServing,
@@ -25,7 +26,6 @@ import {
 import type { SpinPlan, Triple } from "../engine/reel";
 import { FEATURES } from "../features";
 import { addDaysISO, todayISO } from "../lib/dates";
-import type { Snapshot } from "../data/snapshot";
 
 export type Screen =
   | "spin"
@@ -117,46 +117,45 @@ const STOCK0: StockDraft = {
   unit: "",
 };
 
-export function createInitialState(): PlannerState {
-  return {
-    catalogue: [],
-    diets: [],
-    draft: DRAFT0,
-    dur: ["0s", "0s", "0s"],
-    flash: "",
-    grocery: [],
-    idx: [0, 0, 0],
-    locks: [false, false, false],
-    methods: null,
-    methodsOff: [],
-    pantry: [],
-    pantryFilter: "all",
-    picked: null,
-    plan: [],
-    screen: "spin",
-    spinning: false,
-    stock: STOCK0,
-    vocab: EMPTY_VOCAB,
-    weighting: true,
-  };
-}
+export const createInitialState = (): PlannerState => ({
+  catalogue: [],
+  diets: [],
+  draft: DRAFT0,
+  dur: ["0s", "0s", "0s"],
+  flash: "",
+  grocery: [],
+  idx: [0, 0, 0],
+  locks: [false, false, false],
+  methods: null,
+  methodsOff: [],
+  pantry: [],
+  pantryFilter: "all",
+  picked: null,
+  plan: [],
+  screen: "spin",
+  spinning: false,
+  stock: STOCK0,
+  vocab: EMPTY_VOCAB,
+  weighting: true,
+});
 
-export function snapshotOf(state: PlannerState): Snapshot {
-  return {
-    catalogue: state.catalogue,
-    grocery: state.grocery,
-    methodsOff: state.methodsOff,
-    pantry: state.pantry,
-    plan: state.plan,
-  };
-}
+export const snapshotOf = (state: PlannerState): Snapshot => ({
+  catalogue: state.catalogue,
+  grocery: state.grocery,
+  methodsOff: state.methodsOff,
+  pantry: state.pantry,
+  plan: state.plan,
+});
 
-export const kindOfDraft = (d: AddDraft): string =>
-  d.category === "protein"
-    ? d.proteinKind
-    : d.category === "vegetable"
-      ? d.vegetableKind
-      : d.starchKind;
+export const kindOfDraft = (d: AddDraft): string => {
+  if (d.category === "protein") {
+    return d.proteinKind;
+  }
+  if (d.category === "vegetable") {
+    return d.vegetableKind;
+  }
+  return d.starchKind;
+};
 
 export type Action =
   | { type: "vocab/load"; vocab: Vocab }
@@ -197,39 +196,44 @@ const servingText = (v: Vocab, unit: string): string =>
  * unit that is its own serving (a piece, a can) is always 1; otherwise what was
  * typed, or the unit's default.
  */
-export function servingOf(v: Vocab, unit: string, typed: string): number {
+export const servingOf = (v: Vocab, unit: string, typed: string): number => {
   const fallback = defaultServing(v, unit);
   if (fallback === null) {
     return 1;
   }
   const value = Number(typed);
   return Number.isFinite(value) && value > 0 ? value : fallback;
-}
+};
 
 /** Keeps sums like 0.3 − 0.1 from leaving a trailing 0.19999999999999998. */
 const tidy = (n: number) => Math.round(n * 1e6) / 1e6;
 
 /** A blank or nonsense entry means one of the thing, not NaN. */
-function parseQuantity(typed: string): number {
+const parseQuantity = (typed: string): number => {
   const value = Number(typed);
   return Number.isFinite(value) && value > 0 ? value : 1;
-}
+};
 
 const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
 
 const STOCKED_WINDOW = 6;
 
-export function plannerReducer(
+/** Methods switched on in the Cooking methods screen. */
+export const methodsOn = (state: PlannerState) =>
+  state.vocab.methods.filter((m) => !state.methodsOff.includes(m.code));
+
+// oxlint-disable-next-line complexity -- one case per action: the case count alone is over the limit, and a reducer reads best as one switch
+export const plannerReducer = (
   state: PlannerState,
   action: Action
-): PlannerState {
+): PlannerState => {
   switch (action.type) {
     case "vocab/load": {
       // Defaults for the forms come from the vocabulary too: the first kind of
       // each category, and whichever unit the units table marks as the default.
       const v = action.vocab;
       const unit = defaultUnit(v);
-      const starch = v.starchKinds[0];
+      const [starch] = v.starchKinds;
       return {
         ...state,
         draft: {
@@ -268,7 +272,7 @@ export function plannerReducer(
     }
 
     case "reel/toggleLock": {
-      const locks = [...state.locks] as Triple<boolean>;
+      const locks: Triple<boolean> = [...state.locks];
       locks[action.reel] = !locks[action.reel];
       return { ...state, locks };
     }
@@ -288,14 +292,17 @@ export function plannerReducer(
       // The pantry can change while the reels turn, so read the targets back
       // against the reels as they are now rather than as they were planned.
       const reels = reelsFrom(state.pantry, state.catalogue, state.vocab);
+      // SAFETY: map keeps the length of the Triple it is called on.
       const target = action.target.map((t, k) =>
         reels[k].length ? t % reels[k].length : 0
       ) as Triple<number>;
       const picked = pickedNames(target, reels);
       // A method only survives if the ingredient that landed still has it ticked.
+      // SAFETY: map keeps the length of the Triple it is called on.
       const methods = action.methods.map((code, k) => {
-        const ingredient = picked[k]
-          ? ingredientOf(state.catalogue, picked[k]!)
+        const name = picked[k];
+        const ingredient = name
+          ? ingredientOf(state.catalogue, name)
           : undefined;
         return code && ingredient?.methods.includes(code) ? code : null;
       }) as Triple<string | null>;
@@ -318,6 +325,7 @@ export function plannerReducer(
         return state;
       }
 
+      // SAFETY: map keeps the length of the Triple it is called on.
       const picks = state.picked.map((n) =>
         n ? ingredientOf(state.catalogue, n) : undefined
       ) as Triple<Ingredient | undefined>;
@@ -618,17 +626,20 @@ export function plannerReducer(
     case "flash/clear": {
       return { ...state, flash: "" };
     }
+
+    default: {
+      // Unreachable: every action has its case above, and this line stops
+      // compiling if one is added without one.
+      action satisfies never;
+      return state;
+    }
   }
-}
+};
 
 /** The diet rules switched on, as rows. */
 export const activeRules = (state: PlannerState) =>
   state.vocab.dietRules.filter((r) => state.diets.includes(r.code));
 
-/** Methods switched on in the Cooking methods screen. */
 /** The last dish sent into the pot yesterday, if there was one. The plan is newest first. */
 export const yesterdaysMeal = (state: PlannerState): PlanEntry | undefined =>
   state.plan.find((entry) => entry.cookedOn === addDaysISO(-1));
-
-export const methodsOn = (state: PlannerState) =>
-  state.vocab.methods.filter((m) => !state.methodsOff.includes(m.code));

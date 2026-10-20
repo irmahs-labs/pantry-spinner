@@ -13,7 +13,7 @@ interface Props {
  * dish name uses. Which ones an ingredient can be cooked with is ticked on the
  * ingredient; this screen switches a method off for everything at once.
  */
-export function CookingMethods({ state, dispatch }: Props) {
+export const CookingMethods = ({ state, dispatch }: Props) => {
   const v = state.vocab;
   const usedBy = (code: string) =>
     state.catalogue.filter((i) => i.methods.includes(code)).length;
@@ -59,4 +59,4 @@ export function CookingMethods({ state, dispatch }: Props) {
       </ul>
     </div>
   );
-}
+};

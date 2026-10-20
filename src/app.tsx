@@ -55,9 +55,11 @@ const footNote = (saveFailed: boolean, guest: boolean): string => {
   if (saveFailed) {
     return "Not saved — check your connection.";
   }
+
   if (guest) {
     return "Just looking. This pantry goes when the tab closes.";
   }
+
   return "The reels favour whatever is closest to going off.";
 };
 
@@ -67,12 +69,15 @@ const App = () => {
     undefined,
     createInitialState
   );
+
   const { phase, email, failure, guest, saveFailed, signOut, startGuest } =
     useRemoteSync(state, dispatch);
+
   const timers = useRef<number[]>([]);
 
   useEffect(() => {
     const pending = timers.current;
+
     return () => {
       for (const timer of pending) {
         clearTimeout(timer);
@@ -81,34 +86,41 @@ const App = () => {
   }, []);
 
   const v = state.vocab;
+
   const reels = useMemo(
     () => reelsFrom(state.pantry, state.catalogue, v),
     [state.pantry, state.catalogue, v]
   );
+
   const ready = canSpin(reels, v);
 
   const spin = useCallback(() => {
     if (state.spinning || !ready) {
       return;
     }
+
     const plan = planSpin(state.idx, state.locks, reels, {
       catalogue: state.catalogue,
       rules: activeRules(state),
       vocab: v,
       weighting: state.weighting,
     });
+
     dispatch({ plan, type: "spin/start" });
+
     // Each pick is cooked one of the ways ticked for it, drawn with the dish.
     // SAFETY: plan.target is a Triple, one index per reel, so its map is too.
     const picks = plan.target.map((t, k) =>
       reels[k][t] ? ingredientOf(state.catalogue, reels[k][t].name) : undefined
     ) as Triple<Ingredient | undefined>;
+
     const methods = chooseMethods(
       picks,
       state.methodsOff,
       state.locks,
       state.methods
     );
+
     timers.current.push(
       window.setTimeout(
         () => dispatch({ methods, target: plan.target, type: "spin/settle" }),
@@ -122,27 +134,35 @@ const App = () => {
     if (state.screen !== "spin") {
       return;
     }
+
     const onKey = (e: KeyboardEvent) => {
       const el = e.target;
+
       if (e.code !== "Space" || !(el instanceof HTMLElement)) {
         return;
       }
+
       if (OWNS_SPACE.has(el.tagName) || el.getAttribute("role") === "button") {
         return;
       }
+
       e.preventDefault();
       spin();
     };
+
     window.addEventListener("keydown", onKey);
+
     return () => window.removeEventListener("keydown", onKey);
   }, [state.screen, spin]);
 
   if (phase === "broken") {
     return <SignIn onGuest={startGuest} failure={failure ?? "unreachable"} />;
   }
+
   if (phase === "signed-out") {
     return <SignIn onGuest={startGuest} />;
   }
+
   if (phase === "booting") {
     return (
       <>
@@ -167,9 +187,11 @@ const App = () => {
   };
 
   type NavItem = [Screen, string, number | ""];
+
   const cooked: NavItem[] = FEATURES.history
     ? [["plan", "Cooked", state.plan.length]]
     : [];
+
   const nav: NavItem[] = [
     ["spin", "Draw", ""],
     ["pantry", "Pantry", state.pantry.length],

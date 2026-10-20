@@ -15,11 +15,14 @@ interface Props {
  */
 export const ServingField = ({ vocab, unit, value, onChange }: Props) => {
   const fallback = defaultServing(vocab, unit);
+
   if (fallback === null) {
     return null;
   }
+
   // Sized in the small unit: a serving of rice stocked in kilograms is in grams.
   const small = servingUnitOf(vocab, unit);
+
   return (
     <label className="serving-field">
       <span className="serving-field__label">Serving</span>

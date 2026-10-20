@@ -17,6 +17,7 @@ export interface Account {
 
 export const currentAccount = async (): Promise<Account | null> => {
   const { account } = await getJson<{ account: Account | null }>("/api/me");
+
   return account;
 };
 

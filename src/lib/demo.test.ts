@@ -22,11 +22,14 @@ import type { RawDemo } from "./demo";
 // of rows per table, which is the shape RawVocab names.
 const vocab = toVocab(rawVocab as RawVocab);
 const today = "2026-09-23";
+
 const addDays = (n: number) => {
   const d = new Date(`${today}T12:00:00`);
   d.setDate(d.getDate() + n);
+
   return d.toISOString().slice(0, 10);
 };
+
 // SAFETY: demo.json is the same script's dump of the four demo tables, one
 // array of rows per table, which is the shape RawDemo names.
 const demo = toDemo(rawDemo as RawDemo, vocab, addDays);
@@ -42,6 +45,7 @@ describe("the demo seed", () => {
     for (const item of demo.pantry) {
       expect(ingredientOf(demo.catalogue, item.name), item.name).toBeDefined();
     }
+
     for (const item of demo.grocery) {
       expect(ingredientOf(demo.catalogue, item.name), item.name).toBeDefined();
     }
@@ -56,7 +60,9 @@ describe("the demo seed", () => {
     for (const i of demo.catalogue) {
       expect(i.kind, i.name).not.toBe("");
     }
+
     const units = new Set(vocab.units.map((u) => u.code));
+
     for (const p of demo.pantry) {
       expect(units.has(p.unit), p.name).toBe(true);
     }
@@ -70,6 +76,7 @@ describe("the demo seed", () => {
     expect(spinach?.methods).toEqual([]);
 
     const picks: Triple<Ingredient | undefined> = [chicken, spinach, rice];
+
     const methods = chooseMethods(
       picks,
       [],
@@ -77,6 +84,7 @@ describe("the demo seed", () => {
       null,
       () => 0
     );
+
     expect(dishName(picks, methods, vocab)).toBe(
       "Pan-fried Chicken Rice Bowl with wilted spinach"
     );

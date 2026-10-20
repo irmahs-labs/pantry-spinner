@@ -24,6 +24,7 @@ export const ShoppingList = ({ state, dispatch }: Props) => {
     if (!chosen) {
       return;
     }
+
     dispatch({
       name: chosen,
       qty,
@@ -53,6 +54,7 @@ export const ShoppingList = ({ state, dispatch }: Props) => {
           </option>
           {v.categories.map((c) => {
             const items = addable.filter((i) => i.category === c.code);
+
             return items.length ? (
               <optgroup key={c.code} label={c.label}>
                 {items.map((i) => (

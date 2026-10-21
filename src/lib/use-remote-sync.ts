@@ -26,6 +26,8 @@ export interface RemoteSync {
   phase: Phase;
   /** Set when `phase` is `broken`: what went wrong reading the reference tables. */
   failure: LoadFailure | null;
+  /** Who is signed in, for the header's account pill; null for nobody. */
+  account: Account | null;
   email: string | null;
   /** Looking around without an account: this tab only, nothing saved anywhere else. */
   guest: boolean;
@@ -248,6 +250,7 @@ export const useRemoteSync = (
   }, [isGuest, dispatch]);
 
   return {
+    account,
     email: account?.email ?? null,
     failure,
     guest: isGuest,

@@ -49,7 +49,7 @@ const SignIn = ({ onGuest, failure }: Props) => {
 
   return (
     <>
-      <Header />
+      <Header account={null} />
       <div className="signin">
         <div className="signin-panel">
           <span className="legend" aria-hidden="true">

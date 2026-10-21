@@ -4,7 +4,7 @@
    the one action to press next carries the hard shadow. */
 :root {
   /* Cute Matcha's role tokens, named by job: Light Matcha here, Dark Matcha
-     (green tea) below. Pick one by what the thing is, never by its hex. */
+     below. Pick one by what the thing is, never by its hex. */
   --ground: #f3f1c8;
   --panel: #f7f8de;
   --header: #f7f8de;
@@ -46,7 +46,7 @@
   --body: "Nunito Sans", "Fredoka", system-ui, sans-serif;
 }
 :root[data-theme="dark"] {
-  /* Green tea: a mid-tone matcha page, cards a step lighter, and the header,
+  /* Dark Matcha: a mid-tone matcha page, cards a step lighter, and the header,
      buttons and fields a darker well. Outlines and shadows stay near-black. */
   --ground: #46574b;
   --panel: #52645a;

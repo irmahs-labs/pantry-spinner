@@ -14,6 +14,11 @@ updates:
       npm:
         patterns: ["*"]
         update-types: [minor, patch]
+    ignore:
+      # @types/node follows the Node version the app runs on (the Dockerfile's
+      # node:<major>-alpine), so it moves with that, never on its own.
+      - dependency-name: "@types/node"
+        update-types: [version-update:semver-major]
   - package-ecosystem: github-actions
     directory: /
     schedule:

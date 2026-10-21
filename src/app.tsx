@@ -70,8 +70,16 @@ const App = () => {
     createInitialState
   );
 
-  const { phase, email, failure, guest, saveFailed, signOut, startGuest } =
-    useRemoteSync(state, dispatch);
+  const {
+    account,
+    phase,
+    email,
+    failure,
+    guest,
+    saveFailed,
+    signOut,
+    startGuest,
+  } = useRemoteSync(state, dispatch);
 
   const timers = useRef<number[]>([]);
 
@@ -204,7 +212,10 @@ const App = () => {
 
   return (
     <>
-      <Header onHome={() => dispatch({ screen: "spin", type: "screen/go" })} />
+      <Header
+        account={account}
+        onHome={() => dispatch({ screen: "spin", type: "screen/go" })}
+      />
       <div className="shell">
         <aside className="sidebar">
           <div className="sidebar__sub">

@@ -1,10 +1,14 @@
 import type { MouseEvent, ReactNode } from "react";
 
+import type { Account } from "../lib/account";
 import { APP_NAME } from "../lib/brand";
+import { AccountButton } from "./account-button";
 import { PantryIcon } from "./app-icon";
 import { ThemeToggle } from "./theme-toggle";
 
 interface HeaderProps {
+  /** Who is signed in: null for nobody, undefined while still asking. */
+  account?: Account | null;
   /** Opens the app's home screen; without it the brand reloads the page. */
   onHome?: () => void;
   /** Anything to show before the theme toggle. */
@@ -13,9 +17,9 @@ interface HeaderProps {
 
 /**
  * Cute Matcha's app Header: the icon, the app's name with "by Irma HS"
- * under it, and the theme toggle at the end.
+ * under it, then the theme toggle and the account pill at the end.
  */
-export const Header = ({ onHome, children }: HeaderProps) => {
+export const Header = ({ account, onHome, children }: HeaderProps) => {
   const goHome = (event: MouseEvent<HTMLAnchorElement>) => {
     if (onHome) {
       event.preventDefault();
@@ -35,6 +39,7 @@ export const Header = ({ onHome, children }: HeaderProps) => {
       <div className="app-header__end">
         {children}
         <ThemeToggle />
+        <AccountButton account={account} />
       </div>
     </header>
   );

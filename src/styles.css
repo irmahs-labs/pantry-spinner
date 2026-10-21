@@ -1,5 +1,5 @@
 /* The app's styles, in Cute Matcha's app look, in Light and Dark Matcha:
-   role tokens named by job, Abril Fatface for names and Lato for everything
+   role tokens named by job, Fredoka for titles and Nunito Sans for everything
    else, 2px outlines, flat panels, and strong for whatever is selected. Only
    the one action to press next carries the hard shadow. */
 :root {
@@ -7,19 +7,20 @@
      below. Pick one by what the thing is, never by its hex. */
   --ground: #f3f1c8;
   --panel: #f7f8de;
-  --raised: #ffffff;
-  --raised-hover: #e3f0c6;
+  --header: #f7f8de;
+  --raised: #fffdf0;
+  --raised-hover: #e8e1bd;
   --text: #2f3b34;
   --text-muted: #3f6b30;
   --outline: #2f3b34;
-  --accent: #dde87e;
-  --accent-soft: #b8d970;
+  --accent: #d4dd9c;
+  --accent-soft: #afc584;
   --on-accent: #2f3b34;
   --strong: #3b4a42;
   --on-strong: #fff3cf;
-  /* A pressed or hovered primary: one step past strong, in either theme. */
-  --strong-hover: #2f3b34;
-  --pattern-dot: #b8d970;
+  --selected: #afc584;
+  --on-selected: #2f3b34;
+  --pattern-dot: #afc584;
   --pattern-line: #f3f1c800;
   --focus: #4a7fc0;
   --danger: #f0675c;
@@ -31,29 +32,41 @@
   --terracotta: #d9786a;
   --cream: #fff3cf;
   --white: #ffffff;
+  --ink: #2f3b34;
 
   --line: 2px solid var(--outline);
   --line-thin: 1.5px solid var(--outline);
-  --shadow-hard: 3px 3px 0 var(--outline);
+  /* Hard shadows are the same near-black in both themes */
+  --shadow-hard: 3px 3px 0 #0f1411;
   --radius-panel: 11px;
   --radius-lg: 9px;
 
-  --display: "Abril Fatface", Georgia, serif;
-  --body: "Lato", "Helvetica Neue", Arial, sans-serif;
+  /* Fredoka sets titles and panel names, Nunito Sans everything else */
+  --display: "Fredoka", "Nunito Sans", system-ui, sans-serif;
+  --body: "Nunito Sans", "Fredoka", system-ui, sans-serif;
 }
 :root[data-theme="dark"] {
-  --ground: #1c2420;
-  --panel: #2b3631;
-  --raised: #3b4a42;
-  --raised-hover: #485847;
-  --text: #fff3cf;
-  --text-muted: #b8d970;
+  /* Dark Matcha: a mid-tone matcha page, cards a step lighter, and the header,
+     buttons and fields a darker well. Outlines and shadows stay near-black. */
+  --ground: #46574b;
+  --panel: #52645a;
+  --header: #2f3d34;
+  --raised: #2f3d34;
+  --raised-hover: #3a4a3f;
+  --text: #f3f1c8;
+  --text-muted: #d4e396;
   --outline: #0f1411;
-  --strong: #dde87e;
-  --on-strong: #2f3b34;
-  --strong-hover: #c9d66b;
+  --accent: #c9d68f;
+  --accent-soft: #9eb27a;
+  --on-accent: #0f1411;
+  --strong: #1c2420;
+  --on-strong: #f3f1c8;
+  --selected: #c9d68f;
+  --on-selected: #0f1411;
   --pattern-dot: #b8d97000;
-  --pattern-line: #242e29;
+  --pattern-line: #4d5f52;
+  --focus: #c2d8f5;
+  --danger: #f6a49d;
   color-scheme: dark;
 }
 
@@ -85,7 +98,7 @@ button {
 
 .display {
   font-family: var(--display);
-  font-weight: 400;
+  font-weight: 600;
 }
 .kicker {
   font: 700 12px/1.2 var(--body);
@@ -131,7 +144,7 @@ button {
   align-items: center;
   gap: 12px 16px;
   padding: 14px 28px;
-  background: var(--panel);
+  background: var(--header);
   border-bottom: var(--line);
 }
 .app-header__home {
@@ -147,7 +160,7 @@ button {
 }
 .app-header__name {
   display: block;
-  font: 400 24px/1.1 var(--display);
+  font: 600 24px/1.1 var(--display);
 }
 .app-header__by {
   display: block;
@@ -160,6 +173,46 @@ button {
   justify-content: flex-end;
   align-items: center;
   gap: 8px;
+}
+/* Cute Matcha's AccountButton, as a 40px header pill: a panel piece lying
+   on the desk, with Google's mark or the person's picture in a white
+   circle. On phones only the circle shows; its text stays for screen
+   readers. */
+.account {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px 0 4px;
+  border: var(--line-thin);
+  border-radius: 999px;
+  background: var(--panel);
+  box-shadow: 2px 2px 0 #0f1411;
+  color: var(--text);
+  font: 600 14px/1.2 var(--body);
+  text-decoration: none;
+}
+.account:hover {
+  background: var(--raised-hover);
+}
+.account__icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  overflow: hidden;
+  border: var(--line-thin);
+  border-radius: 50%;
+  background: var(--white);
+  color: var(--ink);
+  font-weight: 700;
+}
+.account__icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .header-pill {
   display: inline-flex;
@@ -186,6 +239,20 @@ button {
   .app-header__end {
     flex-basis: 100%;
     justify-content: flex-start;
+  }
+  .account {
+    width: 44px;
+    min-height: 44px;
+    padding: 0;
+    justify-content: center;
+  }
+  .account__text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 }
 
@@ -265,15 +332,15 @@ button {
 }
 .nav[aria-current="page"] {
   border-color: var(--outline);
-  background: var(--strong);
-  color: var(--on-strong);
+  background: var(--selected);
+  color: var(--on-selected);
 }
 .nav[aria-current="page"] .nav__pip {
-  border-color: var(--on-strong);
+  border-color: var(--on-selected);
   background: var(--accent);
 }
 .nav[aria-current="page"] .nav__count {
-  color: var(--on-strong);
+  color: var(--on-selected);
 }
 
 .main {
@@ -298,7 +365,7 @@ button {
 }
 .topbar__title {
   font-family: var(--display);
-  font-weight: 400;
+  font-weight: 600;
   font-size: 36px;
   line-height: 1.06;
   margin: 8px 0 0;
@@ -332,16 +399,17 @@ button {
 .btn {
   border: var(--line);
   border-radius: 999px;
-  background: var(--strong);
-  color: var(--on-strong);
+  background: var(--accent);
+  color: var(--on-accent);
   box-shadow: var(--shadow-hard);
   font: 700 14px/1.2 var(--body);
 }
 .btn:hover {
-  background: var(--strong-hover);
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 #0f1411;
 }
 .btn:active {
-  box-shadow: 1px 1px 0 var(--outline);
+  box-shadow: 1px 1px 0 #0f1411;
   transform: translate(2px, 2px);
 }
 .btn--outline {
@@ -363,7 +431,7 @@ button {
 }
 .btn--muted:hover,
 .btn--muted:active {
-  background: var(--strong);
+  background: var(--accent);
   box-shadow: var(--shadow-hard);
   transform: none;
 }
@@ -417,8 +485,8 @@ button {
   background: var(--panel);
 }
 .chip[aria-pressed="true"] {
-  background: var(--strong);
-  color: var(--on-strong);
+  background: var(--selected);
+  color: var(--on-selected);
 }
 .chip-row {
   display: flex;
@@ -449,11 +517,11 @@ button {
   transition: left 0.15s ease;
 }
 .switch--on {
-  background: var(--strong);
+  background: var(--selected);
 }
 .switch--on::after {
   left: 24px;
-  background: var(--on-strong);
+  background: var(--on-selected);
 }
 .switch--lg {
   width: 60px;
@@ -577,7 +645,7 @@ button {
 }
 .day-head__title {
   font-family: var(--display);
-  font-weight: 400;
+  font-weight: 600;
   font-size: 42px;
   line-height: 1.04;
   margin: 0;
@@ -631,8 +699,8 @@ button {
   pointer-events: none;
   background: linear-gradient(
     var(--panel) 0%,
-    rgba(247, 248, 222, 0) 28%,
-    rgba(247, 248, 222, 0) 72%,
+    color-mix(in srgb, var(--panel) 0%, transparent) 28%,
+    color-mix(in srgb, var(--panel) 0%, transparent) 72%,
     var(--panel) 100%
   );
 }
@@ -697,8 +765,8 @@ button {
   text-transform: uppercase;
 }
 .reel[aria-pressed="true"] .reel__foot {
-  background: var(--strong);
-  color: var(--on-strong);
+  background: var(--selected);
+  color: var(--on-selected);
 }
 
 /* Use it soon is the one warm mark; fresh is green; to buy is plain. */
@@ -869,7 +937,7 @@ button {
 }
 .recipe__dish {
   font-family: var(--display);
-  font-weight: 400;
+  font-weight: 600;
   font-size: 30px;
   line-height: 1.14;
   text-wrap: pretty;
@@ -1068,7 +1136,7 @@ button {
   height: 46px;
   padding: 0 14px;
   font: 700 14px/1 var(--body);
-  accent-color: var(--strong);
+  accent-color: var(--selected);
 }
 .cat-cards {
   display: grid;
@@ -1090,8 +1158,8 @@ button {
   background: var(--panel);
 }
 .cat-card[aria-pressed="true"] {
-  background: var(--strong);
-  color: var(--on-strong);
+  background: var(--selected);
+  color: var(--on-selected);
 }
 .cat-card span {
   font: 700 14px/1 var(--body);
@@ -1178,8 +1246,8 @@ button {
     color: var(--on-accent);
   }
   .unit-select option:checked {
-    background: var(--strong);
-    color: var(--on-strong);
+    background: var(--selected);
+    color: var(--on-selected);
   }
   .unit-select option::checkmark {
     display: none;
@@ -1243,11 +1311,11 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--on-strong);
+  color: var(--on-selected);
   font: 700 14px/1 var(--body);
 }
 .tick--on {
-  background: var(--strong);
+  background: var(--selected);
 }
 .submit {
   height: 54px;
@@ -1466,8 +1534,8 @@ button {
   background: var(--panel);
 }
 .diet-chip[aria-pressed="true"] {
-  background: var(--strong);
-  color: var(--on-strong);
+  background: var(--selected);
+  color: var(--on-selected);
 }
 .weight-card {
   display: flex;
@@ -1567,7 +1635,7 @@ button {
 
 .signin-brand {
   font-family: var(--display);
-  font-weight: 400;
+  font-weight: 600;
   font-size: 33px;
   line-height: 1.06;
   margin: 0;
@@ -1588,15 +1656,16 @@ button {
   min-height: 48px;
   border: var(--line);
   border-radius: 999px;
-  background: var(--strong);
-  color: var(--on-strong);
+  background: var(--accent);
+  color: var(--on-accent);
   box-shadow: var(--shadow-hard);
   font: 700 15px/1 var(--body);
   text-decoration: none;
 }
 
 .signin-google:hover {
-  background: var(--strong-hover);
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 #0f1411;
 }
 
 /* A third-party mark sits on untinted white in both themes. */

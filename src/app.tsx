@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 
+import { Footer } from "./components/footer";
 import { Header } from "./components/header";
 import SignIn from "./components/sign-in";
 import type { Ingredient } from "./data/model";
@@ -269,59 +270,62 @@ const App = () => {
           </div>
         </aside>
 
-        <main className="main">
-          <header className="topbar">
-            <div>
-              <div className="topbar__kicker">{kickers[state.screen]}</div>
-              <h1 className="topbar__title">{TITLES[state.screen]}</h1>
-            </div>
-            {ready ? (
-              <button
-                type="button"
-                className="soon-pill"
-                onClick={() =>
-                  dispatch({ screen: "pantry", type: "screen/go" })
-                }
-              >
-                {expiring} going off soon
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="soon-pill"
-                onClick={() =>
-                  dispatch({ screen: "pantry", type: "screen/go" })
-                }
-              >
-                {emptyReels(reels, v).length === v.categories.length
-                  ? "Nothing stocked"
-                  : `No ${labelOfCategory(v, emptyReels(reels, v)[0]).toLowerCase()}`}
-              </button>
-            )}
-          </header>
+        <div className="column">
+          <main className="main">
+            <header className="topbar">
+              <div>
+                <div className="topbar__kicker">{kickers[state.screen]}</div>
+                <h1 className="topbar__title">{TITLES[state.screen]}</h1>
+              </div>
+              {ready ? (
+                <button
+                  type="button"
+                  className="soon-pill"
+                  onClick={() =>
+                    dispatch({ screen: "pantry", type: "screen/go" })
+                  }
+                >
+                  {expiring} going off soon
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="soon-pill"
+                  onClick={() =>
+                    dispatch({ screen: "pantry", type: "screen/go" })
+                  }
+                >
+                  {emptyReels(reels, v).length === v.categories.length
+                    ? "Nothing stocked"
+                    : `No ${labelOfCategory(v, emptyReels(reels, v)[0]).toLowerCase()}`}
+                </button>
+              )}
+            </header>
 
-          {state.screen === "spin" && (
-            <Draw state={state} dispatch={dispatch} onSpin={spin} />
-          )}
-          {state.screen === "pantry" && (
-            <Pantry state={state} dispatch={dispatch} />
-          )}
-          {state.screen === "add" && (
-            <AddIngredient state={state} dispatch={dispatch} />
-          )}
-          {state.screen === "plan" && FEATURES.history && (
-            <Cooked state={state} />
-          )}
-          {state.screen === "list" && (
-            <ShoppingList state={state} dispatch={dispatch} />
-          )}
-          {state.screen === "methods" && (
-            <CookingMethods state={state} dispatch={dispatch} />
-          )}
-          {state.screen === "setup" && (
-            <ReelRules state={state} dispatch={dispatch} />
-          )}
-        </main>
+            {state.screen === "spin" && (
+              <Draw state={state} dispatch={dispatch} onSpin={spin} />
+            )}
+            {state.screen === "pantry" && (
+              <Pantry state={state} dispatch={dispatch} />
+            )}
+            {state.screen === "add" && (
+              <AddIngredient state={state} dispatch={dispatch} />
+            )}
+            {state.screen === "plan" && FEATURES.history && (
+              <Cooked state={state} />
+            )}
+            {state.screen === "list" && (
+              <ShoppingList state={state} dispatch={dispatch} />
+            )}
+            {state.screen === "methods" && (
+              <CookingMethods state={state} dispatch={dispatch} />
+            )}
+            {state.screen === "setup" && (
+              <ReelRules state={state} dispatch={dispatch} />
+            )}
+          </main>
+          <Footer />
+        </div>
       </div>
     </>
   );

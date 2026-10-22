@@ -1,12 +1,12 @@
 /**
- * The app's 40 × 40 icon for the Header: the slot machine, drawn flat in
+ * The app's icon, 40 × 40 in the Header: the slot machine, drawn flat in
  * Cute Matcha's Light Matcha colours, the same in both themes, as an icon
  * that is also the favicon must be. Its outer edge and lever are in `text`,
  * which disappears in Light Matcha and turns cream in Dark Matcha, so it
  * reads on either header. public/favicon.svg is the same drawing.
  */
-export const PantryIcon = () => (
-  <svg aria-hidden="true" width="40" height="40" viewBox="0 0 32 32">
+export const PantryIcon = ({ size = 40 }: { size?: number }) => (
+  <svg aria-hidden="true" width={size} height={size} viewBox="0 0 32 32">
     <path
       d="M24 19h3.5V9"
       fill="none"

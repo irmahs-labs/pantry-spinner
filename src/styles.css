@@ -290,7 +290,12 @@ button {
   text-transform: uppercase;
   color: var(--text-muted);
 }
+/* The sidebar is a screen tall but starts under the header, so until the
+   header scrolls away its bottom is off-screen; sticking the foot to the
+   window's bottom keeps Sign in / Sign out in sight. */
 .sidebar__foot {
+  position: sticky;
+  bottom: 24px;
   margin-top: auto;
   padding: 0 12px;
   display: flex;
@@ -389,6 +394,7 @@ button {
     gap: 8px;
   }
   .sidebar__foot {
+    position: static;
     margin-top: 8px;
     padding: 0 16px;
     flex-direction: row;

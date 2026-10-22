@@ -293,9 +293,15 @@ button {
 .sidebar__foot {
   margin-top: auto;
   padding: 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   font: italic 400 12.5px/1.5 var(--body);
   color: var(--text-muted);
   text-wrap: pretty;
+}
+.sidebar .sidebar__account {
+  padding: 8px 0;
 }
 .nav {
   display: flex;
@@ -349,6 +355,56 @@ button {
   display: flex;
   flex-direction: column;
   gap: 28px;
+}
+/* On a phone the sidebar folds into a strip under the header: the screens
+   as a row of pills that scrolls sideways, and the foot note under them. */
+@media (max-width: 760px) {
+  .shell {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+  }
+  .sidebar {
+    position: static;
+    height: auto;
+    gap: 0;
+    padding: 12px 0;
+    border-right: 0;
+    border-bottom: var(--line);
+  }
+  /* The Pantry pill already carries the count. */
+  .sidebar__sub {
+    display: none;
+  }
+  /* The row fades at the right edge, so a cut-off pill reads as "more". */
+  .sidebar nav {
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 2px 32px 2px 16px;
+    scrollbar-width: none;
+    mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent);
+  }
+  .sidebar .nav {
+    flex: none;
+    width: auto;
+    gap: 8px;
+  }
+  .sidebar__foot {
+    margin-top: 8px;
+    padding: 0 16px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0 12px;
+  }
+  .sidebar .sidebar__account {
+    width: auto;
+    font-style: normal;
+  }
+  .main {
+    padding: 20px 16px 40px;
+    gap: 20px;
+  }
 }
 .topbar {
   display: flex;
@@ -806,6 +862,17 @@ button {
   font: italic 400 13px/1.5 var(--body);
   color: var(--text-muted);
   text-align: center;
+}
+/* Only offered where there is a keyboard: a phone has no space bar. */
+.hint__key {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+@media (hover: none) and (pointer: coarse) {
+  .hint__key {
+    display: none;
+  }
 }
 .kbd {
   font: 700 11px/1 var(--body);
@@ -1490,6 +1557,24 @@ button {
 }
 .stock-btn:hover {
   background: var(--panel);
+}
+/* On a phone the item keeps the full width, and its buttons sit under it,
+   lined up with the name. */
+@media (max-width: 600px) {
+  .lrow {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 10px 10px 14px;
+  }
+  .lrow__main {
+    flex-basis: 100%;
+  }
+  .lrow .stock-btn {
+    margin-left: 44px;
+  }
+  .lrow .icon-x {
+    margin-left: auto;
+  }
 }
 .method-toggle {
   flex: none;

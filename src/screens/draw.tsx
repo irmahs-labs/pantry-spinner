@@ -51,7 +51,7 @@ const hintFor = (
     return "Click a column to hold it, then draw again.";
   }
 
-  return "Draw three — or press";
+  return "Draw three";
 };
 
 const reelTitle = (empty: boolean, locked: boolean): string => {
@@ -201,7 +201,9 @@ export const Draw = ({ state, dispatch, onSpin }: DrawProps) => {
           <div className="hint" aria-live="polite">
             <span>{hint}</span>
             {ready && !state.spinning && !settled && (
-              <kbd className="kbd">SPACE</kbd>
+              <span className="hint__key">
+                — or press <kbd className="kbd">SPACE</kbd>
+              </span>
             )}
           </div>
         </div>

@@ -63,6 +63,24 @@ const footNote = (saveFailed: boolean, guest: boolean): string => {
   return "The reels favour whatever is closest to going off.";
 };
 
+// On a phone the nav is a row that scrolls sideways; React hands this the
+// pill that has just become current, to scroll it into sight. On a desktop
+// the column never scrolls, so it does nothing there.
+const keepInSight = (pill: HTMLButtonElement | null) => {
+  const row = pill?.parentElement;
+
+  if (!(pill && row)) {
+    return;
+  }
+
+  const from = row.getBoundingClientRect();
+  const at = pill.getBoundingClientRect();
+
+  if (at.left < from.left || at.right > from.right) {
+    row.scrollLeft += at.left - from.left - 16;
+  }
+};
+
 const App = () => {
   const [state, dispatch] = useReducer(
     plannerReducer,
@@ -228,6 +246,7 @@ const App = () => {
                 type="button"
                 className="nav"
                 aria-current={state.screen === key ? "page" : undefined}
+                ref={state.screen === key ? keepInSight : undefined}
                 onClick={() => dispatch({ screen: key, type: "screen/go" })}
               >
                 <span className="nav__pip" />
@@ -237,12 +256,10 @@ const App = () => {
             ))}
           </nav>
           <div className="sidebar__foot">
-            {footNote(saveFailed, guest)}
-            <br />
+            <span>{footNote(saveFailed, guest)}</span>
             <button
               type="button"
-              className="nav"
-              style={{ marginTop: 10, padding: "8px 0" }}
+              className="nav sidebar__account"
               onClick={signOut}
             >
               <span className="nav__label">

@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { LoadFailure } from "../data/vocab";
 import { signInUrl } from "../lib/account";
 import { APP_NAME } from "../lib/brand";
+import { Footer } from "./footer";
 import { Header } from "./header";
 
 interface Props {
@@ -87,6 +88,7 @@ const SignIn = ({ onGuest, failure }: Props) => {
             </p>
           </div>
         </div>
+        <Footer />
       </div>
     </>
   );

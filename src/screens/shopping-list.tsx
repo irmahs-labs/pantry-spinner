@@ -41,11 +41,11 @@ export const ShoppingList = ({ state, dispatch }: Props) => {
         What to pick up. <strong>Into pantry</strong> moves something across,
         and only what is in the pantry can be drawn.
       </p>
-      <div className="add-row">
+      <div className="add-row add-row--wrap">
         <select
           aria-label="Add to the list"
           className="unit-select"
-          style={{ flex: 1, minWidth: 0 }}
+          style={{ flex: "1 1 220px", minWidth: 0 }}
           value={chosen}
           onChange={(e) => setChosen(e.target.value)}
         >

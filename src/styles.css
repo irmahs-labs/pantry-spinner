@@ -419,16 +419,21 @@ button {
     gap: 20px;
   }
   .footer {
-    padding: 0 16px 24px;
+    margin-bottom: 24px;
   }
 }
 /* The page's last line, as every irmahs.dev app ends: the icon, then who
-   made it, quiet on the ground */
+   made it, on a pill centred at the bottom */
 .footer {
-  display: flex;
+  align-self: center;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 0 clamp(22px, 4vw, 56px) 28px;
+  margin: 0 16px 28px;
+  padding: 6px 14px 6px 10px;
+  border: var(--line);
+  border-radius: 999px;
+  background: var(--panel);
   font: 14px/1.4 var(--body);
   color: var(--text-muted);
 }
@@ -1737,7 +1742,7 @@ button {
   margin-block: auto;
 }
 .signin > .footer {
-  padding: 20px 0 0;
+  margin: 20px 0 0;
 }
 .signin-panel {
   position: relative;

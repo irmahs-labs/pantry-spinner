@@ -9,6 +9,8 @@ import { defaultUnit } from "../data/vocab";
 import type { CategoryCode, Vocab } from "../data/vocab";
 import { getJson } from "./api";
 import { addDaysISO } from "./dates";
+import { currentLanguage } from "./language";
+import type { Language } from "./language";
 
 export type { RawDemo } from "../data/demo-tables";
 
@@ -28,7 +30,9 @@ const tables = {
       id_starch_kind: optionalId,
       id_vegetable_kind: optionalId,
       name: z.string(),
+      name_fr: z.optional(z.nullable(z.string())),
       short_name: z.nullable(z.string()),
+      short_name_fr: z.optional(z.nullable(z.string())),
     })
   ),
   methods: z.array(z.object({ id_demo_ingredient: id, id_method: id })),
@@ -46,6 +50,7 @@ const tables = {
       id_demo_ingredient: id,
       id_unit: id,
       note: z.string(),
+      note_fr: z.optional(z.nullable(z.string())),
       quantity: z.number(),
     })
   ),
@@ -77,13 +82,17 @@ const isCategory = (code: string | undefined): code is CategoryCode =>
 /**
  * Turns the demo rows into a guest's starting snapshot. Use-by dates are stored
  * as days from now, and become dates here — so the demo is always as fresh as
- * the day it was written, whenever it is opened.
+ * the day it was written, whenever it is opened. Names and notes are in the
+ * page's language, English where the French is missing.
  */
 export const toDemo = (
   raw: RawDemo,
   vocab: Vocab,
-  addDays: (days: number) => string = addDaysISO
+  addDays: (days: number) => string = addDaysISO,
+  language: Language = currentLanguage()
 ): Snapshot => {
+  const french = language === "fr";
+
   const unitOf = (unitId: number) =>
     codeOf(vocab.units, unitId) ?? defaultUnit(vocab);
 
@@ -93,6 +102,10 @@ export const toDemo = (
   const ingredients = rowsOf(
     tables.ingredients,
     raw.meal_planner_demo_ingredients
+  ).map((r) =>
+    french && r.name_fr
+      ? { ...r, name: r.name_fr, short_name: r.short_name_fr ?? null }
+      : r
   );
 
   const nameOf = new Map(ingredients.map((r) => [r.id, r.name]));
@@ -154,7 +167,7 @@ export const toDemo = (
             {
               acquired: false,
               name,
-              note: r.note,
+              note: (french && r.note_fr) || r.note,
               qty: r.quantity,
               unit: unitOf(r.id_unit),
             },

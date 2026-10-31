@@ -1,4 +1,5 @@
 import { ApiError, getJson } from "../lib/api";
+import type { Language } from "../lib/language";
 import type { TableRow } from "./rows";
 
 /**
@@ -10,6 +11,10 @@ import type { TableRow } from "./rows";
  * The three category codes are the one thing fixed here, because they are fixed
  * in the schema too: meal_planner_ingredients has one kind column per category,
  * so a fourth category would be a migration, not a row.
+ *
+ * Every word has a French column beside it (label_fr beside label, and so
+ * on); toVocab reads the one for the page's language, and the English one
+ * where the French is missing.
  */
 export type CategoryCode = "protein" | "vegetable" | "starch";
 
@@ -140,10 +145,18 @@ export const whyLoadFailed = (cause: unknown): LoadFailure =>
     ? "missing"
     : "unreachable";
 
-/** Turns raw rows into the app's shape. Separate from the fetch so it can be tested. */
-export const toVocab = (raw: RawVocab): Vocab => {
+/** Turns raw rows into the app's shape, in a language. Separate from the fetch so it can be tested. */
+export const toVocab = (raw: RawVocab, language: Language = "en"): Vocab => {
   const rows = (table: (typeof VOCAB_TABLES)[number]): TableRow[] =>
     raw[table] ?? [];
+
+  // A word in the page's language: the column's French twin when there is one.
+  // The French columns are nullable text, so a missing one reads as "".
+  const word = (r: TableRow, column: string): string => {
+    const french = language === "fr" ? String(r[`${column}_fr`] ?? "") : "";
+
+    return french || String(r[column] ?? "");
+  };
 
   // A unit's serving unit is another row of the same table, referenced by id.
   const unitCodes = new Map(
@@ -162,7 +175,7 @@ export const toVocab = (raw: RawVocab): Vocab => {
       .map((r) => ({
         code: r.code as CategoryCode,
         id: r.id as number,
-        label: r.label as string,
+        label: word(r, "label"),
         position: r.position as number,
       }))
       .toSorted((a, b) => a.position - b.position),
@@ -171,35 +184,35 @@ export const toVocab = (raw: RawVocab): Vocab => {
       excludesDiets: (r.excludes_diets as string[]) ?? [],
       excludesRedMeat: r.excludes_red_meat as boolean,
       id: r.id as number,
-      label: r.label as string,
+      label: word(r, "label"),
       requiresGlutenFree: r.requires_gluten_free as boolean,
     })),
     dishStyles: rows("meal_planner_dish_styles").map((r) => ({
       code: r.code as string,
       id: r.id as number,
-      label: r.label as string,
-      template: r.name_template as string,
+      label: word(r, "label"),
+      template: word(r, "name_template"),
     })),
     methods: rows("meal_planner_cooking_methods").map((r) => ({
       code: r.code as string,
       id: r.id as number,
-      label: r.label as string,
-      phrase: r.phrase as string,
+      label: word(r, "label"),
+      phrase: word(r, "phrase"),
     })),
     proteinKinds: rows("meal_planner_protein_kinds").map((r) => ({
       code: r.code as string,
       diet: r.diet as string,
-      examples: r.examples as string,
+      examples: word(r, "examples"),
       id: r.id as number,
-      label: r.label as string,
+      label: word(r, "label"),
       redMeat: r.is_red_meat as boolean,
     })),
     starchKinds: rows("meal_planner_starch_kinds").map((r) => ({
       code: r.code as string,
-      examples: r.examples as string,
+      examples: word(r, "examples"),
       glutenFree: r.gluten_free as boolean,
       id: r.id as number,
-      label: r.label as string,
+      label: word(r, "label"),
       styleId: r.id_dish_style as number,
     })),
     units: rows("meal_planner_units").map((r) => ({
@@ -211,23 +224,23 @@ export const toVocab = (raw: RawVocab): Vocab => {
       id: r.id as number,
       isCount: r.is_count as boolean,
       isDefault: r.is_default as boolean,
-      label: r.label as string,
+      label: word(r, "label"),
       servingFactor: Number(r.serving_factor ?? 1),
       servingUnit: unitCodes.get(r.id_serving_unit) ?? null,
     })),
     vegetableKinds: rows("meal_planner_vegetable_kinds").map((r) => ({
       code: r.code as string,
-      examples: r.examples as string,
+      examples: word(r, "examples"),
       id: r.id as number,
-      label: r.label as string,
-      word: r.cooking_word as string,
+      label: word(r, "label"),
+      word: word(r, "cooking_word"),
     })),
   };
 };
 
-/** Every reference table, in one request. Readable without signing in. */
-export const loadVocab = async (): Promise<Vocab> =>
-  toVocab(await getJson<RawVocab>("/api/vocab"));
+/** Every reference table, in one request, as rows in both languages. Readable without signing in. */
+export const loadRawVocab = (): Promise<RawVocab> =>
+  getJson<RawVocab>("/api/vocab");
 
 // ── Reading it ───────────────────────────────────────────────────────────────
 

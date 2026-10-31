@@ -11,6 +11,7 @@ import {
 } from "../data/vocab";
 import { daysLeft, daysNote, ingredientOf } from "../engine/reel";
 import { addDaysISO, daysUntil, todayISO } from "../lib/dates";
+import { useCopy } from "../lib/language";
 import { methodsOn } from "../state/planner";
 import type { Action, PlannerState } from "../state/planner";
 
@@ -19,17 +20,81 @@ interface Props {
   dispatch: Dispatch<Action>;
 }
 
+const COPY = {
+  en: {
+    all: "All",
+    allStocked: "Everything you have is in the pantry",
+    done: "Done",
+    edit: "Edit",
+    everyOff: "Every method is switched off in Cooking methods.",
+    fresh: "Fresh",
+    howCooked: (name: string) => `How ${name} can be cooked`,
+    ingredientToStock: "Ingredient to stock",
+    newIngredient: "+ New ingredient",
+    noIngredients: [
+      "No ingredients yet. ",
+      "New ingredient",
+      " describes one — its reel, its kind and the ways it can be cooked — and then it can be stocked here.",
+    ],
+    noMethods: "No methods ticked",
+    nothingHere:
+      "Nothing stocked here, so the reels have nothing to draw from.",
+    quantity: "Quantity",
+    remove: (name: string) => `Remove ${name}`,
+    servings: (n: number, size: string) =>
+      `${n} ${n === 1 ? "serving" : "servings"} of ${size}`,
+    stockIt: "Stock it",
+    stockOne: "Stock an ingredient…",
+    stocked: "Stocked",
+    unit: "Unit",
+    unknown: "Unknown",
+    useBy: "Use by date",
+    useIt: "Use it",
+  },
+  fr: {
+    all: "Tout",
+    allStocked: "Tout ce que vous avez est dans le garde-manger",
+    done: "OK",
+    edit: "Modifier",
+    everyOff: "Tous les modes sont désactivés dans Modes de cuisson.",
+    fresh: "Frais",
+    howCooked: (name: string) => `Comment cuisiner ${name}`,
+    ingredientToStock: "Ingrédient à stocker",
+    newIngredient: "+ Nouvel ingrédient",
+    noIngredients: [
+      "Pas encore d’ingrédients. ",
+      "Nouvel ingrédient",
+      " en décrit un — son rouleau, son type et ses modes de cuisson — et il peut ensuite être stocké ici.",
+    ],
+    noMethods: "Aucun mode coché",
+    nothingHere: "Rien en stock ici, les rouleaux n’ont donc rien à tirer.",
+    quantity: "Quantité",
+    remove: (name: string) => `Retirer ${name}`,
+    servings: (n: number, size: string) =>
+      `${n} ${n > 1 ? "portions" : "portion"} de ${size}`,
+    stockIt: "Stocker",
+    stockOne: "Stocker un ingrédient…",
+    stocked: "En stock",
+    unit: "Unité",
+    unknown: "Inconnu",
+    useBy: "Date limite",
+    useIt: "À finir",
+  },
+};
+
+type Copy = (typeof COPY)["en"];
+
 /** A pantry card's badge: its tone and its word, by how soon it goes off. */
-const freshnessBadge = (soon: boolean, mid: boolean) => {
+const freshnessBadge = (soon: boolean, mid: boolean, t: Copy) => {
   if (soon) {
-    return { label: "Use it", tone: "badge--dark" };
+    return { label: t.useIt, tone: "badge--dark" };
   }
 
   if (mid) {
-    return { label: "Fresh", tone: "tone-fresh" };
+    return { label: t.fresh, tone: "tone-fresh" };
   }
 
-  return { label: "Stocked", tone: "tone-buy" };
+  return { label: t.stocked, tone: "tone-buy" };
 };
 
 /**
@@ -39,6 +104,7 @@ const freshnessBadge = (soon: boolean, mid: boolean) => {
  */
 export const Pantry = ({ state, dispatch }: Props) => {
   const v = state.vocab;
+  const t = useCopy(COPY);
   const ingredient = (name: string) => ingredientOf(state.catalogue, name);
 
   const rows = state.pantry
@@ -72,7 +138,10 @@ export const Pantry = ({ state, dispatch }: Props) => {
   const servingsNote = (p: (typeof state.pantry)[number]) => {
     const n = servingsLeft(p.qty * servingFactorOf(v, p.unit), p.serving);
 
-    return `${n} ${n === 1 ? "serving" : "servings"} of ${formatQuantity(v, p.serving, servingUnitOf(v, p.unit))}`;
+    return t.servings(
+      n,
+      formatQuantity(v, p.serving, servingUnitOf(v, p.unit))
+    );
   };
 
   const methodLabels = (codes: string[]) =>
@@ -94,16 +163,14 @@ export const Pantry = ({ state, dispatch }: Props) => {
         }}
       >
         <select
-          aria-label="Ingredient to stock"
+          aria-label={t.ingredientToStock}
           className="unit-select"
           style={{ flex: "1 1 220px", minWidth: 0 }}
           value={s.name}
           onChange={(e) => patch({ name: e.target.value })}
         >
           <option value="">
-            {stockable.length
-              ? "Stock an ingredient…"
-              : "Everything you have is in the pantry"}
+            {stockable.length ? t.stockOne : t.allStocked}
           </option>
           {v.categories.map((c) => {
             const items = stockable.filter((i) => i.category === c.code);
@@ -120,7 +187,7 @@ export const Pantry = ({ state, dispatch }: Props) => {
           })}
         </select>
         <input
-          aria-label="Quantity"
+          aria-label={t.quantity}
           className="text-input"
           style={{ width: 72 }}
           type="number"
@@ -130,7 +197,7 @@ export const Pantry = ({ state, dispatch }: Props) => {
           onChange={(e) => patch({ qty: e.target.value })}
         />
         <select
-          aria-label="Unit"
+          aria-label={t.unit}
           className="unit-select"
           value={s.unit}
           onChange={(e) => patch({ unit: e.target.value })}
@@ -148,7 +215,7 @@ export const Pantry = ({ state, dispatch }: Props) => {
           onChange={(serving) => patch({ serving })}
         />
         <input
-          aria-label="Use by date"
+          aria-label={t.useBy}
           className="text-input text-input--date"
           type="date"
           min={todayISO()}
@@ -164,7 +231,7 @@ export const Pantry = ({ state, dispatch }: Props) => {
           className={`btn${s.name ? "" : " btn--muted"}`}
           aria-disabled={!s.name}
         >
-          Stock it
+          {t.stockIt}
         </button>
       </form>
 
@@ -175,7 +242,7 @@ export const Pantry = ({ state, dispatch }: Props) => {
           aria-pressed={state.pantryFilter === "all"}
           onClick={() => dispatch({ filter: "all", type: "pantry/filter" })}
         >
-          All
+          {t.all}
         </button>
         {v.categories.map((c) => (
           <button
@@ -199,21 +266,19 @@ export const Pantry = ({ state, dispatch }: Props) => {
           className="btn"
           onClick={() => dispatch({ screen: "add", type: "screen/go" })}
         >
-          + New ingredient
+          {t.newIngredient}
         </button>
       </div>
 
       {state.catalogue.length === 0 && (
         <p className="intro">
-          No ingredients yet. <strong>New ingredient</strong> describes one —
-          its reel, its kind and the ways it can be cooked — and then it can be
-          stocked here.
+          {t.noIngredients[0]}
+          <strong>{t.noIngredients[1]}</strong>
+          {t.noIngredients[2]}
         </p>
       )}
       {state.catalogue.length > 0 && rows.length === 0 && (
-        <p className="intro">
-          Nothing stocked here, so the reels have nothing to draw from.
-        </p>
+        <p className="intro">{t.nothingHere}</p>
       )}
 
       <div className="pantry-grid">
@@ -221,7 +286,7 @@ export const Pantry = ({ state, dispatch }: Props) => {
           const left = daysLeft(p);
           const soon = left <= 3;
           const mid = left <= 10;
-          const badge = freshnessBadge(soon, mid);
+          const badge = freshnessBadge(soon, mid, t);
           const described = ingredient(p.name);
           const how = methodLabels(described?.methods ?? []);
 
@@ -236,13 +301,13 @@ export const Pantry = ({ state, dispatch }: Props) => {
                   <span className="badge badge--line">
                     {described
                       ? labelOfCategory(v, described.category)
-                      : "Unknown"}
+                      : t.unknown}
                   </span>
                 </div>
                 <button
                   type="button"
                   className="icon-x"
-                  aria-label={`Remove ${p.name}`}
+                  aria-label={t.remove(p.name)}
                   onClick={() =>
                     dispatch({ name: p.name, type: "pantry/remove" })
                   }
@@ -260,7 +325,7 @@ export const Pantry = ({ state, dispatch }: Props) => {
                   · {daysNote(left)}
                 </div>
                 <div className="pcard__how">
-                  <span className="body-sm">{how || "No methods ticked"}</span>
+                  <span className="body-sm">{how || t.noMethods}</span>
                   {described && (
                     <button
                       type="button"
@@ -270,7 +335,7 @@ export const Pantry = ({ state, dispatch }: Props) => {
                         setEditing(editing === p.name ? null : p.name)
                       }
                     >
-                      {editing === p.name ? "Done" : "Edit"}
+                      {editing === p.name ? t.done : t.edit}
                     </button>
                   )}
                 </div>
@@ -279,7 +344,7 @@ export const Pantry = ({ state, dispatch }: Props) => {
                     className="chip-row pcard__methods"
                     // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a <fieldset> brings its own border, padding and min-width into the chip row; role="group" gives assistive tech the same group
                     role="group"
-                    aria-label={`How ${p.name} can be cooked`}
+                    aria-label={t.howCooked(p.name)}
                   >
                     {shown.map((m) => {
                       const on = described.methods.includes(m.code);
@@ -304,9 +369,7 @@ export const Pantry = ({ state, dispatch }: Props) => {
                       );
                     })}
                     {shown.length === 0 && (
-                      <span className="body-sm">
-                        Every method is switched off in Cooking methods.
-                      </span>
+                      <span className="body-sm">{t.everyOff}</span>
                     )}
                   </div>
                 )}

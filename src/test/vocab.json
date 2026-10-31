@@ -1,8 +1,26 @@
 {
   "meal_planner_categories": [
-    { "id": 1, "code": "protein", "label": "Protein", "position": 1 },
-    { "id": 2, "code": "vegetable", "label": "Vegetables", "position": 2 },
-    { "id": 3, "code": "starch", "label": "Starch", "position": 3 }
+    {
+      "id": 1,
+      "code": "protein",
+      "label": "Protein",
+      "position": 1,
+      "label_fr": "Protéines"
+    },
+    {
+      "id": 2,
+      "code": "vegetable",
+      "label": "Vegetables",
+      "position": 2,
+      "label_fr": "Légumes"
+    },
+    {
+      "id": 3,
+      "code": "starch",
+      "label": "Starch",
+      "position": 3,
+      "label_fr": "Féculents"
+    }
   ],
   "meal_planner_protein_kinds": [
     {
@@ -11,7 +29,9 @@
       "label": "Red meat",
       "examples": "Beef, lamb, goat",
       "diet": "meat",
-      "is_red_meat": true
+      "is_red_meat": true,
+      "label_fr": "Viande rouge",
+      "examples_fr": "Bœuf, agneau, chèvre"
     },
     {
       "id": 2,
@@ -19,7 +39,9 @@
       "label": "White meat",
       "examples": "Pork, veal",
       "diet": "meat",
-      "is_red_meat": false
+      "is_red_meat": false,
+      "label_fr": "Viande blanche",
+      "examples_fr": "Porc, veau"
     },
     {
       "id": 3,
@@ -27,7 +49,9 @@
       "label": "Game",
       "examples": "Venison, rabbit, wild boar, bison",
       "diet": "meat",
-      "is_red_meat": true
+      "is_red_meat": true,
+      "label_fr": "Gibier",
+      "examples_fr": "Chevreuil, lapin, sanglier, bison"
     },
     {
       "id": 4,
@@ -35,7 +59,9 @@
       "label": "Poultry",
       "examples": "Chicken, turkey, duck",
       "diet": "meat",
-      "is_red_meat": false
+      "is_red_meat": false,
+      "label_fr": "Volaille",
+      "examples_fr": "Poulet, dinde, canard"
     },
     {
       "id": 5,
@@ -43,7 +69,9 @@
       "label": "Fish",
       "examples": "Salmon, tuna, cod",
       "diet": "fish",
-      "is_red_meat": false
+      "is_red_meat": false,
+      "label_fr": "Poisson",
+      "examples_fr": "Saumon, thon, cabillaud"
     },
     {
       "id": 6,
@@ -51,7 +79,9 @@
       "label": "Seafood",
       "examples": "Prawns, mussels, squid",
       "diet": "fish",
-      "is_red_meat": false
+      "is_red_meat": false,
+      "label_fr": "Fruits de mer",
+      "examples_fr": "Crevettes, moules, calamars"
     },
     {
       "id": 7,
@@ -59,7 +89,9 @@
       "label": "Eggs & dairy",
       "examples": "Eggs, halloumi, paneer",
       "diet": "veg",
-      "is_red_meat": false
+      "is_red_meat": false,
+      "label_fr": "Œufs et laitages",
+      "examples_fr": "Œufs, halloumi, paneer"
     },
     {
       "id": 8,
@@ -67,7 +99,9 @@
       "label": "Plant-based",
       "examples": "Tofu, tempeh, beans, lentils",
       "diet": "veg",
-      "is_red_meat": false
+      "is_red_meat": false,
+      "label_fr": "Végétal",
+      "examples_fr": "Tofu, tempeh, haricots, lentilles"
     }
   ],
   "meal_planner_vegetable_kinds": [
@@ -76,49 +110,70 @@
       "code": "leafy",
       "label": "Leafy greens",
       "examples": "Spinach, kale, chard, lettuce",
-      "cooking_word": "wilted"
+      "cooking_word": "wilted",
+      "label_fr": "Légumes-feuilles",
+      "examples_fr": "Épinards, chou kale, blettes, laitue",
+      "cooking_word_fr": "à l’étuvée"
     },
     {
       "id": 2,
       "code": "brassica",
       "label": "Brassicas",
       "examples": "Broccoli, cauliflower, cabbage",
-      "cooking_word": "charred"
+      "cooking_word": "charred",
+      "label_fr": "Choux",
+      "examples_fr": "Brocoli, chou-fleur, chou",
+      "cooking_word_fr": "à la flamme"
     },
     {
       "id": 3,
       "code": "root",
       "label": "Roots",
       "examples": "Carrot, beetroot, parsnip",
-      "cooking_word": "roasted"
+      "cooking_word": "roasted",
+      "label_fr": "Racines",
+      "examples_fr": "Carotte, betterave, panais",
+      "cooking_word_fr": "au four"
     },
     {
       "id": 4,
       "code": "fruiting",
       "label": "Fruiting",
       "examples": "Peppers, tomato, zucchini, aubergine",
-      "cooking_word": "blistered"
+      "cooking_word": "blistered",
+      "label_fr": "Légumes-fruits",
+      "examples_fr": "Poivrons, tomate, courgette, aubergine",
+      "cooking_word_fr": "à la plancha"
     },
     {
       "id": 5,
       "code": "pods",
       "label": "Pods & legumes",
       "examples": "Green beans, peas, edamame",
-      "cooking_word": "garlicky"
+      "cooking_word": "garlicky",
+      "label_fr": "Gousses et légumineuses",
+      "examples_fr": "Haricots verts, petits pois, edamame",
+      "cooking_word_fr": "à l’ail"
     },
     {
       "id": 6,
       "code": "allium",
       "label": "Alliums",
       "examples": "Onion, leek, fennel",
-      "cooking_word": "caramelised"
+      "cooking_word": "caramelised",
+      "label_fr": "Alliacées",
+      "examples_fr": "Oignon, poireau, fenouil",
+      "cooking_word_fr": "en confit"
     },
     {
       "id": 7,
       "code": "mushroom",
       "label": "Mushrooms",
       "examples": "Shiitake, oyster, chestnut",
-      "cooking_word": "seared"
+      "cooking_word": "seared",
+      "label_fr": "Champignons",
+      "examples_fr": "Shiitaké, pleurote, champignon de Paris",
+      "cooking_word_fr": "à la poêle"
     }
   ],
   "meal_planner_starch_kinds": [
@@ -128,7 +183,9 @@
       "label": "Grains",
       "examples": "Rice, farro, quinoa, bulgur",
       "id_dish_style": 1,
-      "gluten_free": true
+      "gluten_free": true,
+      "label_fr": "Céréales",
+      "examples_fr": "Riz, épeautre, quinoa, boulgour"
     },
     {
       "id": 2,
@@ -136,7 +193,9 @@
       "label": "Noodles",
       "examples": "Udon, rice noodles, soba",
       "id_dish_style": 2,
-      "gluten_free": false
+      "gluten_free": false,
+      "label_fr": "Nouilles",
+      "examples_fr": "Udon, nouilles de riz, soba"
     },
     {
       "id": 3,
@@ -144,7 +203,9 @@
       "label": "Bread",
       "examples": "Sourdough, ciabatta, naan",
       "id_dish_style": 5,
-      "gluten_free": false
+      "gluten_free": false,
+      "label_fr": "Pain",
+      "examples_fr": "Pain au levain, ciabatta, naan"
     },
     {
       "id": 4,
@@ -152,7 +213,9 @@
       "label": "Wraps",
       "examples": "Tortillas, pita, flatbread",
       "id_dish_style": 4,
-      "gluten_free": false
+      "gluten_free": false,
+      "label_fr": "Galettes",
+      "examples_fr": "Tortillas, pita, pain plat"
     },
     {
       "id": 5,
@@ -160,7 +223,9 @@
       "label": "Potatoes & roots",
       "examples": "Potato, sweet potato, polenta",
       "id_dish_style": 6,
-      "gluten_free": true
+      "gluten_free": true,
+      "label_fr": "Pommes de terre et racines",
+      "examples_fr": "Pomme de terre, patate douce, polenta"
     },
     {
       "id": 6,
@@ -168,7 +233,9 @@
       "label": "Whole grains",
       "examples": "Farro, quinoa, bulgur, couscous",
       "id_dish_style": 3,
-      "gluten_free": false
+      "gluten_free": false,
+      "label_fr": "Céréales complètes",
+      "examples_fr": "Épeautre, quinoa, boulgour, couscous"
     }
   ],
   "meal_planner_dish_styles": [
@@ -176,37 +243,49 @@
       "id": 1,
       "code": "bowl",
       "label": "Rice bowl",
-      "name_template": "{method} {protein} {starch} Bowl with {vegetable_method} {vegetable}"
+      "name_template": "{method} {protein} {starch} Bowl with {vegetable_method} {vegetable}",
+      "label_fr": "Bol de riz",
+      "name_template_fr": "Bol {protein} {method}, {starch} et {vegetable} {vegetable_method}"
     },
     {
       "id": 2,
       "code": "noodles",
       "label": "Noodle bowl",
-      "name_template": "{method} {protein} {starch} Stir-Fry with {vegetable_method} {vegetable}"
+      "name_template": "{method} {protein} {starch} Stir-Fry with {vegetable_method} {vegetable}",
+      "label_fr": "Bol de nouilles",
+      "name_template_fr": "Wok {protein} {method}, {starch} et {vegetable} {vegetable_method}"
     },
     {
       "id": 3,
       "code": "salad",
       "label": "Salad bowl",
-      "name_template": "{method} {protein} & {starch} Salad with {vegetable_method} {vegetable}"
+      "name_template": "{method} {protein} & {starch} Salad with {vegetable_method} {vegetable}",
+      "label_fr": "Salade composée",
+      "name_template_fr": "Salade {protein} {method}, {starch} et {vegetable} {vegetable_method}"
     },
     {
       "id": 4,
       "code": "tacos",
       "label": "Tacos",
-      "name_template": "{method} {protein} Tacos with {vegetable_method} {vegetable}"
+      "name_template": "{method} {protein} Tacos with {vegetable_method} {vegetable}",
+      "label_fr": "Tacos",
+      "name_template_fr": "Tacos {protein} {method} et {vegetable} {vegetable_method}"
     },
     {
       "id": 5,
       "code": "skillet",
       "label": "Skillet",
-      "name_template": "{method} {protein} {starch} Skillet with {vegetable_method} {vegetable}"
+      "name_template": "{method} {protein} {starch} Skillet with {vegetable_method} {vegetable}",
+      "label_fr": "Poêlée",
+      "name_template_fr": "Poêlée {protein} {method}, {starch} et {vegetable} {vegetable_method}"
     },
     {
       "id": 6,
       "code": "roast",
       "label": "Roasting tray",
-      "name_template": "{method} {protein} & {starch_method} {starch} Tray with {vegetable_method} {vegetable}"
+      "name_template": "{method} {protein} & {starch_method} {starch} Tray with {vegetable_method} {vegetable}",
+      "label_fr": "Plaque au four",
+      "name_template_fr": "Plaque {protein} {method}, {starch} {starch_method} et {vegetable} {vegetable_method}"
     }
   ],
   "meal_planner_units": [
@@ -218,7 +297,8 @@
       "is_default": true,
       "default_serving": null,
       "id_serving_unit": null,
-      "serving_factor": 1
+      "serving_factor": 1,
+      "label_fr": "pièces"
     },
     {
       "id": 2,
@@ -228,7 +308,8 @@
       "is_default": false,
       "default_serving": 150,
       "id_serving_unit": 2,
-      "serving_factor": 1
+      "serving_factor": 1,
+      "label_fr": "grammes"
     },
     {
       "id": 3,
@@ -238,7 +319,8 @@
       "is_default": false,
       "default_serving": 150,
       "id_serving_unit": 2,
-      "serving_factor": 1000
+      "serving_factor": 1000,
+      "label_fr": "kilogrammes"
     },
     {
       "id": 4,
@@ -248,7 +330,8 @@
       "is_default": false,
       "default_serving": 250,
       "id_serving_unit": 4,
-      "serving_factor": 1
+      "serving_factor": 1,
+      "label_fr": "millilitres"
     },
     {
       "id": 5,
@@ -258,7 +341,8 @@
       "is_default": false,
       "default_serving": 250,
       "id_serving_unit": 4,
-      "serving_factor": 1000
+      "serving_factor": 1000,
+      "label_fr": "litres"
     },
     {
       "id": 6,
@@ -268,7 +352,8 @@
       "is_default": false,
       "default_serving": null,
       "id_serving_unit": null,
-      "serving_factor": 1
+      "serving_factor": 1,
+      "label_fr": "portions"
     },
     {
       "id": 7,
@@ -278,7 +363,8 @@
       "is_default": false,
       "default_serving": null,
       "id_serving_unit": null,
-      "serving_factor": 1
+      "serving_factor": 1,
+      "label_fr": "sachets"
     },
     {
       "id": 11,
@@ -288,30 +374,91 @@
       "is_default": false,
       "default_serving": null,
       "id_serving_unit": null,
-      "serving_factor": 1
+      "serving_factor": 1,
+      "label_fr": "boîtes"
     }
   ],
   "meal_planner_cooking_methods": [
-    { "id": 1, "code": "roast", "label": "Roast", "phrase": "Roasted" },
+    {
+      "id": 1,
+      "code": "roast",
+      "label": "Roast",
+      "phrase": "Roasted",
+      "label_fr": "Rôtir",
+      "phrase_fr": "au four"
+    },
     {
       "id": 2,
       "code": "stir_fry",
       "label": "Stir-fry",
-      "phrase": "Stir-fried"
+      "phrase": "Stir-fried",
+      "label_fr": "Sauter au wok",
+      "phrase_fr": "au wok"
     },
-    { "id": 3, "code": "pan_fry", "label": "Pan-fry", "phrase": "Pan-fried" },
-    { "id": 4, "code": "grill", "label": "Grill", "phrase": "Grilled" },
-    { "id": 5, "code": "smoke", "label": "Smoke", "phrase": "Smoked" },
-    { "id": 6, "code": "steam", "label": "Steam", "phrase": "Steamed" },
-    { "id": 7, "code": "bake", "label": "Bake", "phrase": "Baked" },
-    { "id": 8, "code": "air_fry", "label": "Air-fry", "phrase": "Air-fried" },
+    {
+      "id": 3,
+      "code": "pan_fry",
+      "label": "Pan-fry",
+      "phrase": "Pan-fried",
+      "label_fr": "Poêler",
+      "phrase_fr": "à la poêle"
+    },
+    {
+      "id": 4,
+      "code": "grill",
+      "label": "Grill",
+      "phrase": "Grilled",
+      "label_fr": "Griller",
+      "phrase_fr": "au gril"
+    },
+    {
+      "id": 5,
+      "code": "smoke",
+      "label": "Smoke",
+      "phrase": "Smoked",
+      "label_fr": "Fumer",
+      "phrase_fr": "au fumoir"
+    },
+    {
+      "id": 6,
+      "code": "steam",
+      "label": "Steam",
+      "phrase": "Steamed",
+      "label_fr": "Vapeur",
+      "phrase_fr": "à la vapeur"
+    },
+    {
+      "id": 7,
+      "code": "bake",
+      "label": "Bake",
+      "phrase": "Baked",
+      "label_fr": "Cuire au four",
+      "phrase_fr": "en cocotte"
+    },
+    {
+      "id": 8,
+      "code": "air_fry",
+      "label": "Air-fry",
+      "phrase": "Air-fried",
+      "label_fr": "Friteuse à air",
+      "phrase_fr": "à la friteuse à air"
+    },
     {
       "id": 9,
       "code": "deep_fry",
       "label": "Deep-fry",
-      "phrase": "Deep-fried"
+      "phrase": "Deep-fried",
+      "label_fr": "Frire",
+      "phrase_fr": "en friture"
     },
-    { "id": 10, "code": "soup", "label": "Soup", "phrase": "Simmered" }
+    {
+      "id": 10,
+      "code": "soup",
+      "label": "Soup",
+      "phrase": "Simmered",
+      "label_fr": "Soupe",
+      "phrase_fr": "à feu doux"
+    }
   ],
   "meal_planner_diet_rules": [
     {
@@ -320,7 +467,8 @@
       "label": "Vegetarian",
       "excludes_diets": ["meat", "fish"],
       "excludes_red_meat": false,
-      "requires_gluten_free": false
+      "requires_gluten_free": false,
+      "label_fr": "Végétarien"
     },
     {
       "id": 2,
@@ -328,7 +476,8 @@
       "label": "Pescatarian",
       "excludes_diets": ["meat"],
       "excludes_red_meat": false,
-      "requires_gluten_free": false
+      "requires_gluten_free": false,
+      "label_fr": "Pescétarien"
     },
     {
       "id": 3,
@@ -336,7 +485,8 @@
       "label": "No red meat",
       "excludes_diets": [],
       "excludes_red_meat": true,
-      "requires_gluten_free": false
+      "requires_gluten_free": false,
+      "label_fr": "Sans viande rouge"
     },
     {
       "id": 4,
@@ -344,7 +494,8 @@
       "label": "Gluten-free",
       "excludes_diets": [],
       "excludes_red_meat": false,
-      "requires_gluten_free": true
+      "requires_gluten_free": true,
+      "label_fr": "Sans gluten"
     }
   ]
 }

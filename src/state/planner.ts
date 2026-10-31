@@ -26,6 +26,35 @@ import {
 import type { SpinPlan, Triple } from "../engine/reel";
 import { FEATURES } from "../features";
 import { addDaysISO, todayISO } from "../lib/dates";
+import { currentLanguage } from "../lib/language";
+
+/**
+ * What the planner writes down as it goes: the flash, and the notes kept on a
+ * cooked dish or a shopping-list row, in the language the page is in when
+ * they're written.
+ */
+const NOTES = {
+  en: {
+    added: (name: string, reel: string, have: boolean) =>
+      `${name} is on the ${reel} reel${have ? " and in the pantry." : ", and on the shopping list."}`,
+    addedByYou: "Added by you",
+    justDrawn: "Just drawn",
+    left: (name: string, qty: string) => `${name}: ${qty} left`,
+    newOn: (reel: string) => `New on the ${reel} reel`,
+    usedUp: (name: string) => `${name}: used up`,
+  },
+  fr: {
+    added: (name: string, reel: string, have: boolean) =>
+      `${name} est sur le rouleau ${reel}${have ? " et dans le garde-manger." : ", et sur la liste de courses."}`,
+    addedByYou: "Ajouté par vous",
+    justDrawn: "Tout juste tiré",
+    left: (name: string, qty: string) => `${name} : il reste ${qty}`,
+    newOn: (reel: string) => `Nouveau sur le rouleau ${reel}`,
+    usedUp: (name: string) => `${name} : terminé`,
+  },
+};
+
+const notes = () => NOTES[currentLanguage()];
 
 export type Screen =
   | "spin"
@@ -367,8 +396,8 @@ export const plannerReducer = (
         const item = pantry.find((p) => p.name === name);
 
         return item
-          ? `${name}: ${formatQuantity(state.vocab, item.qty, item.unit)} left`
-          : `${name}: used up`;
+          ? notes().left(name, formatQuantity(state.vocab, item.qty, item.unit))
+          : notes().usedUp(name);
       });
 
       // The meal is recorded either way; that is what "Yesterday you ate …"
@@ -389,8 +418,8 @@ export const plannerReducer = (
             ingredients: names,
             method: methods[0],
             note: method
-              ? `Just drawn · ${method.label.toLowerCase()}`
-              : "Just drawn",
+              ? `${notes().justDrawn} · ${method.label.toLowerCase()}`
+              : notes().justDrawn,
             style: styleOf(picks[2], state.vocab)?.code ?? "",
           },
           ...state.plan,
@@ -489,14 +518,14 @@ export const plannerReducer = (
           ingredient,
         ],
         draft: { ...d, days: 7, methods: [], name: "", qty: "", shortName: "" },
-        flash: `${name} is on the ${reel} reel${d.have ? " and in the pantry." : ", and on the shopping list."}`,
+        flash: notes().added(name, reel, d.have),
         grocery: d.have
           ? state.grocery.filter((g) => !same(g.name, name))
           : [
               {
                 acquired: false,
                 name,
-                note: `New on the ${reel} reel`,
+                note: notes().newOn(reel),
                 qty: parseQuantity(d.qty),
                 unit: d.unit,
               },
@@ -592,7 +621,7 @@ export const plannerReducer = (
           {
             acquired: false,
             name,
-            note: "Added by you",
+            note: notes().addedByYou,
             qty: parseQuantity(action.qty ?? ""),
             unit: action.unit || defaultUnit(state.vocab),
           },

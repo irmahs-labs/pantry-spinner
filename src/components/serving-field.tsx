@@ -1,5 +1,11 @@
 import { defaultServing, servingUnitOf } from "../data/vocab";
 import type { Vocab } from "../data/vocab";
+import { useCopy } from "../lib/language";
+
+const COPY = {
+  en: { label: "Serving", one: (unit: string) => `One serving, in ${unit}` },
+  fr: { label: "Portion", one: (unit: string) => `Une portion, en ${unit}` },
+};
 
 interface Props {
   vocab: Vocab;
@@ -15,6 +21,7 @@ interface Props {
  */
 export const ServingField = ({ vocab, unit, value, onChange }: Props) => {
   const fallback = defaultServing(vocab, unit);
+  const t = useCopy(COPY);
 
   if (fallback === null) {
     return null;
@@ -25,9 +32,9 @@ export const ServingField = ({ vocab, unit, value, onChange }: Props) => {
 
   return (
     <label className="serving-field">
-      <span className="serving-field__label">Serving</span>
+      <span className="serving-field__label">{t.label}</span>
       <input
-        aria-label={`One serving, in ${small}`}
+        aria-label={t.one(small)}
         type="number"
         min={0}
         step="any"

@@ -3,7 +3,45 @@ import type { Dispatch } from "react";
 
 import { defaultUnit, formatQuantity } from "../data/vocab";
 import { ingredientOf } from "../engine/reel";
+import { useCopy } from "../lib/language";
 import type { Action, PlannerState } from "../state/planner";
+
+const COPY = {
+  en: {
+    add: "Add",
+    addTo: "Add to the list",
+    addToOne: "Add to the list…",
+    allOn: "Everything is on the list",
+    gone: " · no longer in your ingredients",
+    howMuch: "How much",
+    intoPantry: "Into pantry",
+    intro: [
+      "What to pick up. ",
+      "Into pantry",
+      " moves something across, and only what is in the pantry can be drawn.",
+    ],
+    nothing: "Nothing to buy. The pantry has it covered.",
+    remove: (name: string) => `Remove ${name}`,
+    unit: "Unit",
+  },
+  fr: {
+    add: "Ajouter",
+    addTo: "Ajouter à la liste",
+    addToOne: "Ajouter à la liste…",
+    allOn: "Tout est sur la liste",
+    gone: " · ne fait plus partie de vos ingrédients",
+    howMuch: "Combien",
+    intoPantry: "Au garde-manger",
+    intro: [
+      "Ce qu’il faut acheter. ",
+      "Au garde-manger",
+      " le range, et seul ce qui est dans le garde-manger peut être tiré.",
+    ],
+    nothing: "Rien à acheter. Le garde-manger est bien rempli.",
+    remove: (name: string) => `Retirer ${name}`,
+    unit: "Unité",
+  },
+};
 
 interface Props {
   state: PlannerState;
@@ -12,6 +50,7 @@ interface Props {
 
 export const ShoppingList = ({ state, dispatch }: Props) => {
   const v = state.vocab;
+  const t = useCopy(COPY);
   const [chosen, setChosen] = useState("");
   const [qty, setQty] = useState("1");
   const [unit, setUnit] = useState("");
@@ -38,20 +77,19 @@ export const ShoppingList = ({ state, dispatch }: Props) => {
   return (
     <div className="page-narrow">
       <p className="intro">
-        What to pick up. <strong>Into pantry</strong> moves something across,
-        and only what is in the pantry can be drawn.
+        {t.intro[0]}
+        <strong>{t.intro[1]}</strong>
+        {t.intro[2]}
       </p>
       <div className="add-row add-row--wrap">
         <select
-          aria-label="Add to the list"
+          aria-label={t.addTo}
           className="unit-select"
           style={{ flex: "1 1 220px", minWidth: 0 }}
           value={chosen}
           onChange={(e) => setChosen(e.target.value)}
         >
-          <option value="">
-            {addable.length ? "Add to the list…" : "Everything is on the list"}
-          </option>
+          <option value="">{addable.length ? t.addToOne : t.allOn}</option>
           {v.categories.map((c) => {
             const items = addable.filter((i) => i.category === c.code);
 
@@ -67,7 +105,7 @@ export const ShoppingList = ({ state, dispatch }: Props) => {
           })}
         </select>
         <input
-          aria-label="How much"
+          aria-label={t.howMuch}
           className="text-input"
           style={{ width: 72 }}
           type="number"
@@ -78,7 +116,7 @@ export const ShoppingList = ({ state, dispatch }: Props) => {
           onChange={(e) => setQty(e.target.value)}
         />
         <select
-          aria-label="Unit"
+          aria-label={t.unit}
           className="unit-select"
           value={unit || defaultUnit(v)}
           onChange={(e) => setUnit(e.target.value)}
@@ -95,12 +133,10 @@ export const ShoppingList = ({ state, dispatch }: Props) => {
           onClick={add}
           aria-disabled={!chosen}
         >
-          Add
+          {t.add}
         </button>
       </div>
-      {state.grocery.length === 0 && (
-        <p className="intro">Nothing to buy. The pantry has it covered.</p>
-      )}
+      {state.grocery.length === 0 && <p className="intro">{t.nothing}</p>}
       <ul className="rows">
         {state.grocery.map((g) => (
           <li key={g.name} className={`lrow${g.acquired ? " lrow--done" : ""}`}>
@@ -119,9 +155,7 @@ export const ShoppingList = ({ state, dispatch }: Props) => {
                 <span className="lrow__name">{g.name}</span>
                 <span className="lrow__why">
                   {g.note}
-                  {ingredientOf(state.catalogue, g.name)
-                    ? ""
-                    : " · no longer in your ingredients"}
+                  {ingredientOf(state.catalogue, g.name) ? "" : t.gone}
                   {" · "}
                   {formatQuantity(v, g.qty, g.unit)}
                 </span>
@@ -132,12 +166,12 @@ export const ShoppingList = ({ state, dispatch }: Props) => {
               className="stock-btn"
               onClick={() => dispatch({ name: g.name, type: "grocery/stock" })}
             >
-              Into pantry
+              {t.intoPantry}
             </button>
             <button
               type="button"
               className="icon-x"
-              aria-label={`Remove ${g.name}`}
+              aria-label={t.remove(g.name)}
               onClick={() => dispatch({ name: g.name, type: "grocery/remove" })}
             >
               ×

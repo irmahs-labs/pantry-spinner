@@ -18,6 +18,7 @@ import {
 } from "../engine/reel";
 import type { Triple } from "../engine/reel";
 import { todayWeekday } from "../lib/dates";
+import { useCopy, useLanguage } from "../lib/language";
 import { yesterdaysMeal } from "../state/planner";
 import type { Action, PlannerState } from "../state/planner";
 
@@ -27,69 +28,141 @@ interface DrawProps {
   onSpin: () => void;
 }
 
-const listOf = (words: string[]) =>
+const COPY = {
+  en: {
+    add: (category: string) => `add ${category}`,
+    again: "Again",
+    and: "and",
+    days: (n: number) => (n === 1 ? "1 day" : `${n} days`),
+    dish: "Tonight's dish",
+    draw: "Draw three",
+    empty: (category: string) => `${category} reel, empty`,
+    held: "held",
+    hold: "Hold this column",
+    holdHint: "Click a column to hold it, then draw again.",
+    intoPot: "Into the pot",
+    method: (label: string) => `Method · ${label}`,
+    nothing: "nothing stocked",
+    nothingStocked: "Nothing stocked",
+    orPress: "— or press",
+    overdue: "overdue",
+    question: "what will we be cooking tonight?",
+    reel: (category: string) => `${category} reel`,
+    reels: "Reels",
+    release: "Release this column",
+    stock: (missing: string) => `Stock ${missing} to draw.`,
+    stocked: "stocked",
+    thisEvening: "This evening",
+    today: "today",
+    tomorrow: "tomorrow",
+    turning: "Turning over…",
+    useFirst: "Use these first",
+    useItUp: " · use it up",
+    whatHolds: "what the pantry holds",
+    yesterday: "Yesterday you ate",
+  },
+  fr: {
+    add: (category: string) => `ajouter ${category}`,
+    again: "Encore",
+    and: "et",
+    days: (n: number) => (n === 1 ? "1 jour" : `${n} jours`),
+    dish: "Le plat du soir",
+    draw: "Tirer trois",
+    empty: (category: string) => `Rouleau ${category}, vide`,
+    held: "bloqué",
+    hold: "Bloquer cette colonne",
+    holdHint: "Cliquez une colonne pour la bloquer, puis tirez à nouveau.",
+    intoPot: "À la casserole",
+    method: (label: string) => `Cuisson · ${label}`,
+    nothing: "rien en stock",
+    nothingStocked: "Rien en stock",
+    orPress: "— ou appuyez sur",
+    overdue: "périmé",
+    question: "qu’allons-nous cuisiner ce soir ?",
+    reel: (category: string) => `Rouleau ${category}`,
+    reels: "Rouleaux",
+    release: "Débloquer cette colonne",
+    stock: (missing: string) => `Stockez ${missing} pour tirer.`,
+    stocked: "en stock",
+    thisEvening: "Ce soir",
+    today: "aujourd’hui",
+    tomorrow: "demain",
+    turning: "Ça tourne…",
+    useFirst: "À utiliser en premier",
+    useItUp: " · à finir",
+    whatHolds: "ce que contient le garde-manger",
+    yesterday: "Hier, vous avez mangé",
+  },
+};
+
+type Copy = (typeof COPY)["en"];
+
+const listOf = (words: string[], t: Copy) =>
   words.length === 1
     ? words[0]
-    : `${words.slice(0, -1).join(", ")} and ${words.at(-1)}`;
+    : `${words.slice(0, -1).join(", ")} ${t.and} ${words.at(-1)}`;
 
 /** The line under the draw button: what is missing, what is happening, or what to do next. */
 const hintFor = (
   ready: boolean,
   spinning: boolean,
   settled: boolean,
-  missing: string[]
+  missing: string[],
+  t: Copy
 ): string => {
   if (!ready) {
-    return `Stock ${listOf(missing)} to draw.`;
+    return t.stock(listOf(missing, t) ?? "");
   }
 
   if (spinning) {
-    return "Turning over…";
+    return t.turning;
   }
 
   if (settled) {
-    return "Click a column to hold it, then draw again.";
+    return t.holdHint;
   }
 
-  return "Draw three";
+  return t.draw;
 };
 
-const reelTitle = (empty: boolean, locked: boolean): string => {
+const reelTitle = (empty: boolean, locked: boolean, t: Copy): string => {
   if (empty) {
-    return "Nothing stocked";
+    return t.nothingStocked;
   }
 
-  return locked ? "Release this column" : "Hold this column";
+  return locked ? t.release : t.hold;
 };
 
 /** How long an item on a reel has left, in the reel's short note. */
-const keepsFor = (left: number): string => {
+const keepsFor = (left: number, t: Copy): string => {
   if (left > 30) {
-    return "stocked";
+    return t.stocked;
   }
 
   if (left < 0) {
-    return "overdue";
+    return t.overdue;
   }
 
   if (left === 0) {
-    return "today";
+    return t.today;
   }
 
-  return left === 1 ? "1 day" : `${left} days`;
+  return t.days(left);
 };
 
 /** When an item running out should be used, in the "use these first" list. */
-const eatBy = (left: number): string => {
+const eatBy = (left: number, t: Copy): string => {
   if (left <= 0) {
-    return "today";
+    return t.today;
   }
 
-  return left === 1 ? "tomorrow" : `${left} days`;
+  return left === 1 ? t.tomorrow : t.days(left);
 };
 
 export const Draw = ({ state, dispatch, onSpin }: DrawProps) => {
   const v = state.vocab;
+  const language = useLanguage();
+  const t = useCopy(COPY);
 
   const reels = useMemo(
     () => reelsFrom(state.pantry, state.catalogue, v),
@@ -119,14 +192,14 @@ export const Draw = ({ state, dispatch, onSpin }: DrawProps) => {
     labelOfCategory(v, c).toLowerCase()
   );
 
-  const hint = hintFor(ready, state.spinning, settled, missing);
+  const hint = hintFor(ready, state.spinning, settled, missing, t);
 
   return (
     <div className="draw">
-      <section className="draw__left" aria-label="Reels">
+      <section className="draw__left" aria-label={t.reels}>
         <div className="day-head">
-          <div className="day-head__day">{todayWeekday()}</div>
-          <h2 className="day-head__title">what the pantry holds</h2>
+          <div className="day-head__day">{todayWeekday(language)}</div>
+          <h2 className="day-head__title">{t.whatHolds}</h2>
           <div className="day-head__rule" />
         </div>
 
@@ -144,16 +217,16 @@ export const Draw = ({ state, dispatch, onSpin }: DrawProps) => {
                 className="reel"
                 disabled={empty}
                 aria-pressed={locked}
-                aria-label={empty ? `${label} reel, empty` : `${label} reel`}
-                title={reelTitle(empty, locked)}
+                aria-label={empty ? t.empty(label) : t.reel(label)}
+                title={reelTitle(empty, locked, t)}
                 onClick={() => dispatch({ reel: k, type: "reel/toggleLock" })}
               >
                 <div className="reel__fade" />
                 {empty ? (
                   <div className="cell reel__empty">
-                    <div className="cell__name">nothing stocked</div>
+                    <div className="cell__name">{t.nothing}</div>
                     <div className="note tone-buy">
-                      add {label.toLowerCase()}
+                      {t.add(label.toLowerCase())}
                     </div>
                   </div>
                 ) : (
@@ -174,7 +247,7 @@ export const Draw = ({ state, dispatch, onSpin }: DrawProps) => {
                             <div
                               className={`note tone-${left <= 3 ? "soon" : "fresh"}`}
                             >
-                              {keepsFor(left)}
+                              {keepsFor(left, t)}
                             </div>
                           </div>
                         );
@@ -182,7 +255,7 @@ export const Draw = ({ state, dispatch, onSpin }: DrawProps) => {
                     )}
                   </div>
                 )}
-                <div className="reel__foot">{locked ? "held" : label}</div>
+                <div className="reel__foot">{locked ? t.held : label}</div>
               </button>
             );
           })}
@@ -196,24 +269,20 @@ export const Draw = ({ state, dispatch, onSpin }: DrawProps) => {
             aria-disabled={!ready}
             disabled={state.spinning || !ready}
           >
-            Draw three
+            {t.draw}
           </button>
           <div className="hint" aria-live="polite">
             <span>{hint}</span>
             {ready && !state.spinning && !settled && (
               <span className="hint__key">
-                — or press <kbd className="kbd">SPACE</kbd>
+                {t.orPress} <kbd className="kbd">SPACE</kbd>
               </span>
             )}
           </div>
         </div>
       </section>
 
-      <section
-        className="stack"
-        style={{ gap: 18 }}
-        aria-label="Tonight's dish"
-      >
+      <section className="stack" style={{ gap: 18 }} aria-label={t.dish}>
         <div className="recipe">
           <span className="legend" aria-hidden="true">
             dinner.txt
@@ -231,12 +300,12 @@ export const Draw = ({ state, dispatch, onSpin }: DrawProps) => {
                 <div className="recipe__kind">{style?.label}</div>
               </div>
               <div className="recipe__body">
-                <div className="kicker">This evening</div>
+                <div className="kicker">{t.thisEvening}</div>
                 <h3 className="recipe__dish">{dishName(picks, methods, v)}</h3>
                 <div className="chip-row">
                   {lead && (
                     <span className="tag tone-green">
-                      Method · {lead.label}
+                      {t.method(lead.label)}
                     </span>
                   )}
                   {picks.map((ingredient, k) => {
@@ -264,7 +333,7 @@ export const Draw = ({ state, dispatch, onSpin }: DrawProps) => {
                       >
                         {ingredient.name}
                         {how ? ` · ${how}` : ""}
-                        {soon ? " · use it up" : ""}
+                        {soon ? t.useItUp : ""}
                       </span>
                     );
                   })}
@@ -275,14 +344,14 @@ export const Draw = ({ state, dispatch, onSpin }: DrawProps) => {
                     className="btn"
                     onClick={() => dispatch({ type: "dish/cook" })}
                   >
-                    Into the pot
+                    {t.intoPot}
                   </button>
                   <button
                     type="button"
                     className="btn btn--outline"
                     onClick={onSpin}
                   >
-                    Again
+                    {t.again}
                   </button>
                 </div>
               </div>
@@ -302,9 +371,7 @@ export const Draw = ({ state, dispatch, onSpin }: DrawProps) => {
                   />
                 ))}
               </div>
-              <div className="recipe__question">
-                what will we be cooking tonight?
-              </div>
+              <div className="recipe__question">{t.question}</div>
               <div className="progress" />
             </div>
           )}
@@ -318,7 +385,7 @@ export const Draw = ({ state, dispatch, onSpin }: DrawProps) => {
               size={36}
             />
             <div>
-              <div className="kicker">Yesterday you ate</div>
+              <div className="kicker">{t.yesterday}</div>
               <div className="yesterday__dish">{yesterday.dish}</div>
             </div>
           </div>
@@ -328,14 +395,14 @@ export const Draw = ({ state, dispatch, onSpin }: DrawProps) => {
 
         {expiring.length > 0 && (
           <div className="soon-list">
-            <div className="kicker">Use these first</div>
+            <div className="kicker">{t.useFirst}</div>
             <div className="chip-row">
               {expiring.map((p) => {
                 const left = daysLeft(p);
 
                 return (
                   <span key={p.name} className="soon-chip">
-                    {p.name} · {eatBy(left)}
+                    {p.name} · {eatBy(left, t)}
                   </span>
                 );
               })}

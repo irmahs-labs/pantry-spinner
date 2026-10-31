@@ -8,7 +8,9 @@
       "id_protein_kind": 4,
       "id_vegetable_kind": null,
       "id_starch_kind": null,
-      "gluten_free": null
+      "gluten_free": null,
+      "name_fr": "Hauts de cuisse de poulet",
+      "short_name_fr": "Poulet"
     },
     {
       "id": 2,
@@ -18,7 +20,9 @@
       "id_protein_kind": 8,
       "id_vegetable_kind": null,
       "id_starch_kind": null,
-      "gluten_free": null
+      "gluten_free": null,
+      "name_fr": "Tofu ferme",
+      "short_name_fr": "Tofu"
     },
     {
       "id": 3,
@@ -28,7 +32,9 @@
       "id_protein_kind": 7,
       "id_vegetable_kind": null,
       "id_starch_kind": null,
-      "gluten_free": null
+      "gluten_free": null,
+      "name_fr": "Œufs",
+      "short_name_fr": "Œuf"
     },
     {
       "id": 4,
@@ -38,7 +44,9 @@
       "id_protein_kind": 5,
       "id_vegetable_kind": null,
       "id_starch_kind": null,
-      "gluten_free": null
+      "gluten_free": null,
+      "name_fr": "Filet de saumon",
+      "short_name_fr": "Saumon"
     },
     {
       "id": 5,
@@ -48,7 +56,9 @@
       "id_protein_kind": null,
       "id_vegetable_kind": 2,
       "id_starch_kind": null,
-      "gluten_free": null
+      "gluten_free": null,
+      "name_fr": "Brocoli",
+      "short_name_fr": null
     },
     {
       "id": 6,
@@ -58,7 +68,9 @@
       "id_protein_kind": null,
       "id_vegetable_kind": 1,
       "id_starch_kind": null,
-      "gluten_free": null
+      "gluten_free": null,
+      "name_fr": "Pousses d’épinards",
+      "short_name_fr": "épinards"
     },
     {
       "id": 7,
@@ -68,7 +80,9 @@
       "id_protein_kind": null,
       "id_vegetable_kind": 7,
       "id_starch_kind": null,
-      "gluten_free": null
+      "gluten_free": null,
+      "name_fr": "Champignons",
+      "short_name_fr": null
     },
     {
       "id": 8,
@@ -78,7 +92,9 @@
       "id_protein_kind": null,
       "id_vegetable_kind": null,
       "id_starch_kind": 1,
-      "gluten_free": true
+      "gluten_free": true,
+      "name_fr": "Riz jasmin",
+      "short_name_fr": "Riz"
     },
     {
       "id": 9,
@@ -88,7 +104,9 @@
       "id_protein_kind": null,
       "id_vegetable_kind": null,
       "id_starch_kind": 4,
-      "gluten_free": true
+      "gluten_free": true,
+      "name_fr": "Tortillas de maïs",
+      "short_name_fr": "Tortilla"
     },
     {
       "id": 10,
@@ -98,7 +116,9 @@
       "id_protein_kind": null,
       "id_vegetable_kind": null,
       "id_starch_kind": 5,
-      "gluten_free": true
+      "gluten_free": true,
+      "name_fr": "Patate douce",
+      "short_name_fr": null
     }
   ],
   "meal_planner_demo_ingredient_methods": [
@@ -182,13 +202,15 @@
       "id_demo_ingredient": 4,
       "quantity": 300,
       "id_unit": 2,
-      "note": "For the weekend"
+      "note": "For the weekend",
+      "note_fr": "Pour le week-end"
     },
     {
       "id_demo_ingredient": 5,
       "quantity": 1,
       "id_unit": 1,
-      "note": "Drawn twice, never in stock"
+      "note": "Drawn twice, never in stock",
+      "note_fr": "Tiré deux fois, jamais en stock"
     }
   ]
 }

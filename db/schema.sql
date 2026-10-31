@@ -27,7 +27,8 @@ CREATE TABLE public.meal_planner_categories (
     id smallint NOT NULL,
     code text NOT NULL,
     label text NOT NULL,
-    "position" smallint NOT NULL
+    "position" smallint NOT NULL,
+    label_fr text
 );
 
 
@@ -39,7 +40,9 @@ CREATE TABLE public.meal_planner_cooking_methods (
     id smallint NOT NULL,
     code text NOT NULL,
     label text NOT NULL,
-    phrase text NOT NULL
+    phrase text NOT NULL,
+    label_fr text,
+    phrase_fr text
 );
 
 
@@ -66,6 +69,8 @@ CREATE TABLE public.meal_planner_demo_ingredients (
     id_vegetable_kind smallint,
     id_starch_kind smallint,
     gluten_free boolean,
+    name_fr text,
+    short_name_fr text,
     CONSTRAINT demo_kind_matches_category CHECK (
 CASE id_category
     WHEN 1 THEN ((id_protein_kind IS NOT NULL) AND (id_vegetable_kind IS NULL) AND (id_starch_kind IS NULL))
@@ -101,6 +106,7 @@ CREATE TABLE public.meal_planner_demo_shopping_list (
     quantity numeric NOT NULL,
     id_unit smallint NOT NULL,
     note text DEFAULT ''::text NOT NULL,
+    note_fr text,
     CONSTRAINT meal_planner_demo_shopping_list_quantity_check CHECK ((quantity > (0)::numeric))
 );
 
@@ -115,7 +121,8 @@ CREATE TABLE public.meal_planner_diet_rules (
     label text NOT NULL,
     excludes_diets text[] DEFAULT '{}'::text[] NOT NULL,
     excludes_red_meat boolean DEFAULT false NOT NULL,
-    requires_gluten_free boolean DEFAULT false NOT NULL
+    requires_gluten_free boolean DEFAULT false NOT NULL,
+    label_fr text
 );
 
 
@@ -127,7 +134,9 @@ CREATE TABLE public.meal_planner_dish_styles (
     id smallint NOT NULL,
     code text NOT NULL,
     label text NOT NULL,
-    name_template text NOT NULL
+    name_template text NOT NULL,
+    label_fr text,
+    name_template_fr text
 );
 
 
@@ -241,6 +250,8 @@ CREATE TABLE public.meal_planner_protein_kinds (
     examples text DEFAULT ''::text NOT NULL,
     diet text NOT NULL,
     is_red_meat boolean DEFAULT false NOT NULL,
+    label_fr text,
+    examples_fr text,
     CONSTRAINT meal_planner_protein_kinds_diet_check CHECK ((diet = ANY (ARRAY['meat'::text, 'fish'::text, 'veg'::text])))
 );
 
@@ -272,7 +283,9 @@ CREATE TABLE public.meal_planner_starch_kinds (
     label text NOT NULL,
     examples text DEFAULT ''::text NOT NULL,
     id_dish_style smallint NOT NULL,
-    gluten_free boolean DEFAULT false NOT NULL
+    gluten_free boolean DEFAULT false NOT NULL,
+    label_fr text,
+    examples_fr text
 );
 
 
@@ -289,6 +302,7 @@ CREATE TABLE public.meal_planner_units (
     default_serving numeric,
     id_serving_unit smallint,
     serving_factor numeric DEFAULT 1 NOT NULL,
+    label_fr text,
     CONSTRAINT meal_planner_units_default_serving_check CHECK ((default_serving > (0)::numeric)),
     CONSTRAINT meal_planner_units_serving_factor_check CHECK ((serving_factor > (0)::numeric))
 );
@@ -324,7 +338,10 @@ CREATE TABLE public.meal_planner_vegetable_kinds (
     code text NOT NULL,
     label text NOT NULL,
     examples text DEFAULT ''::text NOT NULL,
-    cooking_word text NOT NULL
+    cooking_word text NOT NULL,
+    label_fr text,
+    examples_fr text,
+    cooking_word_fr text
 );
 
 
@@ -888,4 +905,5 @@ ALTER TABLE ONLY public.meal_planner_units
 
 INSERT INTO public.schema_migrations (version) VALUES
     ('20261003190000'),
-    ('20261003190001');
+    ('20261003190001'),
+    ('20261031180527');

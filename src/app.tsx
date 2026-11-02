@@ -17,6 +17,7 @@ import {
 } from "./engine/reel";
 import type { Triple } from "./engine/reel";
 import { FEATURES } from "./features";
+import { useCopy } from "./lib/language";
 import { useRemoteSync } from "./lib/use-remote-sync";
 import { AddIngredient } from "./screens/add-ingredient";
 import { Cooked } from "./screens/cooked";
@@ -33,15 +34,93 @@ import {
 } from "./state/planner";
 import type { Screen } from "./state/planner";
 
-const TITLES: Record<Screen, string> = {
-  add: "Add an ingredient",
-  list: "Shopping list",
-  methods: "Cooking methods",
-  pantry: "The pantry",
-  plan: "What you cooked",
-  setup: "Reel rules",
-  spin: "Tonight",
+const COPY = {
+  en: {
+    goingOff: (n: number) => `${n} going off soon`,
+    inPantry: (n: number) => `${n} in the pantry`,
+    kickers: {
+      add: "Onto the reels",
+      list: "Built for you",
+      methods: (n: number) => `${n} in rotation`,
+      pantry: (n: number) => `${n} stocked`,
+      plan: "Last seven days",
+      setup: "Constraints",
+      spin: "Draw a dinner",
+    },
+    main: "Main",
+    nav: {
+      add: "Add ingredient",
+      list: "Shopping list",
+      methods: "Cooking methods",
+      pantry: "Pantry",
+      plan: "Cooked",
+      setup: "Reel rules",
+      spin: "Draw",
+    } satisfies Record<Screen, string>,
+    no: (category: string) => `No ${category}`,
+    notes: {
+      guest: "Just looking. This pantry goes when the tab closes.",
+      saveFailed: "Not saved — check your connection.",
+      usual: "The reels favour whatever is closest to going off.",
+    },
+    nothingStocked: "Nothing stocked",
+    signIn: "Sign in",
+    signOut: "Sign out",
+    titles: {
+      add: "Add an ingredient",
+      list: "Shopping list",
+      methods: "Cooking methods",
+      pantry: "The pantry",
+      plan: "What you cooked",
+      setup: "Reel rules",
+      spin: "Tonight",
+    } satisfies Record<Screen, string>,
+  },
+  fr: {
+    goingOff: (n: number) => `${n} bientôt périmé${n > 1 ? "s" : ""}`,
+    inPantry: (n: number) => `${n} dans le garde-manger`,
+    kickers: {
+      add: "Sur les rouleaux",
+      list: "Faite pour vous",
+      methods: (n: number) => `${n} en rotation`,
+      pantry: (n: number) => `${n} en stock`,
+      plan: "Les sept derniers jours",
+      setup: "Contraintes",
+      spin: "Tirer un dîner",
+    },
+    main: "Principal",
+    nav: {
+      add: "Ajouter un ingrédient",
+      list: "Liste de courses",
+      methods: "Modes de cuisson",
+      pantry: "Garde-manger",
+      plan: "Cuisinés",
+      setup: "Règles des rouleaux",
+      spin: "Tirage",
+    } satisfies Record<Screen, string>,
+    no: (category: string) => `Pas de ${category}`,
+    notes: {
+      guest:
+        "Simple visite. Ce garde-manger disparaît à la fermeture de l’onglet.",
+      saveFailed: "Non enregistré — vérifiez votre connexion.",
+      usual: "Les rouleaux favorisent ce qui va périmer le plus tôt.",
+    },
+    nothingStocked: "Rien en stock",
+    signIn: "Se connecter",
+    signOut: "Se déconnecter",
+    titles: {
+      add: "Ajouter un ingrédient",
+      list: "Liste de courses",
+      methods: "Modes de cuisson",
+      pantry: "Le garde-manger",
+      plan: "Ce que vous avez cuisiné",
+      setup: "Règles des rouleaux",
+      spin: "Ce soir",
+    } satisfies Record<Screen, string>,
+  },
 };
+
+type Copy = (typeof COPY)["en"];
 
 // Space draws, except where focus is in a control that owns the key.
 const OWNS_SPACE: ReadonlySet<string> = new Set([
@@ -52,16 +131,16 @@ const OWNS_SPACE: ReadonlySet<string> = new Set([
 ]);
 
 /** The line at the foot of the sidebar: a failed save first, then guest mode. */
-const footNote = (saveFailed: boolean, guest: boolean): string => {
+const footNote = (saveFailed: boolean, guest: boolean, t: Copy): string => {
   if (saveFailed) {
-    return "Not saved — check your connection.";
+    return t.notes.saveFailed;
   }
 
   if (guest) {
-    return "Just looking. This pantry goes when the tab closes.";
+    return t.notes.guest;
   }
 
-  return "The reels favour whatever is closest to going off.";
+  return t.notes.usual;
 };
 
 // On a phone the nav is a row that scrolls sideways; React hands this the
@@ -101,6 +180,7 @@ const App = () => {
   } = useRemoteSync(state, dispatch);
 
   const timers = useRef<number[]>([]);
+  const t = useCopy(COPY);
 
   useEffect(() => {
     const pending = timers.current;
@@ -137,8 +217,10 @@ const App = () => {
 
     // Each pick is cooked one of the ways ticked for it, drawn with the dish.
     // SAFETY: plan.target is a Triple, one index per reel, so its map is too.
-    const picks = plan.target.map((t, k) =>
-      reels[k][t] ? ingredientOf(state.catalogue, reels[k][t].name) : undefined
+    const picks = plan.target.map((at, k) =>
+      reels[k][at]
+        ? ingredientOf(state.catalogue, reels[k][at].name)
+        : undefined
     ) as Triple<Ingredient | undefined>;
 
     const methods = chooseMethods(
@@ -204,29 +286,25 @@ const App = () => {
   const expiring = state.pantry.filter((p) => daysLeft(p) <= 3).length;
 
   const kickers: Record<Screen, string> = {
-    add: "Onto the reels",
-    list: "Built for you",
-    methods: `${rotation} in rotation`,
-    pantry: `${state.pantry.length} stocked`,
-    plan: "Last seven days",
-    setup: "Constraints",
-    spin: "Draw a dinner",
+    ...t.kickers,
+    methods: t.kickers.methods(rotation),
+    pantry: t.kickers.pantry(state.pantry.length),
   };
 
   type NavItem = [Screen, string, number | ""];
 
   const cooked: NavItem[] = FEATURES.history
-    ? [["plan", "Cooked", state.plan.length]]
+    ? [["plan", t.nav.plan, state.plan.length]]
     : [];
 
   const nav: NavItem[] = [
-    ["spin", "Draw", ""],
-    ["pantry", "Pantry", state.pantry.length],
-    ["add", "Add ingredient", ""],
+    ["spin", t.nav.spin, ""],
+    ["pantry", t.nav.pantry, state.pantry.length],
+    ["add", t.nav.add, ""],
     ...cooked,
-    ["list", "Shopping list", toBuy || ""],
-    ["methods", "Cooking methods", rotation],
-    ["setup", "Reel rules", ""],
+    ["list", t.nav.list, toBuy || ""],
+    ["methods", t.nav.methods, rotation],
+    ["setup", t.nav.setup, ""],
   ];
 
   return (
@@ -237,10 +315,8 @@ const App = () => {
       />
       <div className="shell">
         <aside className="sidebar">
-          <div className="sidebar__sub">
-            {state.pantry.length} in the pantry
-          </div>
-          <nav className="stack" style={{ gap: 6 }} aria-label="Main">
+          <div className="sidebar__sub">{t.inPantry(state.pantry.length)}</div>
+          <nav className="stack" style={{ gap: 6 }} aria-label={t.main}>
             {nav.map(([key, label, count]) => (
               <button
                 key={key}
@@ -257,14 +333,14 @@ const App = () => {
             ))}
           </nav>
           <div className="sidebar__foot">
-            <span>{footNote(saveFailed, guest)}</span>
+            <span>{footNote(saveFailed, guest, t)}</span>
             <button
               type="button"
               className="nav sidebar__account"
               onClick={signOut}
             >
               <span className="nav__label">
-                {guest ? "Sign in" : (email ?? "Sign out")}
+                {guest ? t.signIn : (email ?? t.signOut)}
               </span>
             </button>
           </div>
@@ -275,7 +351,7 @@ const App = () => {
             <header className="topbar">
               <div>
                 <div className="topbar__kicker">{kickers[state.screen]}</div>
-                <h1 className="topbar__title">{TITLES[state.screen]}</h1>
+                <h1 className="topbar__title">{t.titles[state.screen]}</h1>
               </div>
               {ready ? (
                 <button
@@ -285,7 +361,7 @@ const App = () => {
                     dispatch({ screen: "pantry", type: "screen/go" })
                   }
                 >
-                  {expiring} going off soon
+                  {t.goingOff(expiring)}
                 </button>
               ) : (
                 <button
@@ -296,8 +372,13 @@ const App = () => {
                   }
                 >
                   {emptyReels(reels, v).length === v.categories.length
-                    ? "Nothing stocked"
-                    : `No ${labelOfCategory(v, emptyReels(reels, v)[0]).toLowerCase()}`}
+                    ? t.nothingStocked
+                    : t.no(
+                        labelOfCategory(
+                          v,
+                          emptyReels(reels, v)[0]
+                        ).toLowerCase()
+                      )}
                 </button>
               )}
             </header>

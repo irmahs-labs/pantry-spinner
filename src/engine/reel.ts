@@ -2,6 +2,8 @@ import type { Ingredient, PantryItem } from "../data/model";
 import { categoryCodes } from "../data/vocab";
 import type { CategoryCode, DietRule, Vocab } from "../data/vocab";
 import { daysUntil } from "../lib/dates";
+import { currentLanguage } from "../lib/language";
+import type { Language } from "../lib/language";
 
 /** Height of one reel cell in px. Drives all of the spin maths. */
 export const CELL_H = 84;
@@ -269,6 +271,8 @@ export const fillTemplate = (
   const filled = template
     .replaceAll(/\{(?<key>\w+)\}/gu, (_, key: string) => values[key] ?? "")
     .replaceAll(/\s+/gu, " ")
+    // An empty placeholder before a comma ("poulet {method}, riz") leaves no gap
+    .replaceAll(" ,", ",")
     .replace(/\s+[,&]\s*$/u, "")
     .trim();
 
@@ -309,22 +313,44 @@ export const dishName = (
   });
 };
 
-export const daysNote = (days: number): string => {
+const DAYS_NOTES = {
+  en: {
+    months: "keeps for months",
+    past: "past its date",
+    today: "use today",
+    tomorrow: "use tomorrow",
+    within: (days: number) => `use within ${days} days`,
+  },
+  fr: {
+    months: "se garde des mois",
+    past: "date dépassée",
+    today: "à utiliser aujourd’hui",
+    tomorrow: "à utiliser demain",
+    within: (days: number) => `à utiliser sous ${days} jours`,
+  },
+};
+
+export const daysNote = (
+  days: number,
+  language: Language = currentLanguage()
+): string => {
+  const t = DAYS_NOTES[language];
+
   if (days > 30) {
-    return "keeps for months";
+    return t.months;
   }
 
   if (days < 0) {
-    return "past its date";
+    return t.past;
   }
 
   if (days === 0) {
-    return "use today";
+    return t.today;
   }
 
   if (days === 1) {
-    return "use tomorrow";
+    return t.tomorrow;
   }
 
-  return `use within ${days} days`;
+  return t.within(days);
 };

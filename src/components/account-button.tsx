@@ -1,5 +1,19 @@
 import type { Account } from "../lib/account";
 import { signInUrl } from "../lib/account";
+import { useCopy } from "../lib/language";
+
+const COPY = {
+  en: {
+    signIn: "sign in",
+    signedInAs: (email: string) => `Signed in as ${email}`,
+    withGoogle: "sign in with Google",
+  },
+  fr: {
+    signIn: "se connecter",
+    signedInAs: (email: string) => `Compte connecté : ${email}`,
+    withGoogle: "se connecter avec Google",
+  },
+};
 
 // Google's own four-colour mark: never recoloured or redrawn
 const GoogleMark = () => (
@@ -39,17 +53,19 @@ export const AccountButton = ({
 }: {
   account: Account | null | undefined;
 }) => {
+  const t = useCopy(COPY);
+
   if (account === undefined) {
     return null;
   }
 
   if (account === null) {
     return (
-      <a className="account" href={signInUrl()} title="sign in with Google">
+      <a className="account" href={signInUrl()} title={t.withGoogle}>
         <span className="account__icon">
           <GoogleMark />
         </span>
-        <span className="account__text">sign in</span>
+        <span className="account__text">{t.signIn}</span>
       </a>
     );
   }
@@ -60,7 +76,7 @@ export const AccountButton = ({
     <a
       className="account"
       href={signInUrl()}
-      title={`Signed in as ${account.email}`}
+      title={t.signedInAs(account.email)}
     >
       <span className="account__icon">
         {account.image ? (

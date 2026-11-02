@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { LoadFailure } from "../data/vocab";
 import { signInUrl } from "../lib/account";
 import { APP_NAME } from "../lib/brand";
+import { useCopy } from "../lib/language";
 import { Footer } from "./footer";
 import { Header } from "./header";
 
@@ -12,11 +13,37 @@ interface Props {
   failure?: LoadFailure;
 }
 
-const FAILURE_TEXT: Record<LoadFailure, string> = {
-  missing:
-    "The database answered, but its tables aren’t there yet — the migrations haven’t been applied. Every word the app uses lives in those tables.",
-  unreachable:
-    "The app’s server didn’t answer, and every word the app uses comes from its database. Check your connection and reload.",
+const COPY = {
+  en: {
+    blurb:
+      "Your pantry and your list live under your IrmaHS Labs account — the same one for every irmahs.dev app. Sign in with Google; there’s no password to remember.",
+    failure: {
+      missing:
+        "The database answered, but its tables aren’t there yet — the migrations haven’t been applied. Every word the app uses lives in those tables.",
+      unreachable:
+        "The app’s server didn’t answer, and every word the app uses comes from its database. Check your connection and reload.",
+    } satisfies Record<LoadFailure, string>,
+    google: "Continue with Google",
+    guest: "Have a look around",
+    guestNote:
+      "No account. A demo pantry to play with, and nothing is kept — close the tab and it’s gone.",
+    opening: "Opening…",
+  },
+  fr: {
+    blurb:
+      "Votre garde-manger et votre liste vivent sous votre compte IrmaHS Labs — le même pour toutes les apps irmahs.dev. Connectez-vous avec Google ; aucun mot de passe à retenir.",
+    failure: {
+      missing:
+        "La base de données a répondu, mais ses tables ne sont pas encore là — les migrations n’ont pas été appliquées. Tous les mots de l’app vivent dans ces tables.",
+      unreachable:
+        "Le serveur de l’app n’a pas répondu, et tous les mots de l’app viennent de sa base de données. Vérifiez votre connexion et rechargez.",
+    } satisfies Record<LoadFailure, string>,
+    google: "Continuer avec Google",
+    guest: "Jeter un œil",
+    guestNote:
+      "Sans compte. Un garde-manger de démo pour jouer, et rien n’est gardé — fermez l’onglet et il disparaît.",
+    opening: "Ouverture…",
+  },
 };
 
 const GoogleMark = () => (
@@ -47,6 +74,7 @@ const GoogleMark = () => (
  */
 const SignIn = ({ onGuest, failure }: Props) => {
   const [opening, setOpening] = useState(false);
+  const t = useCopy(COPY);
 
   return (
     <>
@@ -58,14 +86,12 @@ const SignIn = ({ onGuest, failure }: Props) => {
           </span>
           <h1 className="signin-brand">{APP_NAME}</h1>
           <p className="signin-blurb">
-            {failure
-              ? FAILURE_TEXT[failure]
-              : "Your pantry and your list live under your IrmaHS Labs account — the same one for every irmahs.dev app. Sign in with Google; there’s no password to remember."}
+            {failure ? t.failure[failure] : t.blurb}
           </p>
           {failure ? null : (
             <a className="signin-google" href={signInUrl()}>
               <GoogleMark />
-              Continue with Google
+              {t.google}
             </a>
           )}
 
@@ -80,12 +106,9 @@ const SignIn = ({ onGuest, failure }: Props) => {
                 setOpening(false);
               }}
             >
-              {opening ? "Opening…" : "Have a look around"}
+              {opening ? t.opening : t.guest}
             </button>
-            <p className="signin-guestNote">
-              No account. A demo pantry to play with, and nothing is kept —
-              close the tab and it’s gone.
-            </p>
+            <p className="signin-guestNote">{t.guestNote}</p>
           </div>
         </div>
         <Footer />

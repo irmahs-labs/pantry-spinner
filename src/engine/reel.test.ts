@@ -365,6 +365,25 @@ describe("dish names are filled from the templates table", () => {
     ).toBe("Baked Chicken & roasted Sweet Potato Tray with roasted broccoli");
   });
 
+  it("names the dish in French from the French templates", () => {
+    // SAFETY: the same dump as `vocab` above, read in French
+    const french = toVocab(raw as RawVocab, "fr");
+    expect(
+      dishName(
+        namedPicks("Chicken Thighs", "Broccoli", "Jasmine Rice"),
+        ["air_fry", "roast", null],
+        french
+      )
+    ).toBe("Bol Chicken à la friteuse à air, Rice et broccoli au four");
+    expect(
+      dishName(
+        namedPicks("Ground Beef", "Baby Spinach", "Jasmine Rice"),
+        [null, null, null],
+        french
+      )
+    ).toBe("Bol Beef, Rice et spinach à l’étuvée");
+  });
+
   it("fills a template it has never seen", () => {
     expect(
       fillTemplate("{method} {protein} over {starch}", {

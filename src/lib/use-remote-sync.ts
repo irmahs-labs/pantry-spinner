@@ -3,14 +3,15 @@ import type { Dispatch } from "react";
 
 import { EMPTY } from "../data/snapshot";
 import type { Snapshot } from "../data/snapshot";
-import { loadVocab, whyLoadFailed } from "../data/vocab";
-import type { LoadFailure } from "../data/vocab";
+import { loadRawVocab, toVocab, whyLoadFailed } from "../data/vocab";
+import type { LoadFailure, RawVocab } from "../data/vocab";
 import { snapshotOf } from "../state/planner";
 import type { Action, PlannerState } from "../state/planner";
 import { currentAccount, signOut as signOutEverywhere } from "./account";
 import type { Account } from "./account";
 import { loadDemo } from "./demo";
 import * as guest from "./guest";
+import { currentLanguage, useLanguage } from "./language";
 import { loadSnapshot, saveSnapshot } from "./remote";
 
 /**
@@ -60,16 +61,24 @@ export const useRemoteSync = (
   const [account, setAccount] = useState<Account | null>(null);
   const [saveFailed, setSaveFailed] = useState(false);
   const synced = useRef<Snapshot | null>(null);
+  // The reference tables in both languages, read again into the page's
+  // language whenever the visitor switches.
+  const [rawVocab, setRawVocab] = useState<RawVocab | null>(null);
+  const language = useLanguage();
 
   // Everything else waits on this: no screen has a word to show without it.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const vocab = await loadVocab();
+        const raw = await loadRawVocab();
 
         if (!cancelled) {
-          dispatch({ type: "vocab/load", vocab });
+          dispatch({
+            type: "vocab/load",
+            vocab: toVocab(raw, currentLanguage()),
+          });
+          setRawVocab(raw);
           setVocabReady(true);
         }
       } catch (error) {
@@ -86,6 +95,13 @@ export const useRemoteSync = (
       cancelled = true;
     };
   }, [dispatch]);
+
+  // Every word on screen comes from the vocabulary, so a new language reads it again.
+  useEffect(() => {
+    if (rawVocab) {
+      dispatch({ type: "vocab/load", vocab: toVocab(rawVocab, language) });
+    }
+  }, [rawVocab, language, dispatch]);
 
   // A guest reload picks the pantry back up out of this tab's storage.
   useEffect(() => {

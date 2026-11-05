@@ -21,6 +21,10 @@ on:
       - ".github/workflows/database.yml"
   workflow_dispatch:
 
+# Reads the repository and nothing else.
+permissions:
+  contents: read
+
 jobs:
   verify:
     name: Migrations build, roll back, and match the committed files

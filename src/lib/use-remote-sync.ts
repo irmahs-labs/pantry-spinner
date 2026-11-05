@@ -69,7 +69,7 @@ export const useRemoteSync = (
   // Everything else waits on this: no screen has a word to show without it.
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    void (async () => {
       try {
         const raw = await loadRawVocab();
 
@@ -123,7 +123,7 @@ export const useRemoteSync = (
     }
 
     let cancelled = false;
-    (async () => {
+    void (async () => {
       try {
         const who = await currentAccount();
 
@@ -262,7 +262,7 @@ export const useRemoteSync = (
       return;
     }
 
-    signOutEverywhere();
+    void signOutEverywhere();
   }, [isGuest, dispatch]);
 
   return {

@@ -4,13 +4,16 @@
 #   npm run db:new -- <name>    create db/migrations/<timestamp>_<name>.sql
 #   npm run db:reset            delete the local database and rebuild it
 #
-# The credentials are for this local container only; production has its own.
+# There is no password: this database is for this machine only; production
+# has its own credentials.
 services:
   db:
     image: postgres:17-alpine
     environment:
       POSTGRES_USER: sleepy
-      POSTGRES_PASSWORD: sleepy
+      # No password: Postgres is only reachable from this machine (127.0.0.1)
+      # and the containers beside it, so it lets the local user straight in.
+      POSTGRES_HOST_AUTH_METHOD: trust
       POSTGRES_DB: sleepy_spinner
     ports:
       # DB_PORT= (empty) picks a free port, which is how the fixture script runs
@@ -28,7 +31,7 @@ services:
     image: ghcr.io/amacneil/dbmate:2
     profiles: [tools]
     environment:
-      DATABASE_URL: postgres://sleepy:sleepy@db:5432/sleepy_spinner?sslmode=disable
+      DATABASE_URL: postgres://sleepy@db:5432/sleepy_spinner?sslmode=disable
       DBMATE_MIGRATIONS_DIR: /db/migrations
       DBMATE_SCHEMA_FILE: /db/schema.sql
     volumes:

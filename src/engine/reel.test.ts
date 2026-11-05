@@ -392,6 +392,12 @@ describe("dish names are filled from the templates table", () => {
       })
     ).toBe("Tofu over Rice");
     expect(fillTemplate("{unknown} soup", {})).toBe("Soup");
+    expect(fillTemplate("{protein} & {side}", { protein: "tofu" })).toBe(
+      "Tofu"
+    );
+    expect(fillTemplate("{protein} ,  {side}", { protein: "tofu" })).toBe(
+      "Tofu,"
+    );
   });
 });
 

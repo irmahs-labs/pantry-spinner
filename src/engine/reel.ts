@@ -273,7 +273,8 @@ export const fillTemplate = (
     .replaceAll(/\s+/gu, " ")
     // An empty placeholder before a comma ("poulet {method}, riz") leaves no gap
     .replaceAll(" ,", ",")
-    .replace(/\s+[,&]\s*$/u, "")
+    // Whitespace is single spaces by now, so a fixed-length match will do
+    .replace(/ [,&] ?$/u, "")
     .trim();
 
   return filled.charAt(0).toUpperCase() + filled.slice(1);

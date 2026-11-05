@@ -118,7 +118,7 @@ npm run db:reset            # delete the local database and build it again from 
 npm run db:fixtures         # regenerate src/test/*.json from the migrations
 ```
 
-The local database is `postgres://sleepy:sleepy@localhost:5432/sleepy_spinner`. Those credentials belong to the local container only.
+The local database is `postgres://sleepy@localhost:5432/sleepy_spinner`, with no password: it only answers this machine. A database made before it went passwordless still asks for one; `npm run db:reset` rebuilds it.
 
 ### The data
 

@@ -3,7 +3,7 @@
 FROM node:24-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --ignore-scripts
 COPY index.html tsconfig.json vite.config.ts ./
 COPY public ./public
 COPY src ./src

@@ -4,11 +4,13 @@ import { useCopy } from "../lib/language";
 
 const COPY = {
   en: {
+    checking: "Checking who is signed in",
     signIn: "sign in",
     signedInAs: (email: string) => `Signed in as ${email}`,
     withGoogle: "sign in with Google",
   },
   fr: {
+    checking: "Vérification du compte connecté",
     signIn: "se connecter",
     signedInAs: (email: string) => `Compte connecté : ${email}`,
     withGoogle: "se connecter avec Google",
@@ -46,7 +48,8 @@ export const firstName = (account: Account) =>
  * mark, or once signed in, the person's picture and first name. Either way
  * it opens the IrmaHS Labs account page, which signs in, shows who you are
  * or signs out, then comes back here. `undefined` while the app is still
- * asking, so the pill never flickers between the two.
+ * asking: a skeleton of the pill's size holds its place, so nothing jumps
+ * or flickers between the two.
  */
 export const AccountButton = ({
   account,
@@ -56,7 +59,16 @@ export const AccountButton = ({
   const t = useCopy(COPY);
 
   if (account === undefined) {
-    return null;
+    return (
+      <span
+        aria-busy="true"
+        aria-label={t.checking}
+        className="account account--loading"
+      >
+        <span className="account__icon" />
+        <span className="account__bar" />
+      </span>
+    );
   }
 
   if (account === null) {

@@ -5,7 +5,7 @@ interface Props {
   style?: React.CSSProperties;
 }
 
-/** A 24px Lucide-style glyph at stroke-width 2.75. `d` holds one or more paths separated by "|". */
+/** A 24px Lucide-style glyph at stroke-width 2, Cute Matcha's screen icons. `d` holds one or more paths separated by "|". */
 export const Icon = ({ d, size, className, style }: Props) => (
   <svg
     viewBox="0 0 24 24"
@@ -13,7 +13,7 @@ export const Icon = ({ d, size, className, style }: Props) => (
     height={size}
     fill="none"
     stroke="currentColor"
-    strokeWidth={2.75}
+    strokeWidth={2}
     strokeLinecap="round"
     strokeLinejoin="round"
     aria-hidden="true"

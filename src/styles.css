@@ -1,7 +1,7 @@
 /* The app's styles, in Cute Matcha's app look, in Light and Dark Matcha:
    role tokens named by job, Fredoka for titles and Nunito Sans for everything
-   else, 2px outlines, flat panels, and strong for whatever is selected. Only
-   the one action to press next carries the hard shadow. */
+   else, 2px outlines, flat panels, and selected for whatever is chosen. Only
+   the one action to press next is yellow (pop) and carries the hard shadow. */
 :root {
   /* Cute Matcha's role tokens, named by job: Light Matcha here, Dark Matcha
      below. Pick one by what the thing is, never by its hex. */
@@ -11,11 +11,15 @@
   --raised: #fffdf0;
   --raised-hover: #e8e1bd;
   --text: #2f3b34;
-  --text-muted: #3f6b30;
+  --text-muted: #335a26;
   --outline: #2f3b34;
   --accent: #d4dd9c;
   --accent-soft: #afc584;
   --on-accent: #2f3b34;
+  /* The one accent: a pastel butter yellow, for the call to action only */
+  --pop: #ffd968;
+  --pop-hover: #f5c94a;
+  --on-pop: #2f3b34;
   --strong: #3b4a42;
   --on-strong: #fff3cf;
   --selected: #afc584;
@@ -38,8 +42,10 @@
   --line-thin: 1.5px solid var(--outline);
   /* Hard shadows are the same near-black in both themes */
   --shadow-hard: 3px 3px 0 #0f1411;
-  --radius-panel: 11px;
-  --radius-lg: 9px;
+  /* Concentric corners: a 20px panel padded 12px holds 8px fields */
+  --radius-panel: 20px;
+  --radius-field: 8px;
+  --space-group: 24px;
 
   /* Fredoka sets titles and panel names, Nunito Sans everything else */
   --display: "Fredoka", "Nunito Sans", system-ui, sans-serif;
@@ -48,23 +54,26 @@
 :root[data-theme="dark"] {
   /* Dark Matcha: a mid-tone matcha page, cards a step lighter, and the header,
      buttons and fields a darker well. Outlines and shadows stay near-black. */
-  --ground: #46574b;
-  --panel: #52645a;
+  --ground: #405045;
+  --panel: #4b5c51;
   --header: #2f3d34;
   --raised: #2f3d34;
   --raised-hover: #3a4a3f;
   --text: #f3f1c8;
-  --text-muted: #d4e396;
+  --text-muted: #dbe8a6;
   --outline: #0f1411;
   --accent: #c9d68f;
   --accent-soft: #9eb27a;
   --on-accent: #0f1411;
+  --pop: #ffe08a;
+  --pop-hover: #ffd666;
+  --on-pop: #0f1411;
   --strong: #1c2420;
   --on-strong: #f3f1c8;
   --selected: #c9d68f;
   --on-selected: #0f1411;
   --pattern-dot: #b8d97000;
-  --pattern-line: #4d5f52;
+  --pattern-line: #4a5b4f;
   --focus: #c2d8f5;
   --danger: #f6a49d;
   color-scheme: dark;
@@ -126,11 +135,11 @@ button {
   position: absolute;
   top: -12px;
   left: 16px;
-  padding: 2px 12px;
+  padding: 3px 12px 1px;
   border-radius: 999px;
   background: var(--strong);
   color: var(--on-strong);
-  font: 700 12px/1.4 var(--body);
+  font: 600 12px/1.4 var(--display);
   letter-spacing: 1.2px;
   text-transform: uppercase;
 }
@@ -161,6 +170,7 @@ button {
 .app-header__name {
   display: block;
   font: 600 24px/1.1 var(--display);
+  text-wrap: balance;
 }
 .app-header__by {
   display: block;
@@ -332,7 +342,7 @@ button {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  font: italic 400 12.5px/1.5 var(--body);
+  font: 400 12.5px/1.5 var(--body);
   color: var(--text-muted);
   text-wrap: pretty;
 }
@@ -443,7 +453,6 @@ button {
   }
   .sidebar .sidebar__account {
     width: auto;
-    font-style: normal;
   }
   .main {
     padding: 20px 16px 32px;
@@ -453,15 +462,12 @@ button {
     margin-bottom: 24px;
   }
 }
-/* The page's last line, as every irmahs.dev app ends: the icon, then who
-   made it, on a pill centred at the bottom */
+/* The page's last line, as every irmahs.dev app ends: where to find more
+   apps, on a pill centred at the bottom */
 .footer {
   align-self: center;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0 16px 28px;
-  padding: 6px 14px 6px 10px;
+  margin: 8px 16px 32px;
+  padding: 6px 14px;
   border: var(--line);
   border-radius: 999px;
   background: var(--panel);
@@ -513,24 +519,30 @@ button {
 }
 
 /* ── buttons ── */
-/* The one action to press next: bark, cream text, the hard shadow. */
+/* The one action to press next: the only yellow thing on the screen, 48px
+   tall, on the hard shadow it sinks into when pressed. */
 .btn {
+  min-height: 48px;
   border: var(--line);
   border-radius: 999px;
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--pop);
+  color: var(--on-pop);
   box-shadow: var(--shadow-hard);
   font: 700 14px/1.2 var(--body);
+  transition:
+    background-color 0.15s,
+    transform 0.08s,
+    box-shadow 0.08s;
 }
 .btn:hover {
-  transform: translate(-1px, -1px);
-  box-shadow: 4px 4px 0 #0f1411;
+  background: var(--pop-hover);
 }
 .btn:active {
   box-shadow: 1px 1px 0 #0f1411;
   transform: translate(2px, 2px);
 }
 .btn--outline {
+  min-height: 42px;
   background: var(--raised);
   color: var(--text);
   box-shadow: none;
@@ -549,7 +561,7 @@ button {
 }
 .btn--muted:hover,
 .btn--muted:active {
-  background: var(--accent);
+  background: var(--pop);
   box-shadow: var(--shadow-hard);
   transform: none;
 }
@@ -661,22 +673,22 @@ button {
   background: var(--panel);
   border: var(--line);
   border-radius: var(--radius-panel);
-  padding: 8px;
+  padding: 12px;
 }
 .add-row input {
   flex: 1;
   min-width: 0;
-  height: 44px;
+  height: 48px;
   padding: 0 14px;
   border: var(--line-thin);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-field);
   background: var(--raised);
   font: 400 15px/1 var(--body);
   color: var(--text);
 }
 .add-row .btn {
   flex: none;
-  height: 44px;
+  height: 48px;
   padding: 0 20px;
 }
 /* The pantry's row can outgrow one line once a serving size joins it. */
@@ -693,10 +705,10 @@ button {
   display: flex;
   align-items: center;
   gap: 6px;
-  height: 44px;
+  height: 48px;
   padding: 0 14px;
   border: var(--line-thin);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-field);
   background: var(--raised);
   max-width: 220px;
 }
@@ -921,7 +933,7 @@ button {
   display: flex;
   align-items: center;
   gap: 10px;
-  font: italic 400 13px/1.5 var(--body);
+  font: 400 13px/1.5 var(--body);
   color: var(--text-muted);
   text-align: center;
 }
@@ -951,7 +963,7 @@ button {
   background: var(--panel);
   border: var(--line);
   border-radius: var(--radius-panel);
-  padding: 24px 18px 18px;
+  padding: 16px 12px 12px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -959,7 +971,7 @@ button {
 .recipe__empty {
   height: 236px;
   border: var(--line-thin);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-field);
   background: var(--ground);
   display: flex;
   flex-direction: column;
@@ -1033,7 +1045,7 @@ button {
 .recipe__art {
   height: 236px;
   border: var(--line-thin);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-field);
   background: var(--accent-soft);
   display: flex;
   flex-direction: column;
@@ -1113,7 +1125,7 @@ button {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 14px 18px;
+  padding: 12px;
   border: var(--line);
   border-radius: var(--radius-panel);
   background: var(--panel);
@@ -1160,7 +1172,7 @@ button {
   background: var(--panel);
   border: var(--line);
   border-radius: var(--radius-panel);
-  padding: 18px 18px 16px;
+  padding: 16px 12px 12px;
 }
 .pcard--soon {
   background: var(--raised);
@@ -1237,7 +1249,7 @@ button {
   background: var(--panel);
   border: var(--line);
   border-radius: var(--radius-panel);
-  padding: 26px;
+  padding: 16px 12px 12px;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -1250,7 +1262,7 @@ button {
 .text-input {
   height: 48px;
   border: var(--line-thin);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-field);
   background: var(--raised);
   padding: 0 14px;
   font: 400 15px/1 var(--body);
@@ -1279,7 +1291,7 @@ button {
   gap: 12px;
   padding: 18px 10px 16px;
   border: var(--line);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-field);
   background: var(--raised);
   color: var(--text);
 }
@@ -1316,7 +1328,7 @@ button {
   width: 130px;
   height: 48px;
   border: var(--line-thin);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-field);
   background: var(--raised);
   padding: 0 36px 0 14px;
   font: 700 14px/1 var(--body);
@@ -1351,7 +1363,7 @@ button {
   }
   .unit-select::picker(select) {
     margin-top: 6px;
-    padding: 6px;
+    padding: 12px;
     border: var(--line);
     border-radius: var(--radius-panel);
     background: var(--panel);
@@ -1359,7 +1371,7 @@ button {
   }
   .unit-select option {
     padding: 10px 12px;
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-field);
     font: 700 14px/1.2 var(--body);
     letter-spacing: normal;
     text-transform: none;
@@ -1407,7 +1419,7 @@ button {
   gap: 14px;
   border: var(--line);
   background: var(--raised);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-field);
   padding: 14px 16px;
   text-align: left;
 }
@@ -1471,7 +1483,7 @@ button {
   background: var(--panel);
   border: var(--line);
   border-radius: var(--radius-panel);
-  padding: 20px;
+  padding: 16px 12px 12px;
 }
 .stat--fresh {
   background: var(--accent-soft);
@@ -1507,7 +1519,7 @@ button {
   background: var(--panel);
   border: var(--line);
   border-radius: var(--radius-panel);
-  padding: 14px 20px 14px 14px;
+  padding: 12px;
 }
 .hrow__icon {
   flex: none;
@@ -1574,7 +1586,7 @@ button {
   background: var(--panel);
   border: var(--line);
   border-radius: var(--radius-panel);
-  padding: 12px 14px 12px 18px;
+  padding: 12px;
 }
 .lrow--done {
   background: var(--ground);
@@ -1663,7 +1675,7 @@ button {
   background: var(--panel);
   border: var(--line);
   border-radius: var(--radius-panel);
-  padding: 22px;
+  padding: 16px 12px 12px;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -1693,7 +1705,7 @@ button {
   border: var(--line);
   background: var(--panel);
   border-radius: var(--radius-panel);
-  padding: 22px;
+  padding: 16px 12px 12px;
 }
 .weight-card[aria-checked="true"] {
   background: var(--accent-soft);
@@ -1718,7 +1730,7 @@ button {
 }
 .footnote {
   padding: 6px 8px;
-  font: italic 400 13px/1.55 var(--body);
+  font: 400 13px/1.55 var(--body);
   color: var(--text-muted);
   text-wrap: pretty;
   margin: 0;
@@ -1782,7 +1794,7 @@ button {
   display: flex;
   flex-direction: column;
   gap: 18px;
-  padding: 30px 24px 24px;
+  padding: 16px 12px 12px;
   border: var(--line);
   border-radius: var(--radius-panel);
   background: var(--panel);
@@ -1811,16 +1823,24 @@ button {
   min-height: 48px;
   border: var(--line);
   border-radius: 999px;
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--pop);
+  color: var(--on-pop);
   box-shadow: var(--shadow-hard);
   font: 700 15px/1 var(--body);
   text-decoration: none;
+  transition:
+    background-color 0.15s,
+    transform 0.08s,
+    box-shadow 0.08s;
 }
 
 .signin-google:hover {
-  transform: translate(-1px, -1px);
-  box-shadow: 4px 4px 0 #0f1411;
+  background: var(--pop-hover);
+}
+
+.signin-google:active {
+  box-shadow: 1px 1px 0 #0f1411;
+  transform: translate(2px, 2px);
 }
 
 /* A third-party mark sits on untinted white in both themes. */
@@ -1836,8 +1856,7 @@ button {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding-top: 18px;
-  border-top: var(--line-thin);
+  padding-top: 6px;
 }
 
 .signin-guest {
@@ -1866,4 +1885,48 @@ button {
   color: var(--text-muted);
   margin: 0;
   text-wrap: pretty;
+}
+
+.footer a {
+  color: var(--text);
+  font-weight: 700;
+  text-decoration: none;
+}
+.footer a:hover {
+  text-decoration: underline;
+}
+
+/* The account pill while the session is asked for: a skeleton of its exact
+   size, so nothing moves when the answer comes. */
+.account--loading {
+  pointer-events: none;
+}
+.account--loading .account__icon {
+  background: var(--raised-hover);
+}
+.account__bar {
+  width: 56px;
+  height: 12px;
+  border-radius: 6px;
+  background: var(--raised-hover);
+  animation: account-pulse 1.2s ease-in-out infinite;
+}
+@keyframes account-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+@media (max-width: 600px) {
+  .account__bar {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .account__bar {
+    animation: none;
+  }
+  .btn:active,
+  .signin-google:active {
+    transform: none;
+  }
 }

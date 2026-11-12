@@ -1,19 +1,20 @@
-import { APP_NAME } from "../lib/brand";
 import { useCopy } from "../lib/language";
-import { PantryIcon } from "./app-icon";
 
 const COPY = {
-  en: { by: "by Irma HS" },
-  fr: { by: "par Irma HS" },
+  en: { more: "more apps at" },
+  fr: { more: "plus d’apps sur" },
 };
 
-/** The page's last line, as every irmahs.dev app ends: the icon, then who made it */
+/**
+ * Cute Matcha's Footer, as every irmahs.dev app ends: the Header already
+ * names the app and says "by Irma HS", so this says where to find more
+ */
 export const Footer = () => {
   const t = useCopy(COPY);
 
   return (
     <footer className="footer">
-      <PantryIcon size={20} /> {APP_NAME} {t.by}
+      {t.more} <a href="https://irmahs.dev">irmahs.dev</a>
     </footer>
   );
 };

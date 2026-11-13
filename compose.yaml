@@ -8,7 +8,10 @@
 # has its own credentials.
 services:
   db:
-    image: postgres:17-alpine
+    # Pinned for the schema.sql check: a 17.12 server's dump adds per-column
+    # lines whose numbers change every run, so the committed file never
+    # matches. Production keeps postgres:17-alpine.
+    image: postgres:17.11-alpine
     environment:
       POSTGRES_USER: sleepy
       # No password: Postgres is only reachable from this machine (127.0.0.1)

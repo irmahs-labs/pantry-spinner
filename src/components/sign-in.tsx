@@ -80,7 +80,7 @@ const SignIn = ({ onGuest, failure }: Props) => {
     <>
       <Header account={null} />
       <div className="signin">
-        <div className="signin-panel">
+        <main className="signin-panel">
           <span className="legend" aria-hidden="true">
             welcome.txt
           </span>
@@ -110,7 +110,7 @@ const SignIn = ({ onGuest, failure }: Props) => {
             </button>
             <p className="signin-guestNote">{t.guestNote}</p>
           </div>
-        </div>
+        </main>
         <Footer />
       </div>
     </>

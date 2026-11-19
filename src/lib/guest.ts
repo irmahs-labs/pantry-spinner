@@ -18,7 +18,7 @@ const read = (): Snapshot | null => {
       return null;
     }
 
-    // SAFETY: only write() below stores this key, and only from a Snapshot. The
+    // SAFETY: only saveGuest() below stores this key, and only from a Snapshot. The
     // fields older tabs lacked are filled in next; text that is not JSON, or has
     // no catalogue and pantry arrays, throws into the catch: no guest session.
     const parsed = JSON.parse(raw) as Snapshot;
@@ -39,7 +39,7 @@ const read = (): Snapshot | null => {
   }
 };
 
-const write = (snapshot: Snapshot): void => {
+export const saveGuest = (snapshot: Snapshot): void => {
   try {
     sessionStorage.setItem(KEY, JSON.stringify(snapshot));
   } catch {
@@ -50,12 +50,7 @@ const write = (snapshot: Snapshot): void => {
 
 export const isGuest = () => read() !== null;
 
-export const startGuest = (start: Snapshot = EMPTY): void => {
-  write(start);
-};
-
 export const loadGuest = (): Snapshot => read() ?? EMPTY;
-export const saveGuest = (snapshot: Snapshot) => write(snapshot);
 
 export const endGuest = (): void => {
   try {

@@ -29,7 +29,6 @@ export interface RemoteSync {
   failure: LoadFailure | null;
   /** Who is signed in, for the header's account pill; null for nobody. */
   account: Account | null;
-  email: string | null;
   /** Looking around without an account: this tab only, nothing saved anywhere else. */
   guest: boolean;
   saveFailed: boolean;
@@ -244,7 +243,7 @@ export const useRemoteSync = (
     }
 
     starting.current = false;
-    guest.startGuest(start);
+    guest.saveGuest(start);
     dispatch({ snapshot: start, type: "state/hydrate" });
     synced.current = start;
     setIsGuest(true);
@@ -267,7 +266,6 @@ export const useRemoteSync = (
 
   return {
     account,
-    email: account?.email ?? null,
     failure,
     guest: isGuest,
     phase,

@@ -24,6 +24,9 @@ const CATEGORY_CODES: ReadonlySet<string> = new Set<CategoryCode>([
   "starch",
 ]);
 
+export const isCategory = (code: string | undefined): code is CategoryCode =>
+  code !== undefined && CATEGORY_CODES.has(code);
+
 export interface Category {
   id: number;
   code: CategoryCode;
@@ -171,7 +174,7 @@ export const toVocab = (raw: RawVocab, language: Language = "en"): Vocab => {
   // filter has kept the rows whose code is in CATEGORY_CODES.
   return {
     categories: rows("meal_planner_categories")
-      .filter((r) => CATEGORY_CODES.has(String(r.code)))
+      .filter((r) => isCategory(String(r.code)))
       .map((r) => ({
         code: r.code as CategoryCode,
         id: r.id as number,
@@ -265,9 +268,12 @@ export const kindsFor = (v: Vocab, category: CategoryCode) => {
 export const defaultUnit = (v: Vocab): string =>
   (v.units.find((u) => u.isDefault) ?? v.units[0])?.code ?? "";
 
+const unitOf = (v: Vocab, unit: string): Unit | undefined =>
+  v.units.find((u) => u.code === unit);
+
 /** The serving a new item in this unit starts on, or null if the unit is its own serving. */
 export const defaultServing = (v: Vocab, unit: string): number | null =>
-  v.units.find((u) => u.code === unit)?.defaultServing ?? null;
+  unitOf(v, unit)?.defaultServing ?? null;
 
 /** Whole servings left, counting a part-serving as one: 100 g at 150 g a serving is 1. */
 export const servingsLeft = (quantity: number, serving: number): number =>
@@ -275,11 +281,11 @@ export const servingsLeft = (quantity: number, serving: number): number =>
 
 /** The unit a serving is sized in when stocking in `unit`: grams for kilograms. */
 export const servingUnitOf = (v: Vocab, unit: string): string =>
-  v.units.find((u) => u.code === unit)?.servingUnit ?? unit;
+  unitOf(v, unit)?.servingUnit ?? unit;
 
 /** How many serving units make one `unit`: 1000 for kilograms, 1 otherwise. */
 export const servingFactorOf = (v: Vocab, unit: string): number =>
-  v.units.find((u) => u.code === unit)?.servingFactor ?? 1;
+  unitOf(v, unit)?.servingFactor ?? 1;
 
 /** One serving, converted into the stock's own unit: 75 g of a kilogram item is 0.075. */
 export const servingInUnit = (v: Vocab, unit: string, serving: number) =>
@@ -294,6 +300,4 @@ export const formatQuantity = (
   quantity: number,
   unit: string
 ): string =>
-  v.units.find((u) => u.code === unit)?.isCount
-    ? `×${quantity}`
-    : `${quantity} ${unit}`;
+  unitOf(v, unit)?.isCount ? `×${quantity}` : `${quantity} ${unit}`;

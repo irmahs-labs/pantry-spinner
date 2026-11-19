@@ -1,5 +1,5 @@
 import type { Ingredient, PantryItem } from "../data/model";
-import { categoryCodes } from "../data/vocab";
+import { categoryCodes, methodOf } from "../data/vocab";
 import type { CategoryCode, DietRule, Vocab } from "../data/vocab";
 import { daysUntil } from "../lib/dates";
 import { currentLanguage } from "../lib/language";
@@ -298,8 +298,7 @@ export const dishName = (
     return present.map((i) => i.name).join(" & ");
   }
 
-  const phrase = (code: string | null) =>
-    vocab.methods.find((m) => m.code === code)?.phrase ?? "";
+  const phrase = (code: string | null) => methodOf(vocab, code)?.phrase ?? "";
 
   const vegKindWord =
     vocab.vegetableKinds.find((k) => k.code === vegetable.kind)?.word ?? "";

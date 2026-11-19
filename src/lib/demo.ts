@@ -5,7 +5,7 @@ import type { Ingredient } from "../data/model";
 import type { TableRow } from "../data/rows";
 import { EMPTY } from "../data/snapshot";
 import type { Snapshot } from "../data/snapshot";
-import { defaultUnit } from "../data/vocab";
+import { defaultUnit, isCategory } from "../data/vocab";
 import type { CategoryCode, Vocab } from "../data/vocab";
 import { getJson } from "./api";
 import { addDaysISO } from "./dates";
@@ -69,15 +69,6 @@ const codeOf = <T extends { id: number; code: string }>(
   rows: T[],
   rowId: number | null
 ): string | undefined => rows.find((r) => r.id === rowId)?.code;
-
-const CATEGORIES: ReadonlySet<string> = new Set<CategoryCode>([
-  "protein",
-  "vegetable",
-  "starch",
-]);
-
-const isCategory = (code: string | undefined): code is CategoryCode =>
-  code !== undefined && CATEGORIES.has(code);
 
 /**
  * Turns the demo rows into a guest's starting snapshot. Use-by dates are stored

@@ -5,6 +5,7 @@ import { ServingField } from "../components/serving-field";
 import {
   formatQuantity,
   labelOfCategory,
+  methodOf,
   servingFactorOf,
   servingUnitOf,
   servingsLeft,
@@ -147,7 +148,7 @@ export const Pantry = ({ state, dispatch }: Props) => {
   const methodLabels = (codes: string[]) =>
     codes
       .flatMap((c) => {
-        const label = v.methods.find((m) => m.code === c)?.label;
+        const label = methodOf(v, c)?.label;
 
         return label ? [label] : [];
       })

@@ -168,16 +168,8 @@ const App = () => {
     createInitialState
   );
 
-  const {
-    account,
-    phase,
-    email,
-    failure,
-    guest,
-    saveFailed,
-    signOut,
-    startGuest,
-  } = useRemoteSync(state, dispatch);
+  const { account, phase, failure, guest, saveFailed, signOut, startGuest } =
+    useRemoteSync(state, dispatch);
 
   const timers = useRef<number[]>([]);
   const t = useCopy(COPY);
@@ -340,7 +332,7 @@ const App = () => {
               onClick={signOut}
             >
               <span className="nav__label">
-                {guest ? t.signIn : (email ?? t.signOut)}
+                {guest ? t.signIn : (account?.email ?? t.signOut)}
               </span>
             </button>
           </div>

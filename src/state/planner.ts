@@ -251,6 +251,10 @@ const parseQuantity = (typed: string): number => {
 
 const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
 
+/** The list with `item` taken out if it is there, or added at the end if not. */
+const toggle = (list: string[], item: string): string[] =>
+  list.includes(item) ? list.filter((x) => x !== item) : [...list, item];
+
 const STOCKED_WINDOW = 6;
 
 /** Methods switched on in the Cooking methods screen. */
@@ -473,15 +477,11 @@ export const plannerReducer = (
     }
 
     case "draft/toggleMethod": {
-      const on = state.draft.methods.includes(action.code);
-
       return {
         ...state,
         draft: {
           ...state.draft,
-          methods: on
-            ? state.draft.methods.filter((c) => c !== action.code)
-            : [...state.draft.methods, action.code],
+          methods: toggle(state.draft.methods, action.code),
         },
       };
     }
@@ -566,6 +566,9 @@ export const plannerReducer = (
         return state;
       }
 
+      const unit = state.stock.unit || defaultUnit(state.vocab);
+      const nextUnit = defaultUnit(state.vocab);
+
       return {
         ...state,
         grocery: state.grocery.filter((g) => g.name !== name),
@@ -574,19 +577,15 @@ export const plannerReducer = (
             expiresOn: addDaysISO(state.stock.days),
             name,
             qty: parseQuantity(state.stock.qty),
-            serving: servingOf(
-              state.vocab,
-              state.stock.unit || defaultUnit(state.vocab),
-              state.stock.serving
-            ),
-            unit: state.stock.unit || defaultUnit(state.vocab),
+            serving: servingOf(state.vocab, unit, state.stock.serving),
+            unit,
           },
           ...state.pantry.filter((p) => p.name !== name),
         ],
         stock: {
           ...STOCK0,
-          serving: servingText(state.vocab, defaultUnit(state.vocab)),
-          unit: defaultUnit(state.vocab),
+          serving: servingText(state.vocab, nextUnit),
+          unit: nextUnit,
         },
       };
     }
@@ -648,6 +647,7 @@ export const plannerReducer = (
 
     case "grocery/stock": {
       const bought = state.grocery.find((g) => g.name === action.name);
+      const unit = bought?.unit ?? defaultUnit(state.vocab);
 
       return {
         ...state,
@@ -657,12 +657,8 @@ export const plannerReducer = (
             expiresOn: addDaysISO(STOCKED_WINDOW),
             name: action.name,
             qty: bought?.qty ?? 1,
-            serving:
-              defaultServing(
-                state.vocab,
-                bought?.unit ?? defaultUnit(state.vocab)
-              ) ?? 1,
-            unit: bought?.unit ?? defaultUnit(state.vocab),
+            serving: defaultServing(state.vocab, unit) ?? 1,
+            unit,
           },
           ...state.pantry.filter((p) => p.name !== action.name),
         ],
@@ -672,18 +668,14 @@ export const plannerReducer = (
     case "method/toggle": {
       return {
         ...state,
-        methodsOff: state.methodsOff.includes(action.code)
-          ? state.methodsOff.filter((c) => c !== action.code)
-          : [...state.methodsOff, action.code],
+        methodsOff: toggle(state.methodsOff, action.code),
       };
     }
 
     case "rules/toggleDiet": {
       return {
         ...state,
-        diets: state.diets.includes(action.code)
-          ? state.diets.filter((d) => d !== action.code)
-          : [...state.diets, action.code],
+        diets: toggle(state.diets, action.code),
       };
     }
 

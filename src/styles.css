@@ -333,7 +333,7 @@ button {
 }
 /* The sidebar is a screen tall but starts under the header, so until the
    header scrolls away its bottom is off-screen; sticking the foot to the
-   window's bottom keeps Sign in / Sign out in sight. */
+   window's bottom keeps its note in sight. */
 .sidebar__foot {
   position: sticky;
   bottom: 24px;
@@ -345,9 +345,6 @@ button {
   font: 400 12.5px/1.5 var(--body);
   color: var(--text-muted);
   text-wrap: pretty;
-}
-.sidebar .sidebar__account {
-  padding: 8px 0;
 }
 .nav {
   display: flex;
@@ -450,9 +447,6 @@ button {
     align-items: center;
     justify-content: space-between;
     gap: 0 12px;
-  }
-  .sidebar .sidebar__account {
-    width: auto;
   }
   .main {
     padding: 20px 16px 32px;

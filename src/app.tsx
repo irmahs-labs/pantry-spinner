@@ -64,8 +64,6 @@ const COPY = {
       usual: "The reels favour whatever is closest to going off.",
     },
     nothingStocked: "Nothing stocked",
-    signIn: "Sign in",
-    signOut: "Sign out",
     titles: {
       add: "Add an ingredient",
       list: "Shopping list",
@@ -106,8 +104,6 @@ const COPY = {
       usual: "Les rouleaux favorisent ce qui va périmer le plus tôt.",
     },
     nothingStocked: "Rien en stock",
-    signIn: "Se connecter",
-    signOut: "Se déconnecter",
     titles: {
       add: "Ajouter un ingrédient",
       list: "Liste de courses",
@@ -168,7 +164,7 @@ const App = () => {
     createInitialState
   );
 
-  const { account, phase, failure, guest, saveFailed, signOut, startGuest } =
+  const { account, phase, failure, guest, saveFailed, startGuest } =
     useRemoteSync(state, dispatch);
 
   const timers = useRef<number[]>([]);
@@ -326,15 +322,6 @@ const App = () => {
           </nav>
           <div className="sidebar__foot">
             <span>{footNote(saveFailed, guest, t)}</span>
-            <button
-              type="button"
-              className="nav sidebar__account"
-              onClick={signOut}
-            >
-              <span className="nav__label">
-                {guest ? t.signIn : (account?.email ?? t.signOut)}
-              </span>
-            </button>
           </div>
         </aside>
 
